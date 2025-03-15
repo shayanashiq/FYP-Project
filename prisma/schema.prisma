@@ -1,0 +1,212 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//// ==================== USERS & AUTH ==================== ////
+model User {
+  id           String    @id @default(uuid())
+  name         String
+  email        String    @unique
+  password     String
+  phone        String?
+  address      String?
+  city         String?
+  country      String?
+  zipCode      String?
+  role         UserRole  @default(CUSTOMER) // New Role Field
+  isAdmin      Boolean   @default(false)
+  
+  // Relationships
+  orders       Order[]
+  cart         Cart?
+  wishlist     Wishlist?
+  reviews      Review[]
+  products     Product[] @relation("VendorProducts") // Vendors can have products
+  
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Product {
+  id            String      @id @default(uuid())
+  name          String
+  description   String
+  shortDescription   String
+  color          String[]
+  size          String[]
+  price         Decimal @db.Decimal(10,4)
+  discount      Decimal? @db.Decimal(10,4)
+  isFeatured    Boolean     @default(false)
+  isBestChoice  Boolean     @default(false)
+  stock         Int         @default(0)
+  sku           String     @unique
+  images        String[]
+  categoryId    String?
+  category      Category?    @relation(fields: [categoryId], references: [id])
+  
+  // New: Vendor Relationship
+  vendorId      String?
+  vendor        User?       @relation(name: "VendorProducts", fields: [vendorId], references: [id])
+  
+  reviews       Review[]
+  orderItems    OrderItem[]
+  cartItems     CartItem[]
+  wishlistItems WishlistItem[]
+
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+}
+
+enum UserRole {
+  CUSTOMER
+  VENDOR
+}
+
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+//// ==================== CART & WISHLIST ==================== ////
+model Cart {
+  id        String    @id @default(uuid())
+  userId    String    @unique
+  user      User      @relation(fields: [userId], references: [id])
+  items     CartItem[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+}
+
+model Wishlist {
+  id        String       @id @default(uuid())
+  userId    String       @unique
+  user      User         @relation(fields: [userId], references: [id])
+  items     WishlistItem[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model WishlistItem {
+  id        String   @id @default(uuid())
+  wishlistId String
+  wishlist   Wishlist @relation(fields: [wishlistId], references: [id])
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+}
+
+//// ==================== ORDERS & PAYMENTS ==================== ////
+model Order {
+  id           String       @id @default(uuid())
+  userId       String
+  user         User         @relation(fields: [userId], references: [id])
+  items        OrderItem[]
+  totalPrice   Decimal
+  status       OrderStatus  @default(PENDING)
+  payment      Payment?
+  shipment     Shipment?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+}
+
+model OrderItem {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Decimal
+}
+
+model Payment {
+  id        String   @id @default(uuid())
+  orderId   String   @unique
+  order     Order    @relation(fields: [orderId], references: [id])
+  method    PaymentMethod
+  status    PaymentStatus @default(PENDING)
+  transactionId String?
+  createdAt DateTime @default(now())
+}
+
+model Shipment {
+  id        String    @id @default(uuid())
+  orderId   String    @unique
+  order     Order     @relation(fields: [orderId], references: [id])
+  status    ShipmentStatus @default(PENDING)
+  trackingNumber String?
+  courier   String?
+  estimatedDelivery DateTime?
+  createdAt DateTime  @default(now())
+}
+
+//// ==================== COUPONS & DISCOUNTS ==================== ////
+model Coupon {
+  id         String   @id @default(uuid())
+  code       String   @unique
+  discount   Decimal
+  expiryDate DateTime
+  usageLimit Int      @default(1)
+  usedBy     String[] // Array of user IDs
+}
+
+//// ==================== REVIEWS & RATINGS ==================== ////
+model Review {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  productId String
+  product   Product  @relation(fields: [productId], references: [id])
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+}
+
+//// ==================== ENUMS ==================== ////
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  RETURNED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  PAYPAL
+  STRIPE
+  CASH_ON_DELIVERY
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum ShipmentStatus {
+  PENDING
+  IN_TRANSIT
+  DELIVERED
+  RETURNED
+}

@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "L24XCP6Y94.com.avahealth.buildmeapp",
+        "paths": [ "/doctor/connect/*" ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,14 @@
+[
+    {
+      "relation": [
+        "delegate_permission/common.handle_all_urls"
+      ],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.avahealth.buildmeapp",
+        "sha256_cert_fingerprints": [
+          "F3:2B:7E:69:2F:1F:0A:0A:2A:6B:51:07:3B:C6:52:16:57:81:DE:2C:B8:89:ED:49:17:83:C2:5F:F0:B3:9A:8C"
+        ]
+      }
+    }
+  ]
