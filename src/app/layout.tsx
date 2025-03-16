@@ -8,7 +8,7 @@ import { ThemeProvider } from "@/components/shared/theme-provider";
 import { Toaster } from "@/components/shared/toaster";
 
 const inter = Inter({ subsets: ["latin"] });
-const canonicalUrl = "https://app.avahealth.ai/";
+const canonicalUrl = "http://localhost:3000/";
 
 export const metadata = {
   title: "AVA Health",

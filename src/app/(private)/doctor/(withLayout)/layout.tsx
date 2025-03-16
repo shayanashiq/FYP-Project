@@ -57,12 +57,12 @@ const Layout = ({ children }: any) => {
         ☰
       </button>
 
-      <Sidebar
+      {/* <Sidebar
         isSidebarOpen={isSidebarOpen}
         toggleSidebar={toggleSidebar}
         onInviteClick={openInvitePopup}
         onComingSoonClick={handleInviteClick} 
-      />
+      /> */}
       <div className="px-8">{children}</div>
     </div>
   );

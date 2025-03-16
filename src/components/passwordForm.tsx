@@ -3,8 +3,6 @@
 import React, { useState } from "react";
 import { useFormik } from "formik";
 import * as Yup from "yup";
-import Input from "./input";
-import Button from "./button";
 import { EyeIcon, EyeOffIcon } from "@heroicons/react/outline";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
@@ -97,7 +95,7 @@ function ClientPasswordForm() {
           <p className="text-red-500">*</p>
         </div>
         <div className="relative">
-          <Input
+          <input
             name="password"
             type={showPassword ? "text" : "password"}
             placeholder="Enter your password"
@@ -136,7 +134,7 @@ function ClientPasswordForm() {
           <p className="text-red-500">*</p>
         </div>
         <div className="relative">
-          <Input
+          <input
             name="confirmPassword"
             type={showConfirmPassword ? "text" : "password"}
             placeholder="Confirm your password"
@@ -166,21 +164,21 @@ function ClientPasswordForm() {
       </div>
 
       {loading ? (
-        <Button
+        <button
           className="w-full rounded-[6.56px] bg-gradient-to-b from-[#579FE1] to-[#2290F3]"
           type="button"
           disabled
         >
           Submitting...
-        </Button>
+        </button>
       ) : (
-        <Button
+        <button
           className="w-full rounded-[6.56px] bg-gradient-to-b from-[#579FE1] to-[#2290F3]"
           type="submit"
           disabled={formik.isSubmitting || !formik.isValid || loading}
         >
           Continue
-        </Button>
+        </button>
       )}
     </form>
   );

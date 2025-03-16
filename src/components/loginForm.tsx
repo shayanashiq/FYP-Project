@@ -6,10 +6,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import * as Yup from "yup";
 import { signIn, useSession } from "next-auth/react";
 import { EyeIcon, EyeOffIcon } from "@heroicons/react/outline";
-import { Button } from "./ui/button";
 import googleLogo from "../assets/images/google-logo.png";
 import Link from "next/link";
-import { Loader } from "./shared/loader";
 import { toast } from "sonner";
 import Image from "next/image";
 
@@ -172,7 +170,7 @@ function ClientLoginForm() {
                 </p>
               </div>
 
-              <Button
+              <button
                 type="submit"
                 className={`bg-gradient-to-b from-[#579FE1] to-[#2290F3] text-base font-medium ${
                   isSubmitting || loading ? "opacity-50 cursor-not-allowed" : ""
@@ -180,7 +178,7 @@ function ClientLoginForm() {
                 disabled={isSubmitting || loading}
               >
                 {loading ? "Loading..." : isSubmitting ? "Logging in..." : "Login"}
-              </Button>
+              </button>
             </div>
           </Form>
         )}
@@ -192,8 +190,7 @@ function ClientLoginForm() {
         <div className="border-t-[1px] border-solid border-[#FFFFFF] flex-grow"></div>
       </div>
 
-      <Button
-        variant="outline"
+      <button
         onClick={handleGoogleSignIn}
         className="w-full bg-white font-custom text-base font-normal text-[#FFFFFF] border-blue-300 border-2"
       >
@@ -205,7 +202,7 @@ function ClientLoginForm() {
           className="w-6 h-6 mr-2"
         />
         <div className="text-black">Continue with Google</div>
-      </Button>
+      </button>
 
       <p className="text-center text-[#FFFFFF] leading-[25.48px] pt-3">
         Do not have an account?{" "}

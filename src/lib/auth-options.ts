@@ -6,7 +6,7 @@ export const authOptions: any = {
   session: {
     strategy: "jwt",
   },
-  pages: {
+  pages: { 
     signIn: "/login",
   },
   providers: [
@@ -30,7 +30,7 @@ export const authOptions: any = {
           );
           try {
             const response = await fetch(
-              "https://app.avahealth.ai/api/password-save",
+              "http://localhost:3000/api/password-save",
               {
                 method: "POST",
                 headers: {
@@ -50,11 +50,11 @@ export const authOptions: any = {
                 const user: any = result.data;
                 console.log("set password >>>>>:::::", {
                   ...user,
-                  doctorProfile: null,
+                  customerProfile: null,
                 });
                 return {
                   ...user,
-                  doctorProfile: null,
+                  customerProfile: null,
                 };
               }
               return null;
@@ -69,11 +69,11 @@ export const authOptions: any = {
         } else if (credentials?.isSettingPassword === "false") {
           try {
             const response: AxiosResponse = await axios.post(
-              "https://app.avahealth.ai/api/login",
+              "http://localhost:3000/api/login",
               {
                 email: credentials?.email,
                 password: credentials?.password,
-                role: ROLE.DOCTOR,
+                role: ROLE.CUSTOMER,
               }
             );
             console.log("Login response:", response);
@@ -82,7 +82,7 @@ export const authOptions: any = {
               // console.log("user>>>>>", user);
               return {
                 ...user,
-                doctorProfile: user.doctorProfile,
+                customerProfile: user.customerProfile,
               };
             }
             return null;
@@ -102,14 +102,14 @@ export const authOptions: any = {
         return {
           ...token,
           isProfileComplete: true,
-          doctorProfile: { ...session },
+          customerProfile: { ...session },
         };
       }
       if (user) {
         token.id = user.id;
         token.email = user.email;
         token.isProfileComplete = user.isProfileComplete || false;
-        token.doctorProfile = user.doctorProfile || null;
+        token.customerProfile = user.customerProfile || null;
         token.verified = user.verified;
         token.resetToken = user.resetToken;
         token.resetTokenExpires = user.resetTokenExpires;
@@ -129,7 +129,7 @@ export const authOptions: any = {
       session.user.image = token.image || null;
       session.user.email = token.email;
       session.user.isProfileComplete = token.isProfileComplete;
-      session.user.doctorProfile = token.doctorProfile || null;
+      session.user.customerProfile = token.customerProfile || null;
       session.user.verified = token.verified;
       session.user.resetToken = token.resetToken;
       session.user.resetTokenExpires = token.resetTokenExpires;

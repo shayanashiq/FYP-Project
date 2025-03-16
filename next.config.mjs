@@ -1,14 +1,6 @@
-/** @type {import('next').NextConfig} */
-import { startNotificationCron } from "./src/server/cronJob.mjs"
-
-
-// startNotificationCron()
+// next.config.mjs - ES Module version
 const nextConfig = {
-  images: {
-    domains: [
-      
-    ],
-  },
+  // your configuration here
 };
 
 export default nextConfig;

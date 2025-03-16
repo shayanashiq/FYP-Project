@@ -10,18 +10,16 @@ datasource db {
 //// ==================== USERS & AUTH ==================== ////
 model User {
   id           String    @id @default(uuid())
-  name         String
+  
   email        String    @unique
   password     String
-  phone        String?
-  address      String?
-  city         String?
-  country      String?
-  zipCode      String?
-  role         UserRole  @default(CUSTOMER) // New Role Field
+  role         UserRole  @default(CUSTOMER) 
   isAdmin      Boolean   @default(false)
-  
+  verified            Boolean            @default(false)
+  isPasswordSet       Boolean            @default(false)
+  isProfileComplete       Boolean            @default(false)
   // Relationships
+  customerProfile CustomerProfile? 
   orders       Order[]
   cart         Cart?
   wishlist     Wishlist?
@@ -30,6 +28,29 @@ model User {
   
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+}
+
+model Otp {
+  id        Int      @id @default(autoincrement())
+  email     String
+  otp       String
+  createdAt DateTime @default(now())
+  expiresAt DateTime @map("expires_at")
+}
+
+model CustomerProfile{
+  id                String      @id @default(uuid())
+  firstName         String      @default("")
+  lastName          String      @default("")
+  phone             String?
+  address           String?
+  city              String?
+  country           String?
+  zipCode           String?
+  userId            String      @unique
+  user              User        @relation(fields: [userId], references: [id])
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
 }
 
 model Product {

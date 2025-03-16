@@ -1,7 +1,7 @@
 "use client";
 import React, { useEffect } from "react";
-import bgImg from "@/assets/imgs/loginBg.png";
-import logo from "@/assets/imgs/white_logo.png";
+// import bgImg from "@/assets/imgs/loginBg.png";
+// import logo from "@/assets/imgs/white_logo.png";
 import ClientPasswordForm from "@/components/loginForm";
 
 export default function Home() {
@@ -23,23 +23,14 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen min-w-full grid grid-cols-1 md:grid-cols-2">
-      {/* Background Image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat z-0"
-        style={{
-          backgroundImage: `url(${bgImg.src})`,
-          backgroundAttachment: "fixed",
-          backgroundSize: "cover",
-          backgroundPosition: "center",
-        }}
-      ></div>
+      
 
       {/* Content Section */}
       <section className="relative z-10 w-full h-full flex flex-col justify-center items-center px-4 space-y-6">
         <div className="flex flex-col justify-center items-center space-y-4">
           <img
             className="max-w-[250px] sm:max-w-[200px] md:max-w-[250px] w-full"
-            src={logo.src}
+            src={"/assets/imgs/loginBg.png"}
             alt="AVA Health"
           />
           <div className="flex flex-col items-center space-y-2 text-center">

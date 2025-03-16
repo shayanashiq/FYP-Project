@@ -20,7 +20,7 @@ export async function verifyToken(
 
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET || "your_jwt_secret"
+      process.env.JWT_SECRET || "N4wL1NMnook2oQA47D6t3m3gw4bnlepd"
     ) as DecodedToken;
 
     // if (allowedRoles && allowedRoles.length > 0) {

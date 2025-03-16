@@ -3,11 +3,8 @@
 import React, { useState } from "react";
 import { Formik, Form, Field } from "formik";
 import { useRouter } from "next/navigation";
-import { Button } from "./ui/button";
-import googleLogo from "../assets/images/google-logo.png";
-import { sendOtp } from "@/lib/actions/auth";
+import axios from "axios";
 import { toast } from "sonner";
-import { Loader } from "@/components/shared/loader";
 
 function validateEmail(value: string) {
   let error;
@@ -22,21 +19,20 @@ function validateEmail(value: string) {
 export default function ClientLoginForm() {
   const router = useRouter();
   const [error, setError] = useState("");
-  const [email, setEmail] = useState("");
 
-  const handleGoogleSignUp = async () => {
-    try {
-      const response = await fetch(`/api/google/signup`);
-      const data = await response.json();
-
-      if (data.url) {
-        window.location.href = data.url;
-      } else {
-        throw new Error("No auth URL received");
-      }
-    } catch (error) {
-      toast.error("Failed to sign up with Google");
+  // Helper function to safely extract error messages
+  const getErrorMessage = (err: any): string => {
+    // Check if message is an object, and if so return a generic message
+    if (err?.response?.data?.message && typeof err.response.data.message === 'object') {
+      return "Server error occurred. Please try again later.";
     }
+    
+    // Otherwise try to get a string message from various places
+    return (
+      (typeof err?.response?.data?.message === 'string' ? err.response.data.message : null) ||
+      err?.message ||
+      "Unknown error occurred"
+    );
   };
 
   return (
@@ -54,40 +50,56 @@ export default function ClientLoginForm() {
           return errors;
         }}
         onSubmit={async (values, { setSubmitting, setErrors }) => {
-          setError("");
-          const emailError = validateEmail(values.email);
-          <Loader />;
-          if (emailError) {
-            setErrors({ email: emailError });
-            setSubmitting(false);
-            return;
-          }
-
           try {
-            const response: any = await sendOtp({
-              email: values.email,
-            });
-            setEmail(values.email);
+            setError("");
+            const emailError = validateEmail(values.email);
+            
+            if (emailError) {
+              setErrors({ email: emailError });
+              setSubmitting(false);
+              return;
+            }
 
-            if (response?.status === 200) {
-              toast.success(response.message || "OTP sent!");
+            console.log("Submitting email:", values.email);
+            
+            const response = await axios.post("/api/send-otp-register", {
+              email: values.email,
+            }, {
+              headers: {
+                "Content-Type": "application/json",
+              },
+            });
+            
+            // Log the response for debugging
+            console.log("API Response:", response);
+            
+            if (response.status === 200) {
+              // Make sure we're accessing a string
+              const successMessage = typeof response.data?.message === 'string' 
+                ? response.data.message 
+                : "OTP sent!";
+                
+              toast.success(successMessage);
               router.push(
-                `./verification?email=${encodeURIComponent(
-                  values.email.toString()
-                )}`
+                `./verification?email=${encodeURIComponent(values.email)}`
               );
             }
           } catch (err: any) {
-            if (
-              err?.response?.data?.message ===
-              "Verified user found with this email"
-            ) {
+            console.error("Error during OTP send:", err);
+            
+            // Debug the error structure
+            console.log("Error response:", err?.response?.data);
+            
+            const errorMessage = getErrorMessage(err);
+            
+            if (err?.response?.data?.message === "Verified user found with this email") {
               toast.success("Verified user found, redirecting to login.");
               router.push(`/login?email=${encodeURIComponent(values.email)}`);
             } else {
-              toast.error(err?.message || "🚨Oops... Something went wrong!", {
-                description: err?.response.data.message || err.message,
+              toast.error("Something went wrong!", {
+                description: errorMessage,
               });
+              setError(errorMessage);
             }
           } finally {
             setSubmitting(false);
@@ -107,30 +119,24 @@ export default function ClientLoginForm() {
               </label>
 
               <Field
+                id="email"
                 name="email"
+                type="email"
                 placeholder="Enter your email address"
                 className="h-[42px] mb-[2px] py-4 px-6 rounded-[6.56px] border-blue-500 border-2 w-full text-sm ring-0 focus:ring-0 outline-none"
               />
-              {errors.email && touched.email && (
-                <p className="text-red-500">{errors.email}</p>
-              )}
-              {isSubmitting ? (
-                <Button
-                  type="button"
-                  className="bg-gradient-to-b from-[#579FE1] to-[#2290F3] font-medium text-base"
-                  disabled
-                >
-                  Signing up...
-                </Button>
-              ) : (
-                <Button
-                  type="submit"
-                  className="bg-gradient-to-b from-[#579FE1] to-[#2290F3] font-medium text-base"
-                  disabled={isSubmitting}
-                >
-                  Continue
-                </Button>
-              )}
+              
+              {errors.email && touched.email ? (
+                <div className="text-red-500">{String(errors.email)}</div>
+              ) : null}
+              
+              <button
+                type="submit"
+                className="bg-gradient-to-b from-[#579FE1] to-[#2290F3] text-white font-medium text-base py-2 px-4 rounded mt-2"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Signing up..." : "Continue"}
+              </button>
             </div>
           </Form>
         )}
@@ -142,16 +148,7 @@ export default function ClientLoginForm() {
         <div className="border-t-[1px] border-solid border-white flex-grow"></div>
       </div>
 
-      <Button
-        onClick={handleGoogleSignUp}
-        variant="outline"
-        className="w-full bg-white font-custom text-base font-normal text-black border-blue-300 border-2"
-      >
-        <img src={googleLogo.src} alt="Google Logo" className="w-6 h-6 mr-2" />
-        Continue With Google
-      </Button>
-
-      {error && <p className="text-red-500">{error}</p>}
+      {error ? <p className="text-red-500">{error}</p> : null}
     </div>
   );
 }
