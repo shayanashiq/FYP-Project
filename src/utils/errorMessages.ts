@@ -13,7 +13,7 @@ export const ErrorMessages = {
   tokenError: "Error verifying token",
   patientIdRequired: "Patient ID is required",
   patientNotFound: `No patient found with ID`,
-  patientFound: "A patient profile is already registered with this email",
+  customerFound: "A patient profile is already registered with this email",
   doctorFound: "A doctor profile is already registered with this email",
   invalidPatientIdFormat: "Invalid Patient ID format. It must be a number.",
   invalidUser: "Invalid User",
