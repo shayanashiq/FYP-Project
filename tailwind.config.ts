@@ -2,11 +2,9 @@ import type { Config } from "tailwindcss";
 import plugin from 'tailwindcss/plugin';
 
 const config: Config = {
-  darkMode: ["class"],
   content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
@@ -70,31 +68,6 @@ const config: Config = {
       },
     },
   },
-  plugins: [
-    require('tailwindcss-animate'),
-    require('tailwind-scrollbar')({ nocompatible: true }),
-    plugin(({ addUtilities }) => {
-      addUtilities({
-        '.scrollbar-rounded': {
-          'scrollbar-width': 'thin',
-          'scrollbar-color': '#4D9BE2 white',
-          // 'scrollbar-color': '#FFFFFF',
-          '&::-webkit-scrollbar': {
-            width: '6px',
-            height: '6px',
-          },
-          '&::-webkit-scrollbar-track': {
-            background: '#FFFFFF',
-            borderRadius: '4px',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            backgroundColor: '#4D9BE2 gray',
-            // backgroundColor: '#FFFFFF',
-            borderRadius: '20px',
-          },
-        },
-      });
-    }),
-  ],
+  
 };
 export default config;

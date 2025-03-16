@@ -23,8 +23,6 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen min-w-full grid grid-cols-1 md:grid-cols-2">
-      
-
       {/* Content Section */}
       <section className="relative z-10 w-full h-full flex flex-col justify-center items-center px-4 space-y-6">
         <div className="flex flex-col justify-center items-center space-y-4">
@@ -35,7 +33,7 @@ export default function Home() {
           />
           <div className="flex flex-col items-center space-y-2 text-center">
             <h1 className="font-[600] text-[#FFFFFF] text-[20px] sm:text-[24px] md:text-[36px] lg:text-[46px] leading-tight md:leading-[56.96px] tracking-[-2%] font-custom whitespace-nowrap">
-              Welcome To AVA ONE
+              Welcome To AVA ONE 
             </h1>
             <p className="text-[#FFFFFF] text-[14px] sm:text-lg lg:text-[18px] leading-snug sm:leading-[24px] lg:leading-[43.7px] tracking-[-2%] font-normal">
               Get started - it’s free. No credit card needed.
