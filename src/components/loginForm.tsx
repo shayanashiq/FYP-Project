@@ -43,19 +43,31 @@ function ClientLoginForm() {
     try {
       const result = await signIn("google", {
         redirect: false,
-        callbackUrl: from || "/doctor/dashboard"
+        callbackUrl: from || "/"
       });
-
+  
       if (result?.error) {
         toast.error("Failed to sign in with Google");
+      } else {
+        // Check the user role after Google sign-in
+        const session = await fetch("/api/auth/session");
+        const sessionData = await session.json();
+        
+        if (sessionData?.user?.role === "ADMIN") {
+          router.push("/admin");
+        } else if (sessionData?.user?.role === "VENDOR") {
+          router.push("/vendor"); // Add this if vendors have a specific page
+        } else {
+          router.push("/"); // Default for customers
+        }
       }
     } catch (error) {
       toast.error("Error signing in with Google");
     }
-  };
+  }; 
 
-  const callbackUrl = from || session?.user?.role === "DOCTOR"
-    ? "/doctor/dashboard"
+  const callbackUrl = from || session?.user?.role === "CUSTOMER"
+    ? "/"
     : session?.user?.role === null &&
       session?.user?.token &&
       session?.user?.isPasswordSet === false &&
@@ -85,16 +97,27 @@ function ClientLoginForm() {
               email: values.email,
               password: values.password,
               isSettingPassword: "false",
-              callbackUrl: "/doctor/dashboard",
+              callbackUrl: "/",
             });
             setSubmitting(false);
-
+        
             if (result?.error) {
               toast.error("Error", {
                 description: result?.error || "🚨Oops... Something went wrong!",
               });
             } else {
-              router.push("/doctor/dashboard");
+              // Instead of hardcoding the redirect to "/"
+              // Get the current session to check the user role
+              const session = await fetch("/api/auth/session");
+              const sessionData = await session.json();
+              
+              if (sessionData?.user?.role === "ADMIN") {
+                router.push("/admin");
+              } else if (sessionData?.user?.role === "VENDOR") {
+                router.push("/vendor"); // Add this if vendors have a specific page
+              } else {
+                router.push("/"); // Default for customers
+              }
             }
           } catch (err) {
             toast.error("Error", {
@@ -109,7 +132,7 @@ function ClientLoginForm() {
               <div className="my-2">
                 <label
                   htmlFor="email"
-                  className="text-[#FFFFFF] font-semibold text-sm mb-2 block leading-[13.7px] -tracking-3"
+                  className="text-black font-semibold text-sm mb-2 block leading-[13.7px] -tracking-3"
                 >
                   Email <span className="text-red-500">*</span>
                 </label>
@@ -132,7 +155,7 @@ function ClientLoginForm() {
               <div className="relative my-2">
                 <label
                   htmlFor="password"
-                  className="text-[#FFFFFF] font-semibold text-sm block mb-2 leading-[13.7px] -tracking--10"
+                  className="text-black font-semibold text-sm block mb-2 leading-[13.7px] -tracking--10"
                 >
                   Password <span className="text-red-500">*</span>
                 </label>
@@ -165,14 +188,14 @@ function ClientLoginForm() {
               </div>
 
               <div onClick={() => router.push("/forget-password")}>
-                <p className="py-2 text-xs underline text-right font-medium leading-[13.7px] cursor-pointer text-[#FFFFFF]">
+                <p className="py-2 text-xs underline text-right font-medium leading-[13.7px] cursor-pointer text-black">
                   Forget Password?
                 </p>
               </div>
 
               <button
                 type="submit"
-                className={`bg-gradient-to-b from-[#579FE1] to-[#2290F3] text-base font-medium ${
+                className={`bg-gradient-to-b from-[#579FE1] to-[#2290F3] text-base font-medium text-white py-2 ${
                   isSubmitting || loading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
                 disabled={isSubmitting || loading}
@@ -185,14 +208,14 @@ function ClientLoginForm() {
       </Formik>
 
       <div className="py-3 flex items-center justify-center">
-        <div className="border-t-[1px] border-solid border-[#FFFFFF] flex-grow"></div>
-        <span className="mx-2 text-[#FFFFFF] text-base font-normal">Or</span>
-        <div className="border-t-[1px] border-solid border-[#FFFFFF] flex-grow"></div>
+        <div className="border-t-[1px] border-solid border-black flex-grow"></div>
+        <span className="mx-2 text-black text-base font-normal">Or</span>
+        <div className="border-t-[1px] border-solid border-black flex-grow"></div>
       </div>
 
       <button
         onClick={handleGoogleSignIn}
-        className="w-full bg-white font-custom text-base font-normal text-[#FFFFFF] border-blue-300 border-2"
+        className="flex justify-center py-2 w-full bg-white font-custom text-base font-normal text-black border-blue-300 border-2"
       >
         <Image
           width={50}
@@ -204,11 +227,11 @@ function ClientLoginForm() {
         <div className="text-black">Continue with Google</div>
       </button>
 
-      <p className="text-center text-[#FFFFFF] leading-[25.48px] pt-3">
+      <p className="text-center text-black leading-[25.48px] pt-3">
         Do not have an account?{" "}
         <Link
           href="./register"
-          className="text-[#FFFFFF] cursor-pointer text-base font-normal"
+          className="text-black cursor-pointer text-base font-normal"
         >
           Sign Up
         </Link>

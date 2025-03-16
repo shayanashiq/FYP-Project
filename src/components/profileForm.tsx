@@ -4,24 +4,8 @@ import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-
-interface CustomerProfile {
-  firstName: string;
-  lastName: string;
-  phone: string;
-  address: string;
-  city: string;
-  country: string;
-  zipCode: string;
-}
-
-interface User {
-  name?: string | null;
-  email?: string | null;
-  image?: string | null;
-  isProfileComplete?: boolean;
-  customerProfile?: CustomerProfile | null;
-}
+import { CustomerProfile } from "@/types/customerProfile";
+import {User} from "@/types/user";
 
 const CustomerProfileForm: React.FC = () => {
   const { data: session, update } = useSession();
@@ -37,10 +21,11 @@ const CustomerProfileForm: React.FC = () => {
     zipCode: "",
   });
 
+  const user = session?.user as User
   useEffect(() => {
-    if (!session?.user) return;
-    if (session.user.customerProfile) {
-      setProfile(session.user.customerProfile);
+    if (!user) return;
+    if (user.customerProfile) {
+      setProfile(user.customerProfile);
     } else {
       fetchProfile();
     }
@@ -67,7 +52,7 @@ const CustomerProfileForm: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const method = session?.user?.isProfileComplete ? "PUT" : "POST";
+      const method = user?.isProfileComplete ? "PUT" : "POST";
       const response = await fetch("/api/customer-profile", {
         method,
         headers: {
@@ -85,8 +70,8 @@ const CustomerProfileForm: React.FC = () => {
       toast.success(data.message);
       await update({ user: { ...session?.user, customerProfile: profile, isProfileComplete: true } });
 
-      if (!session?.user?.isProfileComplete) {
-        router.push("/dashboard");
+      if (!user?.isProfileComplete) {
+        router.push("/");
       }
     } catch (error: any) {
       console.error("Error saving profile:", error);
@@ -132,7 +117,7 @@ const CustomerProfileForm: React.FC = () => {
           disabled={loading}
           className="mt-6 w-full py-2 px-4 bg-indigo-600 text-white rounded-md shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-indigo-300"
         >
-          {loading ? "Saving..." : session?.user?.isProfileComplete ? "Update Profile" : "Create Profile"}
+          {loading ? "Saving..." : user?.isProfileComplete ? "Update Profile" : "Create Profile"}
         </button>
       </form>
     </div>

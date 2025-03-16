@@ -1,9 +1,13 @@
 export interface CustomerProfile {
-    firstName: string;
-    lastName: string;
-    phone: string;
-    address: string;
-    city: string;
-    country: string;
-    zipCode: string;
-  }
+  id?: string;
+  firstName: string;
+  lastName: string;
+  phone?: string | null;
+  address?: string | null;
+  city?: string | null;
+  country?: string | null;
+  zipCode?: string | null;
+  userId?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}

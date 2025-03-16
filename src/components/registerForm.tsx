@@ -113,7 +113,7 @@ export default function ClientLoginForm() {
             <div className="flex flex-col space-y-2 relative w-full font-custom">
               <label
                 htmlFor="email"
-                className="text-white text-[17px] leading-[20px] font-semibold"
+                className="text-black text-[17px] leading-[20px] font-semibold"
               >
                 Email address <span className="text-red-500">*</span>
               </label>
