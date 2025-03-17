@@ -1,7 +1,5 @@
 "use client";
 import React, { useEffect } from "react";
-// import bgImg from "@/assets/imgs/loginBg.png";
-// import logo from "@/assets/imgs/white_logo.png";
 import ClientPasswordForm from "@/components/loginForm";
 
 export default function Home() {
@@ -33,7 +31,7 @@ export default function Home() {
           />
           <div className="flex flex-col items-center space-y-2 text-center">
             <h1 className="font-[600] text-[#FFFFFF] text-[20px] sm:text-[24px] md:text-[36px] lg:text-[46px] leading-tight md:leading-[56.96px] tracking-[-2%] font-custom whitespace-nowrap">
-              Welcome To AVA ONE 
+              Welcome 
             </h1>
             <p className="text-[#FFFFFF] text-[14px] sm:text-lg lg:text-[18px] leading-snug sm:leading-[24px] lg:leading-[43.7px] tracking-[-2%] font-normal">
               Get started - it’s free. No credit card needed.

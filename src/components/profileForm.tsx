@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { CustomerProfile } from "@/types/customerProfile";
-import {User} from "@/types/user";
+import { User } from "@/types/user";
 
 const CustomerProfileForm: React.FC = () => {
   const { data: session, update } = useSession();
@@ -60,9 +60,9 @@ const CustomerProfileForm: React.FC = () => {
         },
         body: JSON.stringify(profile),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.message || "Failed to save profile");
       }
@@ -101,13 +101,18 @@ const CustomerProfileForm: React.FC = () => {
                 {label} {required && "*"}
               </label>
               <input
-                type="text"
+                type="date"
                 name={name}
-                value={profile[name as keyof CustomerProfile] || ""}
+                value={
+                  profile[name as keyof CustomerProfile] instanceof Date
+                    ? (profile[name as keyof CustomerProfile] as Date).toISOString().split("T")[0]
+                    : ""
+                }
                 onChange={handleChange}
                 required={required}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               />
+
             </div>
           ))}
         </div>

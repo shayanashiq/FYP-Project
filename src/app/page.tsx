@@ -1,15 +1,16 @@
-"use client";
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+"use client"
+import HeaderBottom from '@/common/components/layouts/HeaderBottom'
+import HeaderTop from '@/common/components/layouts/HeaderTop'
+import Footer from '@/common/components/layouts/Footer'
+import Homepage from '../../modules/homepage'
 
-const LandingPage = () => {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace("/login"); // Redirect to the login page
-  }, [router]);
-
-  return null; // Render nothing
-};
-
-export default LandingPage;
+export default function Home() {
+  return (
+    <main className="bg-white">
+      <HeaderTop />
+      <HeaderBottom />
+      <Homepage />
+      <Footer />
+    </main>
+  )
+}

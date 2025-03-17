@@ -43,6 +43,7 @@ model CustomerProfile{
   firstName         String      @default("")
   lastName          String      @default("")
   phone             String?
+  imageUrl          String?
   address           String?
   city              String?
   country           String?
