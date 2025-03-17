@@ -38,11 +38,7 @@ const Product: React.FC<ProductProps> = ({ product }) => {
           </div>
         )}
 
-        {product?.tags && product.tags.includes("sale") && (
-          <div className="bg-blue-500 text-white px-3 py-1 rounded-md text-sm font-medium shadow-md">
-            ❤️ Sale
-          </div>
-        )}
+        
       </div>
 
       {/* Favorite Button */}

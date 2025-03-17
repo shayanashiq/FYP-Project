@@ -127,7 +127,7 @@ const CategoryDropdown = () => {
 
 const HeaderBottom = () => {
     return (
-        <div className="w-full h-16 bg-black flex items-center gap-10 fixed top-0 left-0 z-50 shadow-md">
+        <div className="bg-[#7D0A0A] w-full h-16 px-4 flex items-center gap-10 fixed top-0 left-0">
             <Link href="/" className="cursor-pointer">
                 <img className="ml-16" src="/assets/img/logo.png" alt="Logo" />
             </Link>
