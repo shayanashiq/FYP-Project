@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Product, { ProductType } from "./Product";
 
 // Updated ProductType to match API response
@@ -44,13 +45,53 @@ interface ApiResponse {
   pagination: PaginationInfo;
 }
 
+interface WishlistItem {
+  id: string;
+  productId: string;
+}
+
 const TopDeals: React.FC = () => {
+  const { data: session } = useSession();
   const [products, setProducts] = useState<ProductType[]>([]);
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const sliderRef = useRef<HTMLDivElement>(null);
+
+  // Fetch user's wishlist if logged in
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchWishlist(session.user.id);
+    }
+  }, [session]);
+
+  // Fetch wishlist function
+  const fetchWishlist = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/wishlist?userId=${userId}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setWishlistItems(data.data?.items || []);
+      }
+    } catch (error) {
+      console.error("Error fetching wishlist:", error);
+    }
+  };
+
+  // Refetch wishlist after user interaction
+  const refreshWishlist = () => {
+    if (session?.user?.id) {
+      fetchWishlist(session.user.id);
+    }
+  };
 
   // Fetch top deals products from API
   useEffect(() => {
@@ -181,10 +222,22 @@ const TopDeals: React.FC = () => {
                   className="flex transition-transform duration-500 ease-in-out"
                   style={{ width: "fit-content" }}
                 >
-                  {/* Display all potentially visible products */}
-                  {visibleProducts.map((product, index) => (
-                    <Product key={`${product.id}-${index}`} product={product} />
-                  ))}
+                  {/* Display all potentially visible products with wishlist status */}
+                  {visibleProducts.map((product, index) => {
+                    // Find if this product is in the wishlist
+                    const wishlistItem = wishlistItems.find(item => item.productId === product.id);
+                    const isInWishlist = !!wishlistItem;
+                    
+                    return (
+                      <Product 
+                        key={`${product.id}-${index}`} 
+                        product={product} 
+                        isInWishlist={isInWishlist}
+                        wishlistItemId={wishlistItem?.id}
+                        onWishlistChange={refreshWishlist}
+                      />
+                    );
+                  })}
                 </div>
 
                 {/* Left Arrow */}
