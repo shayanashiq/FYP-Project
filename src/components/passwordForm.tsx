@@ -58,7 +58,7 @@ function ClientPasswordForm() {
           email: email.toString(),
           password: values.password,
           isSettingPassword: "true",
-          callbackUrl: `/doctor/profile?email=${encodeURIComponent(
+          callbackUrl: `/profile?email=${encodeURIComponent(
             email.toString()
           )}`,
         });
@@ -66,7 +66,7 @@ function ClientPasswordForm() {
           toast.success("🎉 Password set successfully!");
           setLoading(false);
           router.push(
-            `/doctor/profile?email=${encodeURIComponent(email.toString())}`
+            `/profile?email=${encodeURIComponent(email.toString())}`
           );
         }
         setLoading(false);

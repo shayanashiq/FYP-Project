@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react'
 import SearchSection from './SearchSection'
-import Link from 'next/link'
+import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import CartSection from '@/common/components/layouts/CartSection'
 
 // Categories with subcategories
@@ -77,6 +78,7 @@ const categoriesData = [
 
 const CategoryDropdown = () => {
     const [isHovering, setIsHovering] = useState(false);
+    const router = useRouter();
 
     return (
         <div
@@ -111,21 +113,29 @@ const CategoryDropdown = () => {
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
                             {categoriesData.map((category, index) => (
                                 <div key={index} className="flex flex-col">
-                                    <Link
-                                        href={category.link}
+                                    <a
+                                        href="#"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            router.push(category.link);
+                                        }}
                                         className="font-semibold text-gray-800 hover:text-amber-500 mb-3 text-lg border-b border-gray-100 pb-2"
                                     >
                                         {category.name}
-                                    </Link>
+                                    </a>
                                     <ul className="space-y-2">
                                         {category.subcategories.map((subcategory, subIndex) => (
                                             <li key={subIndex}>
-                                                <Link
-                                                    href={subcategory.link}
+                                                <a
+                                                    href="#"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        router.push(subcategory.link);
+                                                    }}
                                                     className="text-gray-600 hover:text-amber-500 text-sm block"
                                                 >
                                                     {subcategory.name}
-                                                </Link>
+                                                </a>
                                             </li>
                                         ))}
                                     </ul>
@@ -140,12 +150,27 @@ const CategoryDropdown = () => {
 }
 
 const HeaderBottom = () => {
+    const router = useRouter();
+    
     return (
         <header className="bg-blue-800 w-full h-16 fixed top-0 left-0 z-50 shadow-md">
             <div className="container mx-auto h-full flex items-center justify-between px-4">
-                <Link href="/" className="flex-shrink-0">
-                    <img className="h-10" src="/assets/img/logo.png" alt="Logo" />
-                </Link>
+                <a 
+                    href="#" 
+                    onClick={(e) => {
+                        e.preventDefault();
+                        router.push('/');
+                    }} 
+                    className="flex-shrink-0"
+                >
+                    <Image 
+                        src="/assets/img/logo.png" 
+                        alt="Logo" 
+                        width={40} 
+                        height={40} 
+                        className="h-10 w-auto" 
+                    />
+                </a>
                 
                 <div className="flex-grow max-w-2xl mx-4">
                     <SearchSection />

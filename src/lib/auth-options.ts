@@ -1,12 +1,16 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import axios, { AxiosResponse } from "axios";
+import { PrismaClient } from "@prisma/client";
 import { ROLE } from "@/common/constant/apis-urls";
+
+const prisma = new PrismaClient();
+
 export const authOptions: any = {
   session: {
     strategy: "jwt",
   },
-  pages: { 
+  pages: {
     signIn: "/login",
   },
   providers: [
@@ -18,94 +22,68 @@ export const authOptions: any = {
         isSettingPassword: { label: "IsSettingPassword", type: "hidden" },
       },
       async authorize(credentials) {
-        console.log("credentials", credentials);
+        console.log("Credentials received:", credentials);
+
         if (!credentials?.email || !credentials?.password) {
-          return null;
+          throw new Error("Missing email or password.");
         }
 
+        let user;
         if (credentials?.isSettingPassword === "true") {
-          console.log(
-            "credentials?.isSettingPassword",
-            credentials?.isSettingPassword
-          );
-          try {
-            const response = await fetch(
-              "http://localhost:3000/api/password-save",
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                  email: credentials?.email,
-                  newPassword: credentials?.password,
-                  confirmPassword: credentials?.password,
-                }),
-              }
-            );
+          console.log("User is setting a new password...");
 
-            if (response.ok) {
-              if (response.status === 200) {
-                const result = await response.json();
-                const user: any = result.data;
-                console.log("set password >>>>>:::::", {
-                  ...user,
-                  customerProfile: null,
-                });
-                return {
-                  ...user,
-                  customerProfile: null,
-                };
-              }
-              return null;
-            }
-            return null;
-          } catch (err: any) {
-            const message =
-              err.response?.data?.message || "Login failed. Please try again.";
-            console.error("❌ Error in login:", message);
-            throw new Error(message); // You may want to replace with a generic error for security reasons.
+          const response = await fetch("http://localhost:3000/api/password-save", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: credentials?.email,
+              newPassword: credentials?.password,
+              confirmPassword: credentials?.password,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new Error("Failed to set password.");
           }
-        } else if (credentials?.isSettingPassword === "false") {
-          try {
-            const response: AxiosResponse = await axios.post(
-              "http://localhost:3000/api/login",
-              {
-                email: credentials?.email,
-                password: credentials?.password,
-                role: ROLE.CUSTOMER,
-              }
-            );
-            console.log("Login response:", response);
-            if (response.status === 200) {
-              const user: any = response.data.data;
-              // console.log("user>>>>>", user);
-              return {
-                ...user,
-                customerProfile: user.customerProfile,
-              };
-            }
-            return null;
-          } catch (err: any) {
-            const message =
-              err.response?.data?.message || "Login failed. Please try again.";
-            console.error("❌ Error in login:", message);
-            throw new Error(message); // You may want to replace with a generic error for security reasons.
+
+          const result = await response.json();
+          user = result.data;
+        } else {
+          console.log("User is logging in...");
+
+          const response: AxiosResponse = await axios.post("http://localhost:3000/api/login", {
+            email: credentials?.email,
+            password: credentials?.password,
+            role: ROLE.CUSTOMER,
+          });
+
+          if (response.status !== 200) {
+            throw new Error("Invalid login credentials.");
           }
+
+          user = response.data.data;
         }
+
+        if (!user) return null;
+
+        // Fetch the customer profile from the database
+        const customerProfile = await prisma.customerProfile.findUnique({
+          where: { userId: user.id },
+        });
+
+        console.log("User found:", { ...user, customerProfile });
+
+        return { ...user, customerProfile };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user, trigger, session }: any) {
-      if (trigger === "update") {
-        return {
-          ...token,
-          isProfileComplete: true,
-          customerProfile: { ...session },
-        };
-      }
+    async jwt({ token, user }:any) {
       if (user) {
+        console.log("Setting user data in JWT token:", user);
+
         token.id = user.id;
         token.email = user.email;
         token.isProfileComplete = user.isProfileComplete || false;
@@ -114,7 +92,6 @@ export const authOptions: any = {
         token.resetToken = user.resetToken;
         token.resetTokenExpires = user.resetTokenExpires;
         token.isPasswordSet = user.isPasswordSet;
-        token.isProfileComplete = user.isProfileComplete;
         token.role = user.role;
         token.loginType = user.loginType;
         token.token = user.token;
@@ -123,10 +100,10 @@ export const authOptions: any = {
       return token;
     },
 
-    async session({ session, token }: any) {
+    async session({ session, token }:any) {
+      console.log("Attaching token data to session:", token);
+
       session.user.id = token.id;
-      session.user.name = token.name || null;
-      session.user.image = token.image || null;
       session.user.email = token.email;
       session.user.isProfileComplete = token.isProfileComplete;
       session.user.customerProfile = token.customerProfile || null;
@@ -134,7 +111,6 @@ export const authOptions: any = {
       session.user.resetToken = token.resetToken;
       session.user.resetTokenExpires = token.resetTokenExpires;
       session.user.isPasswordSet = token.isPasswordSet;
-      session.user.isProfileComplete = token.isProfileComplete;
       session.user.role = token.role;
       session.user.loginType = token.loginType;
       session.user.token = token.token;
@@ -144,3 +120,5 @@ export const authOptions: any = {
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
+
+export default authOptions;
