@@ -102,6 +102,16 @@ export async function POST(req: NextRequest) {
       return errorResponse(ErrorMessages.invalidEmailOrPassword, 401);
     }
 
+    // const token = jwt.sign(
+    //   {
+    //     email: user.email,
+    //     id: user.id,
+    //     role: user.role,
+    //     isAdmin: user.isAdmin
+    //   },
+    //   JWT_SECRET,
+    //   { expiresIn: "1h" }
+    // );
     const token = jwt.sign(
       {
         email: user.email,
@@ -109,8 +119,7 @@ export async function POST(req: NextRequest) {
         role: user.role,
         isAdmin: user.isAdmin
       },
-      JWT_SECRET,
-      { expiresIn: "1h" }
+      JWT_SECRET
     );
 
     const { password: userPass, ...currUser } = user;

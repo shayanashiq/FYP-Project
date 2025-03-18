@@ -43,10 +43,14 @@ export async function POST(req: NextRequest) {
     });
 
     // Generate JWT token
+    // const token = jwt.sign(
+    //   { email: user.email, id: user.id },
+    //   process.env.JWT_SECRET || "N4wL1NMnook2oQA47D6t3m3gw4bnlepd",
+    //   { expiresIn: "1h" }
+    // );
     const token = jwt.sign(
       { email: user.email, id: user.id },
-      process.env.JWT_SECRET || "N4wL1NMnook2oQA47D6t3m3gw4bnlepd",
-      { expiresIn: "1h" }
+      process.env.JWT_SECRET || "N4wL1NMnook2oQA47D6t3m3gw4bnlepd"
     );
 
     // Exclude password from response

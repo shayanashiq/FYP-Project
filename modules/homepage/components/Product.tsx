@@ -25,10 +25,16 @@ export interface ProductType {
 interface ProductProps {
   product: ProductType;
   isInWishlist?: boolean;
-  wishlistItemId?: string; // Added to store the wishlist item ID
+  wishlistItemId?: string;
+  onWishlistChange?: () => void;
 }
 
-const Product: React.FC<ProductProps> = ({ product, isInWishlist = false, wishlistItemId }) => {
+const Product: React.FC<ProductProps> = ({ 
+  product, 
+  isInWishlist = false, 
+  wishlistItemId,
+  onWishlistChange 
+}) => {
   const router = useRouter();
   const [inWishlist, setInWishlist] = useState(isInWishlist);
   const [currentWishlistItemId, setCurrentWishlistItemId] = useState(wishlistItemId);
@@ -36,7 +42,7 @@ const Product: React.FC<ProductProps> = ({ product, isInWishlist = false, wishli
   const {data: session} = useSession();
   const userId = session?.user?.id;
   
-  // Sync state with props whenever they change
+  // Update local state when props change
   useEffect(() => {
     setInWishlist(isInWishlist);
     setCurrentWishlistItemId(wishlistItemId);
@@ -44,7 +50,6 @@ const Product: React.FC<ProductProps> = ({ product, isInWishlist = false, wishli
 
   const handleWishlistToggle = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigating to product page
-    e.preventDefault(); // Prevent any default actions
     
     if (!userId) {
       // Redirect to login if user is not authenticated
@@ -68,8 +73,8 @@ const Product: React.FC<ProductProps> = ({ product, isInWishlist = false, wishli
         if (response.ok) {
           setInWishlist(false);
           setCurrentWishlistItemId(undefined);
-        } else {
-          console.error("Failed to remove from wishlist, status:", response.status);
+          // Notify parent component about the change
+          if (onWishlistChange) onWishlistChange();
         }
       } else {
         // Add to wishlist
@@ -84,10 +89,9 @@ const Product: React.FC<ProductProps> = ({ product, isInWishlist = false, wishli
         if (response.ok) {
           const data = await response.json();
           setInWishlist(true);
-          // Make sure we're accessing the correct property in the response
           setCurrentWishlistItemId(data.data.id);
-        } else {
-          console.error("Failed to add to wishlist, status:", response.status);
+          // Notify parent component about the change
+          if (onWishlistChange) onWishlistChange();
         }
       }
     } catch (error) {
@@ -99,6 +103,7 @@ const Product: React.FC<ProductProps> = ({ product, isInWishlist = false, wishli
 
   return (
     <div
+      onClick={() => router.push(`/products/${product.slug}`)}
       className="w-80 max-h-[450px] m-2 shrink-0 bg-white border-[1px] border-gray-300 hover:shadow-lg transition-shadow duration-300 relative overflow-hidden group">
       <div className="absolute top-2 left-2 flex flex-col gap-2 z-10">
         {product?.tags && product.tags.includes("best choice") && (
@@ -137,7 +142,10 @@ const Product: React.FC<ProductProps> = ({ product, isInWishlist = false, wishli
 
       {/* Product Image Container */}
       <div className="p-4 flex items-center justify-center bg-gray-50 relative overflow-hidden">
-        <div onClick={() => router.push(`/products/${product?.slug}`)} className="cursor-pointer block w-full h-full">
+        <Link
+          href={`/products/${product?.slug}`}
+          className="block w-full h-full"
+        >
           <div className="relative w-40 h-60 mx-auto">
             <Image
               src={product?.image}
@@ -148,16 +156,13 @@ const Product: React.FC<ProductProps> = ({ product, isInWishlist = false, wishli
               priority={false}
             />
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Product Info */}
       <div className="px-4">
         {/* Product Title */}
-        <h3 
-          className="text-lg font-medium text-gray-800 mb-2 line-clamp-2 cursor-pointer"
-          onClick={() => router.push(`/products/${product?.slug}`)}
-        >
+        <h3 className="text-lg font-medium text-gray-800 mb-2 line-clamp-2 ">
           {product?.title}
         </h3>
         {product?.shortDescription && (
@@ -227,9 +232,9 @@ const Product: React.FC<ProductProps> = ({ product, isInWishlist = false, wishli
             </button>
           )}
 
-          <div
-            onClick={() => router.push(`/products/${product?.slug}`)}
-            className="h-12 w-12 bg-blue-300 hover:bg-blue-400 rounded-md flex items-center justify-center transition-colors cursor-pointer"
+          <Link
+            href={`/products/${product?.slug}`}
+            className="h-12 w-12 bg-blue-300 hover:bg-blue-400 rounded-md flex items-center justify-center transition-colors"
           >
             <svg
               width="22"
@@ -253,7 +258,7 @@ const Product: React.FC<ProductProps> = ({ product, isInWishlist = false, wishli
                 strokeLinejoin="round"
               />
             </svg>
-          </div>
+          </Link>
         </div>
       </div>
     </div>
