@@ -2,6 +2,13 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Product, { ProductType } from "./Product";
+import { useSession } from "next-auth/react";
+
+interface WishlistItem {
+  id: string;
+  userId: string;
+  productId: string;
+}
 
 // Updated ProductType to match API response
 interface ApiProductType {
@@ -46,11 +53,13 @@ interface ApiResponse {
 
 const FeaturedProducts: React.FC = () => {
   const [products, setProducts] = useState<ProductType[]>([]);
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isAnimating, setIsAnimating] = useState<boolean>(false);
   const sliderRef = useRef<HTMLDivElement>(null);
+  const { data: session } = useSession();
 
   // Fetch featured products from API
   useEffect(() => {
@@ -119,6 +128,61 @@ const FeaturedProducts: React.FC = () => {
 
     fetchFeaturedProducts();
   }, []);
+
+  // Fetch wishlist items whenever session changes or when products are loaded
+  useEffect(() => {
+    const fetchWishlist = async () => {
+      if (!session?.user?.id) return;
+      
+      try {
+        const response = await fetch(`/api/wishlist?userId=${session.user.id}`);
+        if (!response.ok) {
+          console.error('Failed to fetch wishlist');
+          return;
+        }
+        
+        const data = await response.json();
+        // Make sure we're accessing the correct property in the response
+        // Based on your Wishlist component, it seems the API returns data.data
+        setWishlistItems(data.data?.items || []);
+      } catch (error) {
+        console.error('Error fetching wishlist:', error);
+      }
+    };
+    
+    if (session?.user?.id && products.length > 0) {
+      fetchWishlist();
+    }
+  }, [session, products]);
+
+  // Function to handle wishlist updates from child components
+  const handleWishlistUpdate = (productId: string, isAdded: boolean, wishlistItemId?: string) => {
+    setWishlistItems(prevItems => {
+      if (isAdded) {
+        // Add item to wishlist if not already present
+        if (!prevItems.some(item => item.productId === productId)) {
+          return [...prevItems, { 
+            id: wishlistItemId || `temp-${Date.now()}`, 
+            userId: session?.user?.id || '', 
+            productId 
+          }];
+        }
+      } else {
+        // Remove item from wishlist
+        return prevItems.filter(item => item.productId !== productId);
+      }
+      return prevItems;
+    });
+  };
+
+  // Helper function to check if a product is in the wishlist
+  const getWishlistInfo = (productId: string) => {
+    const wishlistItem = wishlistItems.find(item => item.productId === productId);
+    return {
+      isInWishlist: !!wishlistItem,
+      wishlistItemId: wishlistItem?.id
+    };
+  };
 
   // Function to handle next/prev clicks
   const handleNext = (): void => {
@@ -189,9 +253,17 @@ const FeaturedProducts: React.FC = () => {
                   style={{ width: "fit-content" }}
                 >
                   {/* Display all potentially visible products */}
-                  {visibleProducts.map((product, index) => (
-                    <Product key={`${product.id}-${index}`} product={product} />
-                  ))}
+                  {visibleProducts.map((product, index) => {
+                    const { isInWishlist, wishlistItemId } = getWishlistInfo(product.id);
+                    return (
+                      <Product 
+                        key={`${product.id}-${index}`} 
+                        product={product} 
+                        isInWishlist={isInWishlist}
+                        wishlistItemId={wishlistItemId}
+                      />
+                    );
+                  })}
                 </div>
 
                 {/* Left Arrow */}

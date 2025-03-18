@@ -3,52 +3,6 @@ import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth-options";
 
-// GET - Retrieve all wishlist items for a user
-export async function GET(req: NextRequest) {
-  try {
-    // Get userId from the URL query parameter
-    const url = new URL(req.url);
-    const userId = url.searchParams.get("userId");
-
-    if (!userId) {
-      return NextResponse.json({ 
-        message: "User ID is required" 
-      }, { status: 400 });
-    }
-
-    // Check if wishlist exists for the user
-    const wishlist = await prisma.wishlist.findUnique({
-      where: { userId },
-      include: {
-        items: {
-          include: {
-            product: true // Include product details for each wishlist item
-          }
-        }
-      }
-    });
-
-    if (!wishlist) {
-      return NextResponse.json({ 
-        message: "Wishlist not found",
-        data: { items: [] }
-      }, { status: 200 });
-    }
-
-    return NextResponse.json({
-      message: "Wishlist items retrieved successfully",
-      data: wishlist
-    }, { status: 200 });
-
-  } catch (error) {
-    console.error("Error retrieving wishlist items:", error);
-    return NextResponse.json({
-      message: "Failed to retrieve wishlist items",
-      error: (error as Error).message
-    }, { status: 500 });
-  }
-}
-
 export async function POST(req: NextRequest) {
   try {
     const { userId, productId } = await req.json();

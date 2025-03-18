@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 // Define the product type
 export interface ProductType {
@@ -23,49 +24,120 @@ export interface ProductType {
 
 interface ProductProps {
   product: ProductType;
+  isInWishlist?: boolean;
+  wishlistItemId?: string; // Added to store the wishlist item ID
 }
 
-const Product: React.FC<ProductProps> = ({ product }) => {
+const Product: React.FC<ProductProps> = ({ product, isInWishlist = false, wishlistItemId }) => {
   const router = useRouter();
+  const [inWishlist, setInWishlist] = useState(isInWishlist);
+  const [currentWishlistItemId, setCurrentWishlistItemId] = useState(wishlistItemId);
+  const [isLoading, setIsLoading] = useState(false);
+  const {data: session} = useSession();
+  const userId = session?.user?.id;
+  
+  // Sync state with props whenever they change
+  useEffect(() => {
+    setInWishlist(isInWishlist);
+    setCurrentWishlistItemId(wishlistItemId);
+  }, [isInWishlist, wishlistItemId]);
+
+  const handleWishlistToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigating to product page
+    e.preventDefault(); // Prevent any default actions
+    
+    if (!userId) {
+      // Redirect to login if user is not authenticated
+      router.push('/login');
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      if (inWishlist && currentWishlistItemId) {
+        // Remove from wishlist
+        const response = await fetch('/api/wishlist', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId, itemId: currentWishlistItemId }),
+        });
+        
+        if (response.ok) {
+          setInWishlist(false);
+          setCurrentWishlistItemId(undefined);
+        } else {
+          console.error("Failed to remove from wishlist, status:", response.status);
+        }
+      } else {
+        // Add to wishlist
+        const response = await fetch('/api/wishlist', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId, productId: product.id }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setInWishlist(true);
+          // Make sure we're accessing the correct property in the response
+          setCurrentWishlistItemId(data.data.id);
+        } else {
+          console.error("Failed to add to wishlist, status:", response.status);
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling wishlist:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div
-    onClick={()=>router.push(`/products/${product.id}`)}
-    className="w-80 max-h-[450px] m-2 shrink-0 bg-white border-[1px] border-gray-300 hover:shadow-lg transition-shadow duration-300 relative overflow-hidden group">
+      className="w-80 max-h-[450px] m-2 shrink-0 bg-white border-[1px] border-gray-300 hover:shadow-lg transition-shadow duration-300 relative overflow-hidden group">
       <div className="absolute top-2 left-2 flex flex-col gap-2 z-10">
         {product?.tags && product.tags.includes("best choice") && (
           <div className="bg-amber-500 text-white px-3 py-1 rounded-md text-sm font-medium shadow-md">
             Best choice
           </div>
         )}
-
-        
       </div>
 
       {/* Favorite Button */}
-      <button className="absolute top-2 right-2 bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-gray-100 transition-colors z-10">
-        <svg
-          width="20"
-          height="18"
-          viewBox="0 0 20 18"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M10.5166 16.8874C10.2333 16.9957 9.77496 16.9957 9.49163 16.8874C6.99996 15.9707 1.25 12.2541 1.25 6.1207C1.25 3.33333 3.48329 1.08333 6.25413 1.08333C7.88329 1.08333 9.32496 1.83333 10.0041 3.00833C10.6833 1.83333 12.1333 1.08333 13.7541 1.08333C16.525 1.08333 18.7583 3.33333 18.7583 6.1207C18.7583 12.2541 13.0083 15.9707 10.5166 16.8874Z"
-            stroke="#292D32"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+      <button 
+        onClick={handleWishlistToggle}
+        disabled={isLoading}
+        className="absolute top-2 right-2 bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-gray-100 transition-colors z-10"
+      >
+        {isLoading ? (
+          <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+        ) : (
+          <svg
+            width="20"
+            height="18"
+            viewBox="0 0 20 18"
+            fill={inWishlist ? "#f87171" : "none"}
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M10.5166 16.8874C10.2333 16.9957 9.77496 16.9957 9.49163 16.8874C6.99996 15.9707 1.25 12.2541 1.25 6.1207C1.25 3.33333 3.48329 1.08333 6.25413 1.08333C7.88329 1.08333 9.32496 1.83333 10.0041 3.00833C10.6833 1.83333 12.1333 1.08333 13.7541 1.08333C16.525 1.08333 18.7583 3.33333 18.7583 6.1207C18.7583 12.2541 13.0083 15.9707 10.5166 16.8874Z"
+              stroke={inWishlist ? "#f87171" : "#292D32"}
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )}
       </button>
 
       {/* Product Image Container */}
       <div className="p-4 flex items-center justify-center bg-gray-50 relative overflow-hidden">
-        <Link
-          href={`/products/${product?.slug}`}
-          className="block w-full h-full"
-        >
+        <div onClick={() => router.push(`/products/${product?.slug}`)} className="cursor-pointer block w-full h-full">
           <div className="relative w-40 h-60 mx-auto">
             <Image
               src={product?.image}
@@ -76,13 +148,16 @@ const Product: React.FC<ProductProps> = ({ product }) => {
               priority={false}
             />
           </div>
-        </Link>
+        </div>
       </div>
 
       {/* Product Info */}
       <div className="px-4">
         {/* Product Title */}
-        <h3 className="text-lg font-medium text-gray-800 mb-2 line-clamp-2 ">
+        <h3 
+          className="text-lg font-medium text-gray-800 mb-2 line-clamp-2 cursor-pointer"
+          onClick={() => router.push(`/products/${product?.slug}`)}
+        >
           {product?.title}
         </h3>
         {product?.shortDescription && (
@@ -152,9 +227,9 @@ const Product: React.FC<ProductProps> = ({ product }) => {
             </button>
           )}
 
-          <Link
-            href={`/products/${product?.slug}`}
-            className="h-12 w-12 bg-blue-300 hover:bg-blue-400 rounded-md flex items-center justify-center transition-colors"
+          <div
+            onClick={() => router.push(`/products/${product?.slug}`)}
+            className="h-12 w-12 bg-blue-300 hover:bg-blue-400 rounded-md flex items-center justify-center transition-colors cursor-pointer"
           >
             <svg
               width="22"
@@ -178,7 +253,7 @@ const Product: React.FC<ProductProps> = ({ product }) => {
                 strokeLinejoin="round"
               />
             </svg>
-          </Link>
+          </div>
         </div>
       </div>
     </div>

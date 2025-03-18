@@ -80,32 +80,46 @@ const CategoryDropdown = () => {
 
     return (
         <div
-            className="relative bg-blue-900"
+            className="relative"
             onMouseEnter={() => setIsHovering(true)}
             onMouseLeave={() => setIsHovering(false)}
         >
-            <div className="space-x-2 h-16  flex items-center justify-center cursor-pointer">
-                <div className="text-[#000000] font-medium text-base whitespace-nowrap">Categories</div>
-                <svg width="20" height="20" viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M20.42 9.45001L13.9 15.97C13.13 16.74 11.87 16.74 11.1 15.97L4.58002 9.45001" stroke="white" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
+            <button className="flex items-center gap-1 text-white font-medium hover:text-amber-300 transition-colors px-3 py-2">
+                Categories
+                <svg 
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 25 25" 
+                    fill="none" 
+                    xmlns="http://www.w3.org/2000/svg"
+                    className={`transition-transform duration-300 ${isHovering ? 'rotate-180' : ''}`}
+                >
+                    <path 
+                        d="M20.42 9.45001L13.9 15.97C13.13 16.74 11.87 16.74 11.1 15.97L4.58002 9.45001" 
+                        stroke="currentColor" 
+                        strokeWidth="1.5" 
+                        strokeMiterlimit="10" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                    />
                 </svg>
-            </div>
+            </button>
 
             {isHovering && (
-                <div className="fixed inset-0 h-[300px] flex items-center justify-center bg-white shadow-lg py-8 z-100  shadow-3xl border-t border-gray-200" style={{ top: '7rem' }}>
-                    <div className="container mx-auto px-4">
-                        <div className="grid grid-cols-6 gap-8">
+                <div className="absolute left-0 w-screen bg-white shadow-lg z-40 border-t border-gray-200" style={{ top: '100%' }}>
+                    <div className="container mx-auto px-4 py-6">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
                             {categoriesData.map((category, index) => (
-                                <div key={index}>
+                                <div key={index} className="flex flex-col">
                                     <Link
                                         href={category.link}
-                                        className="font-semibold text-gray-800 hover:text-amber-500 mb-4 block text-lg"
+                                        className="font-semibold text-gray-800 hover:text-amber-500 mb-3 text-lg border-b border-gray-100 pb-2"
                                     >
                                         {category.name}
                                     </Link>
-                                    <ul>
+                                    <ul className="space-y-2">
                                         {category.subcategories.map((subcategory, subIndex) => (
-                                            <li key={subIndex} className="mb-2">
+                                            <li key={subIndex}>
                                                 <Link
                                                     href={subcategory.link}
                                                     className="text-gray-600 hover:text-amber-500 text-sm block"
@@ -127,14 +141,22 @@ const CategoryDropdown = () => {
 
 const HeaderBottom = () => {
     return (
-        <div className="bg-[#7D0A0A] w-full h-16 px-4 flex items-center gap-10 fixed top-0 left-0">
-            <Link href="/" className="cursor-pointer">
-                <img className="ml-16" src="/assets/img/logo.png" alt="Logo" />
-            </Link>
-            <SearchSection />
-            <CategoryDropdown />
-            <CartSection />
-        </div>
+        <header className="bg-blue-800 w-full h-16 fixed top-0 left-0 z-50 shadow-md">
+            <div className="container mx-auto h-full flex items-center justify-between px-4">
+                <Link href="/" className="flex-shrink-0">
+                    <img className="h-10" src="/assets/img/logo.png" alt="Logo" />
+                </Link>
+                
+                <div className="flex-grow max-w-2xl mx-4">
+                    <SearchSection />
+                </div>
+                
+                <nav className="flex items-center gap-6">
+                    <CategoryDropdown />
+                    <CartSection />
+                </nav>
+            </div>
+        </header>
     );
 };
 

@@ -21,7 +21,8 @@ const CustomerProfileForm: React.FC = () => {
     zipCode: "",
   });
 
-  const user = session?.user as User
+  const user = session?.user as User;
+  
   useEffect(() => {
     if (!user) return;
     if (user.customerProfile) {
@@ -88,31 +89,26 @@ const CustomerProfileForm: React.FC = () => {
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[
-            { label: "First Name", name: "firstName", required: true },
-            { label: "Last Name", name: "lastName", required: true },
-            { label: "Phone Number", name: "phone" },
-            { label: "Address", name: "address" },
-            { label: "City", name: "city" },
-            { label: "Country", name: "country" },
-            { label: "Zip Code", name: "zipCode" },
-          ].map(({ label, name, required }) => (
+            { label: "First Name", name: "firstName", type: "text", required: true },
+            { label: "Last Name", name: "lastName", type: "text", required: true },
+            { label: "Phone Number", name: "phone", type: "tel" },
+            { label: "Address", name: "address", type: "text" },
+            { label: "City", name: "city", type: "text" },
+            { label: "Country", name: "country", type: "text" },
+            { label: "Zip Code", name: "zipCode", type: "text" },
+          ].map(({ label, name, type, required }) => (
             <div key={name}>
               <label className="block text-sm font-medium text-gray-700">
                 {label} {required && "*"}
               </label>
               <input
-                type="date"
+                type={type}
                 name={name}
-                value={
-                  profile[name as keyof CustomerProfile] instanceof Date
-                    ? (profile[name as keyof CustomerProfile] as Date).toISOString().split("T")[0]
-                    : ""
-                }
+                value={profile[name as keyof CustomerProfile] || ""}
                 onChange={handleChange}
                 required={required}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               />
-
             </div>
           ))}
         </div>

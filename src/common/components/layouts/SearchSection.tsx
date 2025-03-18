@@ -1,27 +1,39 @@
 'use client'
 
 import React, { useState } from 'react'
-import Button from '../elements/Button'
-import InputField from '../elements/InputField'
-import Image from 'next/image'
 import { Search } from "lucide-react";
 
 const SearchSection = () => {
     const [searchTerm, setSearchTerm] = useState("")
+    const [isFocused, setIsFocused] = useState(false)
+
+    const handleSearch = (e:any) => {
+        e.preventDefault()
+        // Handle search logic here
+        console.log("Searching for:", searchTerm)
+    }
 
     return (
-        <div className="w-full max-w-[650px] flex justify-center items-center gap-4 lg:flex md:flex">
-            <div className="relative w-full">
-                <InputField
+        <div className="w-full max-w-lg">
+            <form onSubmit={handleSearch} className="relative">
+                <input
                     type="text"
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)} // Controlled input
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
                     placeholder="Search products..."
-                    className="text-black border border-gray-300 w-full h-12  bg-white rounded-md focus:outline-none focus:border-amber-600"
+                    className={`w-full py-2 pl-4 pr-10 text-gray-700 bg-white border rounded-lg 
+                    transition-all duration-200 focus:outline-none
+                    ${isFocused ? 'border-amber-500 shadow-sm' : 'border-gray-300'}`}
                 />
-                        <Search className="absolute cursor-pointer left-[610px] top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
-
-            </div>
+                <button 
+                    type="submit"
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-amber-600 transition-colors"
+                >
+                    <Search size={18} />
+                </button>
+            </form>
         </div>
     )
 }

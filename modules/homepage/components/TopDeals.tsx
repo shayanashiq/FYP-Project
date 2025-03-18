@@ -17,8 +17,8 @@ interface ApiProductType {
   isFeatured: boolean;
   discount?: number;
   isBestChoice?: boolean;
-  color?: string;
-  size?: string;
+  color?: string[];
+  size?: string[];
   shortDescription?: string;
   category?: any;
   vendor?: {
@@ -55,41 +55,55 @@ const TopDeals: React.FC = () => {
   // Fetch top deals products from API
   useEffect(() => {
     const fetchTopDeals = async () => {
-      try {
+      try { 
         setLoading(true);
+        console.log('Fetching top deals products with discount >= 20%');
+        
         // Update the API endpoint to filter for products with discount >= 20%
         const response = await fetch('/api/products?minDiscount=20&limit=50');
         
         if (!response.ok) {
-          throw new Error('Failed to fetch top deals products');
+          throw new Error(`Failed to fetch top deals products: ${response.status}`);
         }
         
         const data: ApiResponse = await response.json();
+        console.log('API Response:', data);
         
         // Map API products to component's ProductType format
-        const formattedProducts = data.products.map(product => ({
-          id: product.id,
-          title: product.name,
-          description: product.description || "",
-          shortDescription: product.shortDescription || "",
-          image: product.images && product.images.length > 0 ? product.images[0] : "/assets/img/8-1.png",
-          regularPrice: product.price,
-          salePrice: product.discount ? product.price - (product.price * product.discount / 100) : product.price,
-          tags: [
-            ...(product.isBestChoice ? ["best choice"] : []),
-            "sale", // Add 'sale' tag directly as a string, not as an array
-            // Add other tag logic as needed
-          ],
-          inStock: product.stock > 0,
-          slug: product.sku || product.id,
-          discountPercentage: product.discount || 0, // Add discount percentage to display
-        }));
+        const formattedProducts = data.products.map(product => {
+          // Make sure discount is a number
+          const discountValue = typeof product.discount === 'number' ? product.discount : 0;
+          
+          // Calculate sale price (assuming discount is a percentage)
+          const salePrice = product.price - (product.price * discountValue / 100);
+          
+          console.log(`Product ${product.name}: price=${product.price}, discount=${discountValue}%, salePrice=${salePrice}`);
+          
+          return {
+            id: product.id,
+            title: product.name,
+            description: product.description || "",
+            shortDescription: product.shortDescription || "",
+            image: product.images && product.images.length > 0 ? product.images[0] : "/assets/img/8-1.png",
+            regularPrice: product.price,
+            salePrice: salePrice,
+            tags: [
+              ...(product.isBestChoice ? ["best choice"] : []),
+              "sale", // Add 'sale' tag directly as a string, not as an array
+              // Add other tag logic as needed
+            ],
+            inStock: product.stock > 0,
+            slug: product.sku || product.id,
+            discountPercentage: discountValue, // Add discount percentage to display
+          };
+        });
         
+        console.log('Formatted products:', formattedProducts);
         setProducts(formattedProducts);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
-        console.error('Error fetching top deals products:', err);
-        // Removed fallback hardcoded products
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+        console.error('Error fetching top deals products:', errorMessage);
+        setError(errorMessage);
         setProducts([]);
       } finally {
         setLoading(false);
