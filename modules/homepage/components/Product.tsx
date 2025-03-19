@@ -38,7 +38,10 @@ const Product: React.FC<ProductProps> = ({
   const router = useRouter();
   const [inWishlist, setInWishlist] = useState(isInWishlist);
   const [currentWishlistItemId, setCurrentWishlistItemId] = useState(wishlistItemId);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isWishlistLoading, setIsWishlistLoading] = useState(false);
+  const [isCartLoading, setIsCartLoading] = useState(false);
+  const [inCart, setInCart] = useState(false);
+  const [cartItemId, setCartItemId] = useState<string | undefined>(undefined);
   const {data: session} = useSession();
   const userId = session?.user?.id;
   
@@ -47,6 +50,41 @@ const Product: React.FC<ProductProps> = ({
     setInWishlist(isInWishlist);
     setCurrentWishlistItemId(wishlistItemId);
   }, [isInWishlist, wishlistItemId]);
+
+  // Check if product is in cart when component mounts or user changes
+  useEffect(() => {
+    if (userId) {
+      checkCartStatus();
+    }
+  }, [userId, product.id]);
+
+  // Function to check if product is in user's cart
+  const checkCartStatus = async () => {
+    if (!userId) return;
+    
+    try {
+      const response = await fetch(`/api/cart?userId=${userId}`);
+      
+      if (response.ok) {
+        const { data } = await response.json();
+        
+        if (data && data.items) {
+          // Find if this product is in the cart
+          const cartItem = data.items.find((item: any) => item.productId === product.id);
+          
+          if (cartItem) {
+            setInCart(true);
+            setCartItemId(cartItem.id);
+          } else {
+            setInCart(false);
+            setCartItemId(undefined);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error checking cart status:", error);
+    }
+  };
 
   const handleWishlistToggle = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigating to product page
@@ -57,7 +95,7 @@ const Product: React.FC<ProductProps> = ({
       return;
     }
 
-    setIsLoading(true);
+    setIsWishlistLoading(true);
     
     try {
       if (inWishlist && currentWishlistItemId) {
@@ -97,7 +135,63 @@ const Product: React.FC<ProductProps> = ({
     } catch (error) {
       console.error("Error toggling wishlist:", error);
     } finally {
-      setIsLoading(false);
+      setIsWishlistLoading(false);
+    }
+  };
+
+  const handleCartToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent navigating to product page
+    
+    if (!userId) {
+      // Redirect to login if user is not authenticated
+      router.push('/login');
+      return;
+    }
+
+    if (!product.inStock && !inCart) {
+      return; // Don't proceed if product is out of stock and not already in cart
+    }
+
+    setIsCartLoading(true);
+    
+    try {
+      if (inCart && cartItemId) {
+        // Remove from cart
+        const response = await fetch(`/api/cart/${cartItemId}`, {
+          method: 'DELETE',
+        });
+        
+        if (response.ok) {
+          setInCart(false);
+          setCartItemId(undefined);
+        }
+      } else {
+        // Add to cart
+        const response = await fetch('/api/cart', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            userId, 
+            productId: product.id,
+            quantity: 1
+          }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setInCart(true);
+          setCartItemId(data.data.id);
+        } else {
+          const errorData = await response.json();
+          console.error("Error adding to cart:", errorData.message);
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling cart:", error);
+    } finally {
+      setIsCartLoading(false);
     }
   };
 
@@ -116,10 +210,10 @@ const Product: React.FC<ProductProps> = ({
       {/* Favorite Button */}
       <button 
         onClick={handleWishlistToggle}
-        disabled={isLoading}
+        disabled={isWishlistLoading}
         className="absolute top-2 right-2 bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-gray-100 transition-colors z-10"
       >
-        {isLoading ? (
+        {isWishlistLoading ? (
           <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
         ) : (
           <svg
@@ -185,42 +279,66 @@ const Product: React.FC<ProductProps> = ({
 
         {/* Buttons Section */}
         <div className="flex gap-2">
-          {product?.inStock ? (
-            <button className="flex-1 h-12 bg-blue-300 hover:bg-blue-400 text-slate-800 font-semibold px-4 rounded-md transition-colors flex items-center justify-between">
-              <span>Add to cart</span>
-              <div className="w-7 h-7 bg-amber-500 rounded-full flex items-center justify-center">
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 18 18"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M1.89203 1.9411H3.1399C3.91443 1.9411 4.52402 2.60806 4.45947 3.37543L3.86423 10.5184C3.76382 11.6873 4.68896 12.6914 5.86511 12.6914H13.5029C14.5356 12.6914 15.4392 11.8451 15.5181 10.8196L15.9054 5.44086C15.9914 4.25037 15.0878 3.28219 13.8902 3.28219H4.6316"
-                    stroke="white"
-                    strokeWidth="1.5"
-                    strokeMiterlimit="10"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M12.1116 16.2844C12.6067 16.2844 13.0081 15.883 13.0081 15.3879C13.0081 14.8928 12.6067 14.4915 12.1116 14.4915C11.6165 14.4915 11.2151 14.8928 11.2151 15.3879C11.2151 15.883 11.6165 16.2844 12.1116 16.2844Z"
-                    stroke="white"
-                    strokeWidth="1.5"
-                    strokeMiterlimit="10"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M6.37436 16.2844C6.86946 16.2844 7.27081 15.883 7.27081 15.3879C7.27081 14.8928 6.86946 14.4915 6.37436 14.4915C5.87926 14.4915 5.47791 14.8928 5.47791 15.3879C5.47791 15.883 5.87926 16.2844 6.37436 16.2844Z"
-                    stroke="white"
-                    strokeWidth="1.5"
-                    strokeMiterlimit="10"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+          {product?.inStock || inCart ? (
+            <button 
+              onClick={handleCartToggle}
+              disabled={isCartLoading}
+              className={`flex-1 h-12 ${inCart ? 'bg-red-300 hover:bg-red-400' : 'bg-blue-300 hover:bg-blue-400'} text-slate-800 font-semibold px-4 rounded-md transition-colors flex items-center justify-between`}
+            >
+              <span>{isCartLoading ? "Loading..." : inCart ? "Remove from cart" : "Add to cart"}</span>
+              <div className={`w-7 h-7 ${inCart ? 'bg-red-500' : 'bg-amber-500'} rounded-full flex items-center justify-center`}>
+                {isCartLoading ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : inCart ? (
+                  <svg 
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path 
+                      d="M18 6L6 18M6 6L18 18" 
+                      stroke="white" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                ) : (
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 18 18"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M1.89203 1.9411H3.1399C3.91443 1.9411 4.52402 2.60806 4.45947 3.37543L3.86423 10.5184C3.76382 11.6873 4.68896 12.6914 5.86511 12.6914H13.5029C14.5356 12.6914 15.4392 11.8451 15.5181 10.8196L15.9054 5.44086C15.9914 4.25037 15.0878 3.28219 13.8902 3.28219H4.6316"
+                      stroke="white"
+                      strokeWidth="1.5"
+                      strokeMiterlimit="10"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M12.1116 16.2844C12.6067 16.2844 13.0081 15.883 13.0081 15.3879C13.0081 14.8928 12.6067 14.4915 12.1116 14.4915C11.6165 14.4915 11.2151 14.8928 11.2151 15.3879C11.2151 15.883 11.6165 16.2844 12.1116 16.2844Z"
+                      stroke="white"
+                      strokeWidth="1.5"
+                      strokeMiterlimit="10"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M6.37436 16.2844C6.86946 16.2844 7.27081 15.883 7.27081 15.3879C7.27081 14.8928 6.86946 14.4915 6.37436 14.4915C5.87926 14.4915 5.47791 14.8928 5.47791 15.3879C5.47791 15.883 5.87926 16.2844 6.37436 16.2844Z"
+                      stroke="white"
+                      strokeWidth="1.5"
+                      strokeMiterlimit="10"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                )}
               </div>
             </button>
           ) : (

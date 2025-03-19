@@ -7,7 +7,6 @@ import { SideSize } from './SideSize'
 import { Card } from '@/common/components/elements/Card'
 import ButtonLove from '@/common/components/elements/ButtonLove'
 import Star from '@/common/components/elements/Star'
-import { PRODUCTS } from '@/common/constant/products'
 import BannerPromotion from '../../homepage/components/BannerPromotion'
 import Link from 'next/link'
 import Product from '../../../modules/homepage/components/Product'
@@ -28,12 +27,12 @@ const Products = () => {
                     <SideSize />
                     <Separator />
                 </div>
-                <div className="max-w-full ml-8 flex flex-wrap ">
+                {/* <div className="max-w-full ml-8 flex flex-wrap ">
                     {PRODUCTS.map((product, index) => (
                         <Product key={`${product.id}-${index}`} product={product} />
 
                     ))}
-                </div>
+                </div> */}
             </div>
             <BannerPromotion />
         </>
