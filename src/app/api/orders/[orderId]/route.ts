@@ -6,10 +6,6 @@ export async function GET(request: Request, { params }: { params: { orderId: str
   try {
     const { orderId } = params;
 
-    if (!orderId) {
-      return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
-    }
-
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: { items: { include: { product: true } }, payment: true },
@@ -26,50 +22,50 @@ export async function GET(request: Request, { params }: { params: { orderId: str
   }
 }
 
-// PUT request handler: Update an order
+// PUT request handler: Update an order and deduct stock
 export async function PUT(req: Request, { params }: { params: { orderId: string } }) {
   try {
-    const orderId = params.orderId;
+    const { orderId } = params;
     const { status, paymentMethod, paymentStatus } = await req.json();
 
-    // Fetch the order along with its payment record
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { payment: true },
+      include: { items: true, payment: true },
     });
 
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    // Check if the order has an associated payment record
-    if (!order.payment) {
-      // If no payment record exists, create one
-      await prisma.payment.create({
-        data: {
-          orderId: orderId, // Assuming `orderId` is the foreign key in Payment
-          method: paymentMethod || "UNKNOWN",
-          status: paymentStatus || "PENDING",
-        },
-      });
-    }
+    // Ensure the payment record exists
+    await prisma.payment.upsert({
+      where: { orderId },
+      update: {
+        method: paymentMethod || order.payment?.method,
+        status: paymentStatus || order.payment?.status,
+      },
+      create: {
+        orderId,
+        method: paymentMethod || "UNKNOWN",
+        status: paymentStatus || "PENDING",
+      },
+    });
 
-    // Update the order and payment details
+    // Deduct stock for ordered items
+    await Promise.all(
+      order.items.map((item) =>
+        prisma.product.update({
+          where: { id: item.productId },
+          data: { stock: { decrement: item.quantity } },
+        })
+      )
+    );
+
+    // Update the order status
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
-      data: {
-        status, // e.g., "CONFIRMED"
-        payment: {
-          update: {
-            method: paymentMethod || order.payment?.method, // Preserve existing if not provided
-            status: paymentStatus || order.payment?.status, // Preserve existing if not provided
-          },
-        },
-      },
-      include: {
-        items: { include: { product: true } },
-        payment: true,
-      },
+      data: { status },
+      include: { items: { include: { product: true } }, payment: true },
     });
 
     return NextResponse.json(updatedOrder, { status: 200 });

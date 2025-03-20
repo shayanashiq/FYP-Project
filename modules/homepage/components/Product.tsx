@@ -280,7 +280,7 @@ const Product: React.FC<ProductProps> = ({
         {/* Buttons Section */}
         <div className="flex gap-2">
           {product?.inStock || inCart ? (
-            <button 
+            <button
               onClick={handleCartToggle}
               disabled={isCartLoading}
               className={`flex-1 h-12 ${inCart ? 'bg-red-300 hover:bg-red-400' : 'bg-blue-300 hover:bg-blue-400'} text-slate-800 font-semibold px-4 rounded-md transition-colors flex items-center justify-between`}

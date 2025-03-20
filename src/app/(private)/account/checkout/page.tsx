@@ -117,6 +117,9 @@ const CheckoutPage = () => {
       
       // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // subtract the no of items from the total stock ty and update db
+      
       
       // Redirect to order confirmation
       router.push(`/account/orders/confirmation?orderId=${order.id}`);

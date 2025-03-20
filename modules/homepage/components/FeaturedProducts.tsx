@@ -98,29 +98,7 @@ const FeaturedProducts: React.FC = () => {
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
         console.error('Error fetching featured products:', err);
         
-        // Fallback to sample data if API fails
-        setProducts([
-          {
-            id: "1",
-            title: "Case Explorer wanted",
-            image: "/assets/img/8-1.png",
-            regularPrice: 12.0,
-            salePrice: 8.99,
-            tags: ["best choice"],
-            inStock: true,
-            slug: "case-explorer-wanted",
-          },
-          {
-            id: "2",
-            title: "Gaming Headset Pro",
-            image: "/assets/img/8-1.png",
-            regularPrice: 89.99,
-            salePrice: 69.99,
-            tags: ["hot"],
-            inStock: true,
-            slug: "gaming-headset-pro",
-          }
-        ]);
+        
       } finally {
         setLoading(false);
       }
