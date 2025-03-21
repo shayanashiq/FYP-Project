@@ -7,6 +7,9 @@ const prisma = new PrismaClient();
 export async function GET(request: NextRequest) {
   try {
     const categories = await prisma.category.findMany({
+      include: {
+        subcategories: true // Include subcategories in the response
+      },
       orderBy: {
         name: 'asc'
       }
@@ -22,7 +25,7 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// You can also add POST method to create categories
+// POST method to create categories
 export async function POST(request: NextRequest) {
   try {
     const { name, description } = await request.json();

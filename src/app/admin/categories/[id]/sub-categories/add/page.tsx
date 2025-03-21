@@ -1,16 +1,43 @@
-// app/admin/categories/add/page.tsx
+// app/admin/categories/[id]/subcategories/add/page.tsx
 "use client";
 
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
 
-export default function AddCategoryPage() {
+export default function AddSubcategoryToCategoryPage() {
   const router = useRouter();
+  const params = useParams();
+  const categoryId = params.id as string;
+  
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [categoryName, setCategoryName] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // Fetch parent category name for display
+  useEffect(() => {
+    const fetchCategory = async () => {
+      try {
+        const response = await fetch(`/api/categories/${categoryId}`);
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Category not found');
+        }
+        
+        setCategoryName(data.name);
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCategory();
+  }, [categoryId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,7 +45,7 @@ export default function AddCategoryPage() {
     setError('');
     
     try {
-      const response = await fetch('/api/categories', {
+      const response = await fetch(`/api/categories/${categoryId}/subcategories`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -51,13 +78,17 @@ export default function AddCategoryPage() {
     }
   };
 
+  if (isLoading) {
+    return <div className="max-w-2xl mx-auto p-6">Loading category...</div>;
+  }
+
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Add New Category</h1>
+      <h1 className="text-2xl font-bold mb-6">Add Subcategory to {categoryName}</h1>
       
       {success && (
         <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-          Category created successfully! Redirecting...
+          Subcategory created successfully! Redirecting...
         </div>
       )}
       
@@ -70,7 +101,7 @@ export default function AddCategoryPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-            Category Name *
+            Subcategory Name *
           </label>
           <input
             type="text"
@@ -111,7 +142,7 @@ export default function AddCategoryPage() {
               (isSubmitting || !name.trim()) && 'opacity-50 cursor-not-allowed'
             }`}
           >
-            {isSubmitting ? 'Saving...' : 'Add Category'}
+            {isSubmitting ? 'Saving...' : 'Add Subcategory'}
           </button>
         </div>
       </form>

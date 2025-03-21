@@ -1,5 +1,8 @@
-// src/app/api/cart/items/[id]/route.ts
+// app/api/categories/[id]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export async function GET(
   request: NextRequest,
@@ -8,12 +11,26 @@ export async function GET(
   try {
     const { id } = params;
     
-    // Your GET logic here
+    const category = await prisma.category.findUnique({
+      where: { id },
+      include: {
+        subcategories: true,
+        products: true
+      }
+    });
     
-    return NextResponse.json({ id, message: "Item retrieved" });
+    if (!category) {
+      return NextResponse.json(
+        { error: 'Category not found' },
+        { status: 404 }
+      );
+    }
+    
+    return NextResponse.json(category);
   } catch (error) {
+    console.error('Error fetching category:', error);
     return NextResponse.json(
-      { error: 'Error occurred' },
+      { error: 'Failed to fetch category' },
       { status: 500 }
     );
   }
@@ -25,14 +42,65 @@ export async function PUT(
 ) {
   try {
     const { id } = params;
-    const body = await request.json();
+    const { name, description } = await request.json();
     
-    // Your PUT logic here
+    if (!name) {
+      return NextResponse.json(
+        { error: 'Category name is required' },
+        { status: 400 }
+      );
+    }
     
-    return NextResponse.json({ id, body, message: "Item updated" });
+    const updatedCategory = await prisma.category.update({
+      where: { id },
+      data: {
+        name,
+        description: description || undefined
+      }
+    });
+    
+    return NextResponse.json(updatedCategory);
   } catch (error) {
+    console.error('Error updating category:', error);
     return NextResponse.json(
-      { error: 'Error occurred' },
+      { error: 'Failed to update category' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { id } = params;
+    
+    // Check if the category has subcategories
+    const categoryWithSubcategories = await prisma.category.findUnique({
+      where: { id },
+      include: {
+        subcategories: true
+      }
+    });
+    
+    if (categoryWithSubcategories?.subcategories.length) {
+      return NextResponse.json(
+        { error: 'Cannot delete category with subcategories' },
+        { status: 400 }
+      );
+    }
+    
+    // Delete the category
+    await prisma.category.delete({
+      where: { id }
+    });
+    
+    return NextResponse.json({ message: 'Category deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting category:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete category' },
       { status: 500 }
     );
   }

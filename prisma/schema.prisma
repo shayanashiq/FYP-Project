@@ -54,49 +54,75 @@ model CustomerProfile{
   updatedAt         DateTime    @updatedAt
 }
 
-model Product {
-  id            String      @id @default(uuid())
-  name          String
-  description   String
-  shortDescription   String
-  color          String[]
-  size          String[]
-  price         Decimal @db.Decimal(10,4)
-  discount      Decimal? @db.Decimal(10,4)
-  isFeatured    Boolean     @default(false)
-  isBestChoice  Boolean     @default(false)
-  stock         Int         @default(0)
-  sku           String     @unique
-  images        String[]
-  categoryId    String?
-  category      Category?    @relation(fields: [categoryId], references: [id])
-  
-  // New: Vendor Relationship
-  vendorId      String?
-  vendor        User?       @relation(name: "VendorProducts", fields: [vendorId], references: [id])
-  
-  reviews       Review[]
-  orderItems    OrderItem[]
-  cartItems     CartItem[]
-  wishlistItems WishlistItem[]
 
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+model Category {
+  id            String        @id @default(uuid())
+  name          String        @unique
+  description   String?
+  subcategories SubCategory[]
+  products      Product[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model SubCategory {
+  id          String    @id @default(uuid())
+  name        String    
+  description String?
+  
+  // Relation to parent category
+  categoryId  String
+  category    Category  @relation(fields: [categoryId], references: [id])
+  
+  // Products in this subcategory
+  products    Product[]
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Ensure subcategory names are unique within a category
+  @@unique([categoryId, name])
+}
+
+model Product {
+  id              String      @id @default(uuid())
+  name            String
+  description     String
+  shortDescription String
+  color           String[]
+  size            String[]
+  price           Decimal     @db.Decimal(10,4)
+  discount        Decimal?    @db.Decimal(10,4)
+  isFeatured      Boolean     @default(false)
+  isBestChoice    Boolean     @default(false)
+  stock           Int         @default(0)
+  sku             String      @unique
+  images          String[]
+  
+  // Category relationship
+  categoryId      String?
+  category        Category?   @relation(fields: [categoryId], references: [id])
+  
+  // New subcategory relationship
+  subcategoryId   String?
+  subcategory     SubCategory? @relation(fields: [subcategoryId], references: [id])
+  
+  // Other relationships remain the same
+  vendorId        String?
+  vendor          User?       @relation(name: "VendorProducts", fields: [vendorId], references: [id])
+  
+  reviews         Review[]
+  orderItems      OrderItem[]
+  cartItems       CartItem[]
+  wishlistItems   WishlistItem[]
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 }
 
 enum UserRole {
   CUSTOMER
   VENDOR
-}
-
-
-model Category {
-  id          String    @id @default(uuid())
-  name        String    @unique
-  description String?
-  products    Product[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
 }
 
 //// ==================== CART & WISHLIST ==================== ////
