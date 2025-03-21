@@ -38,7 +38,7 @@ export default function AddSubcategoryPage() {
     setError('');
     
     try {
-      const response = await fetch('/api/subcategories', {
+      const response = await fetch('/api/sub-categories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

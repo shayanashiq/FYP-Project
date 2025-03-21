@@ -28,7 +28,7 @@ export default async function CategoriesPage() {
             Add New Category
           </Link>
           <Link
-            href="/admin/subcategories/add"
+            href="/admin/sub-categories/add"
             className="px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
           >
             Add New Subcategory
@@ -108,14 +108,9 @@ export default async function CategoriesPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    
                     <Link 
-                      href={`/admin/categories/${category.id}/edit`}
-                      className="text-indigo-600 hover:text-indigo-900 mr-3"
-                    >
-                      Edit
-                    </Link>
-                    <Link 
-                      href={`/admin/categories/${category.id}/subcategories/add`}
+                      href={`/admin/categories/${category.id}/sub-categories/add`}
                       className="text-green-600 hover:text-green-900"
                     >
                       Add Subcategory

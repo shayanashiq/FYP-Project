@@ -7,6 +7,16 @@ interface Category {
   id: string;
   name: string;
   description?: string;
+  subcategories?: SubCategory[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+interface SubCategory {
+  id: string;
+  name: string;
+  description?: string;
+  categoryId: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -16,6 +26,7 @@ interface ProductFormData {
   description: string;
   price: string;
   categoryId: string;
+  subcategoryId: string; // Added subcategoryId
   stock: string;
   sku?: string;
   images: string[]; // This will store image URLs
@@ -32,6 +43,7 @@ export default function AddProductPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<SubCategory[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [colorInput, setColorInput] = useState('');
   const [sizeInput, setSizeInput] = useState('');
@@ -43,6 +55,7 @@ export default function AddProductPage() {
     description: '',
     price: '',
     categoryId: '',
+    subcategoryId: '',  // Added subcategoryId
     stock: '',
     sku: '',
     images: [], // Initialize as empty array
@@ -67,7 +80,8 @@ export default function AddProductPage() {
         const data = await response.json();
         const formattedCategories = data.map((category: any) => ({
           id: category.id,
-          name: category.name
+          name: category.name,
+          subcategories: category.subcategories || []
         }));
 
         setCategories(formattedCategories);
@@ -75,6 +89,14 @@ export default function AddProductPage() {
         // Set the first category as default if available
         if (formattedCategories.length > 0) {
           setFormData(prev => ({ ...prev, categoryId: formattedCategories[0].id }));
+          
+          // Set subcategories for the first category
+          if (formattedCategories[0].subcategories && formattedCategories[0].subcategories.length > 0) {
+            setSubcategories(formattedCategories[0].subcategories);
+            setFormData(prev => ({ ...prev, subcategoryId: formattedCategories[0].subcategories[0].id }));
+          } else {
+            setSubcategories([]);
+          }
         }
       } catch (err) {
         console.error('Error fetching categories:', err);
@@ -86,6 +108,26 @@ export default function AddProductPage() {
 
     fetchCategories();
   }, []);
+
+  // Update subcategories when category changes
+  useEffect(() => {
+    if (formData.categoryId) {
+      const selectedCategory = categories.find(cat => cat.id === formData.categoryId);
+      if (selectedCategory && selectedCategory.subcategories) {
+        setSubcategories(selectedCategory.subcategories);
+        
+        // Reset subcategory selection or select the first one if available
+        if (selectedCategory.subcategories.length > 0) {
+          setFormData(prev => ({ ...prev, subcategoryId: selectedCategory.subcategories[0].id }));
+        } else {
+          setFormData(prev => ({ ...prev, subcategoryId: '' }));
+        }
+      } else {
+        setSubcategories([]);
+        setFormData(prev => ({ ...prev, subcategoryId: '' }));
+      }
+    }
+  }, [formData.categoryId, categories]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -230,6 +272,7 @@ export default function AddProductPage() {
         sku: formData.sku || undefined,
         images: formData.images,
         categoryId: formData.categoryId,
+        subcategoryId: formData.subcategoryId || undefined, // Include subcategoryId
         isFeatured: formData.isFeatured === true,
         discount: formData.discount,
         isBestChoice: formData.isBestChoice === true,
@@ -311,6 +354,7 @@ export default function AddProductPage() {
       stock: parseInt(formData.stock, 10) || 10,
       sku: formData.sku || "SKU123",
       categoryId: formData.categoryId || "cat123",
+      subcategoryId: formData.subcategoryId || null, // Include subcategoryId in preview
       isFeatured: formData.isFeatured === true,
       discount: formData.discount,
       isBestChoice: formData.isBestChoice === true,
@@ -383,6 +427,34 @@ export default function AddProductPage() {
                 </p>
               )}
             </div>
+
+            {/* Subcategory selection */}
+            <div>
+              <label htmlFor="subcategoryId" className="block text-sm font-medium text-gray-700">
+                Subcategory
+              </label>
+              <select
+                id="subcategoryId"
+                name="subcategoryId"
+                value={formData.subcategoryId}
+                onChange={handleChange}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                disabled={subcategories.length === 0}
+              >
+                <option value="">Select a subcategory</option>
+                {subcategories.map(subcategory => (
+                  <option key={subcategory.id} value={subcategory.id}>
+                    {subcategory.name}
+                  </option>
+                ))}
+              </select>
+              {subcategories.length === 0 && (
+                <p className="mt-1 text-sm text-gray-500">
+                  No subcategories available for this category.
+                </p>
+              )}
+            </div>
+
             <div>
               <label htmlFor="isFeatured" className="block text-sm font-medium text-gray-700">
                 Featured

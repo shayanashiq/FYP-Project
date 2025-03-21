@@ -2,11 +2,12 @@ export interface CustomerProfile {
   id?: string;
   firstName: string;
   lastName: string;
-  phone?: string | null;
-  address?: string | null;
-  city?: string | null;
-  country?: string | null;
-  zipCode?: string | null;
+  phone?: string;
+  imageUrl?: string;
+  address?: string;
+  city?: string;
+  country?: string;
+  zipCode?: string;
   userId?: string;
   createdAt?: Date;
   updatedAt?: Date;
