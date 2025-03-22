@@ -1,125 +1,90 @@
-import React from 'react'
+import React from 'react';
 
-const FooterMenu = () => {
+const Footer = () => {
     return (
-        <div className="container mx-auto">
-            <div className="flex p-16">
-                <div className="w-full h-full justify-center items-center lg:justify-start lg:items-start gap-10 flex m-auto">
-                    <div className="flex-col justify-center items-center lg:justify-start lg:items-start gap-9 flex">
-                        <div className="flex-col gap-10 flex lg:justify-start lg:items-start">
-                            <img className="w-36 h-10" src="/assets/img/logo-11.png" />
-                            <div className="text-cyan-800 text-base font-normal">64 st james boulevard<br />hoswick , ze2 7zj</div>
-                        </div>
-                        <div className="flex-col gap-6 justify-center items-center flex lg:justify-start lg:items-start">
-                            <div className="w-64 h-px -rotate-180 border border-neutral-400"></div>
-                            <div className="justify-center items-center gap-9 flex">
-                                <div className="w-6 h-6 justify-center items-center flex">
-                                    <a href="#" className="w-6 h-6 relative">
-                                        <svg className="hover:stroke-amber-500 stroke-slate-600" width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M22.1 10.2H12.7V13.9H18.2C18.1 14.8 17.5 16.2 16.2 17.1C15.4 17.7 14.2 18.1 12.7 18.1C10.1 18.1 7.79995 16.4 6.99995 13.9C6.79995 13.3 6.69995 12.6 6.69995 11.9C6.69995 11.2 6.79995 10.5 6.99995 9.9C7.09995 9.7 7.09995 9.5 7.19995 9.4C8.09995 7.3 10.2 5.8 12.7 5.8C14.6 5.8 15.8 6.6 16.6 7.3L19.4 4.5C17.6999 3 15.4 2 12.7 2C8.79995 2 5.39995 4.2 3.79995 7.5C3.09995 8.9 2.69995 10.4 2.69995 12C2.69995 13.6 3.09995 15.1 3.79995 16.5C5.39995 19.8 8.79995 22 12.7 22C15.4 22 17.6999 21.1 19.2999 19.6C21.1999 17.9 22.2999 15.3 22.2999 12.2C22.2999 11.4 22.2 10.8 22.1 10.2Z" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                    </a>
-                                </div>
-                                <div className="w-6 h-6 justify-center items-center flex">
-                                    <a href="#" className="w-6 h-6 relative">
-                                        <svg className="hover:stroke-blue-500 stroke-slate-600" width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M14.5 9.3V12.2H17.1C17.3 12.2 17.4 12.4 17.4 12.6L17 14.5C17 14.6 16.8 14.7 16.7 14.7H14.5V22H11.5V14.8H9.8C9.6 14.8 9.5 14.7 9.5 14.5V12.6C9.5 12.4 9.6 12.3 9.8 12.3H11.5V9C11.5 7.3 12.8 6 14.5 6H17.2C17.4 6 17.5 6.1 17.5 6.3V8.7C17.5 8.9 17.4 9 17.2 9H14.8C14.6 9 14.5 9.1 14.5 9.3Z" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" />
-                                            <path d="M15.5 22H9.5C4.5 22 2.5 20 2.5 15V9C2.5 4 4.5 2 9.5 2H15.5C20.5 2 22.5 4 22.5 9V15C22.5 20 20.5 22 15.5 22Z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                    </a>
-                                </div>
-                                <div className="w-6 h-6 justify-center items-center flex">
-                                    <a href="#" className="w-6 h-6 relative">
-                                        <svg className="hover:stroke-green-500 stroke-slate-600" width="25" height="24" viewBox="0 0 25 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M7.4 20.6C8.9 21.5 10.7 22 12.5 22C18 22 22.5 17.5 22.5 12C22.5 6.5 18 2 12.5 2C7 2 2.5 6.5 2.5 12C2.5 13.8 3 15.5 3.8 17L2.94044 20.306C2.74572 21.0549 3.43892 21.7317 4.18299 21.5191L7.4 20.6Z" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
-                                            <path d="M17 14.8485C17 15.0105 16.9639 15.177 16.8873 15.339C16.8107 15.501 16.7116 15.654 16.5809 15.798C16.36 16.041 16.1167 16.2165 15.8418 16.329C15.5714 16.4415 15.2784 16.5 14.9629 16.5C14.5033 16.5 14.012 16.392 13.4937 16.1715C12.9755 15.951 12.4572 15.654 11.9434 15.2805C11.4251 14.9025 10.9339 14.484 10.4652 14.0205C10.001 13.5525 9.58187 13.062 9.20781 12.549C8.83826 12.036 8.54081 11.523 8.32449 11.0145C8.10816 10.5015 8 10.011 8 9.543C8 9.237 8.05408 8.9445 8.16224 8.6745C8.27041 8.4 8.44166 8.148 8.68052 7.923C8.96895 7.6395 9.28443 7.5 9.61793 7.5C9.74412 7.5 9.87031 7.527 9.98297 7.581C10.1002 7.635 10.2038 7.716 10.2849 7.833L11.3305 9.3045C11.4116 9.417 11.4702 9.5205 11.5108 9.6195C11.5513 9.714 11.5739 9.8085 11.5739 9.894C11.5739 10.002 11.5423 10.11 11.4792 10.2135C11.4206 10.317 11.335 10.425 11.2268 10.533L10.8843 10.8885C10.8348 10.938 10.8122 10.9965 10.8122 11.0685C10.8122 11.1045 10.8167 11.136 10.8257 11.172C10.8393 11.208 10.8528 11.235 10.8618 11.262C10.9429 11.4105 11.0826 11.604 11.2809 11.838C11.4837 12.072 11.7 12.3105 11.9344 12.549C12.1778 12.7875 12.4121 13.008 12.651 13.2105C12.8853 13.4085 13.0791 13.5435 13.2323 13.6245C13.2549 13.6335 13.2819 13.647 13.3135 13.6605C13.3495 13.674 13.3856 13.6785 13.4261 13.6785C13.5028 13.6785 13.5613 13.6515 13.6109 13.602L13.9534 13.2645C14.0661 13.152 14.1743 13.0665 14.2779 13.0125C14.3816 12.9495 14.4852 12.918 14.5979 12.918C14.6835 12.918 14.7737 12.936 14.8728 12.9765C14.972 13.017 15.0756 13.0755 15.1883 13.152L16.68 14.2095C16.7972 14.2905 16.8783 14.385 16.9279 14.4975C16.973 14.61 17 14.7225 17 14.8485Z" strokeWidth="1.5" strokeMiterlimit="10" />
-                                        </svg>
-                                    </a>
-                                </div>
-                            </div>
+        <footer className="bg-[#205781] text-white py-16 mt-12">
+            <div className="container mx-auto px-4 max-w-7xl">
+                <div className="flex flex-col md:flex-row justify-between">
+                    {/* Brand Column - with wider gap */}
+                    <div className="space-y-4 md:w-1/3 md:pr-12 mb-8 md:mb-0">
+                        <h2 className="text-2xl font-bold italic">Lylla & Lora</h2>
+                        <p className="text-sm w-1/2">
+                            We have clothes that suits your style and which you're proud to wear. From women to men.
+                        </p>
+                        <div className="flex space-x-2 pt-2">
+                            <a href="#" className="bg-black p-2 rounded-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                    <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+                                </svg>
+                            </a>
+                            <a href="#" className="bg-blue-600 p-2 rounded-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                    <path d="M9 8h-3v4h3v12h5v-12h3.642l.358-4h-4v-1.667c0-.955.192-1.333 1.115-1.333h2.885v-5h-3.808c-3.596 0-5.192 1.583-5.192 4.615v3.385z" />
+                                </svg>
+                            </a>
+                            <a href="#" className="bg-pink-600 p-2 rounded-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+                                </svg>
+                            </a>
+                            <a href="#" className="bg-gray-700 p-2 rounded-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="white">
+                                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                                </svg>
+                            </a>
                         </div>
                     </div>
-                    <div className="w-full justify-center items-center gap-10 lg:gap-32 hidden lg:flex">
-                        <div className="flex-col justify-center items-start gap-3 inline-flex">
-                            <div className="text-cyan-800 text-lg font-semibold">Find product</div>
-                            <div className="flex-col justify-center items-start gap-3.5 flex">
-                                <div className="justify-center items-center gap-3 inline-flex">
-                                    <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
-                                    <a href="#" className="text-cyan-800 text-lg font-normal">Brownze arnold</a>
-                                </div>
-                                <div className="justify-center items-center gap-3 inline-flex">
-                                    <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
-                                    <a href='#' className="text-cyan-800 text-lg font-normal">Chronograph blue</a>
-                                </div>
-                                <div className="justify-center items-center gap-3 inline-flex">
-                                    <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
-                                    <a href='#' className="text-cyan-800 text-lg font-normal">Smart phones</a>
-                                </div>
-                                <div className="justify-center items-center gap-3 inline-flex">
-                                    <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
-                                    <a href='#' className="text-cyan-800 text-lg font-normal">Automatic watch</a>
-                                </div>
-                                <div className="justify-center items-center gap-3 inline-flex">
-                                    <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
-                                    <a href='#' className="text-cyan-800 text-lg font-normal">Hair straighteners</a>
-                                </div>
-                            </div>
+
+                    {/* Three columns with equal spacing */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:w-2/3">
+                        {/* Company Column */}
+                        <div>
+                            <h3 className="text-sm font-bold tracking-wider uppercase mb-4">COMPANY</h3>
+                            <ul className="space-y-2">
+                                <li><a href="#" className="text-sm hover:underline">About</a></li>
+                                <li><a href="#" className="text-sm hover:underline">Features</a></li>
+                                <li><a href="#" className="text-sm hover:underline">Works</a></li>
+                                <li><a href="#" className="text-sm hover:underline">Career</a></li>
+                            </ul>
                         </div>
-                        <div className="flex-col justify-center items-start gap-3 inline-flex">
-                            <div className="text-cyan-800 text-lg font-semibold">Get help</div>
-                            <div className="flex-col justify-center items-start gap-3.5 flex">
-                                <div className="justify-center items-center gap-3 inline-flex">
-                                    <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
-                                    <a href='#' className="text-cyan-800 text-lg font-normal">About us</a>
-                                </div>
-                                <div className="justify-center items-center gap-3 inline-flex">
-                                    <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
-                                    <a href='#' className="text-cyan-800 text-lg font-normal">Contact us</a>
-                                </div>
-                                <div className="justify-center items-center gap-3 inline-flex">
-                                    <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
-                                    <a href='#' className="text-cyan-800 text-lg font-normal">Return policy</a>
-                                </div>
-                                <div className="justify-center items-center gap-3 inline-flex">
-                                    <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
-                                    <a href='#' className="text-cyan-800 text-lg font-normal">Privacy policy</a>
-                                </div>
-                                <div className="justify-center items-center gap-3 inline-flex">
-                                    <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
-                                    <a href='#' className="text-cyan-800 text-lg font-normal">Payment policy</a>
-                                </div>
-                            </div>
+
+                        {/* Help Column */}
+                        <div>
+                            <h3 className="text-sm font-bold tracking-wider uppercase mb-4">HELP</h3>
+                            <ul className="space-y-2">
+                                <li><a href="#" className="text-sm hover:underline">Customer Support</a></li>
+                                <li><a href="#" className="text-sm hover:underline">Delivery Details</a></li>
+                                <li><a href="#" className="text-sm hover:underline">Terms & Conditions</a></li>
+                                <li><a href="#" className="text-sm hover:underline">Privacy Policy</a></li>
+                            </ul>
                         </div>
-                        <div className="flex-col justify-center items-start gap-3 inline-flex">
-                            <div className="text-cyan-800 text-lg font-semibold">About us</div>
-                            <div className="flex-col justify-center items-start gap-3.5 flex">
-                                <div className="justify-center items-center gap-3 inline-flex">
-                                    <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
-                                    <a href='#' className="text-cyan-800 text-lg font-normal">News</a>
-                                </div>
-                                <div className="justify-center items-center gap-3 inline-flex">
-                                    <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
-                                    <a href='#' className="text-cyan-800 text-lg font-normal">Service</a>
-                                </div>
-                                <div className="justify-center items-center gap-3 inline-flex">
-                                    <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
-                                    <a href='#' className="text-cyan-800 text-lg font-normal">Our policy</a>
-                                </div>
-                                <div className="justify-center items-center gap-3 inline-flex">
-                                    <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
-                                    <a href='#' className="text-cyan-800 text-lg font-normal">Custmer care</a>
-                                </div>
-                                <div className="justify-center items-center gap-3 inline-flex">
-                                    <div className="w-2.5 h-2.5 bg-zinc-300 rounded-full" />
-                                    <a href='#' className="text-cyan-800 text-lg font-normal">Faq’s</a>
-                                </div>
-                            </div>
+
+                        {/* FAQ Column */}
+                        <div>
+                            <h3 className="text-sm font-bold tracking-wider uppercase mb-4">FAQ</h3>
+                            <ul className="space-y-2">
+                                <li><a href="#" className="text-sm hover:underline">Account</a></li>
+                                <li><a href="#" className="text-sm hover:underline">Manage Deliveries</a></li>
+                                <li><a href="#" className="text-sm hover:underline">Orders</a></li>
+                                <li><a href="#" className="text-sm hover:underline">Payments</a></li>
+                            </ul>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    )
-}
 
-export default FooterMenu
+                {/* Payment Methods */}
+                <div className="mt-12 flex justify-end">
+                    <div className="flex space-x-2">
+                        <img src="/api/placeholder/48/32" alt="Visa" className="h-8 bg-white rounded" />
+                        <img src="/api/placeholder/48/32" alt="Mastercard" className="h-8 bg-white rounded" />
+                        <img src="/api/placeholder/48/32" alt="PayPal" className="h-8 bg-white rounded" />
+                        <img src="/api/placeholder/48/32" alt="Apple Pay" className="h-8 bg-white rounded" />
+                        <img src="/api/placeholder/48/32" alt="Google Pay" className="h-8 bg-white rounded" />
+                    </div>
+                </div>
+            </div>
+        </footer>
+    );
+};
+
+export default Footer;

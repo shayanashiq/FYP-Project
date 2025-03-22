@@ -4,8 +4,7 @@ import FooterMenu from './FooterMenu'
 
 const Footer = () => {
     return (
-        <div className="bg-sky-100">
-            <Newsletter />
+        <div className="bg-[sky-100]">
             <FooterMenu />
         </div>
     )

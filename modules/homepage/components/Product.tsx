@@ -19,6 +19,7 @@ export interface ProductType {
   salePrice: number;
   tags?: string[] | null;
   inStock: boolean;
+  stock?: number; // Added stock property
   slug: string;
 }
 
@@ -29,11 +30,11 @@ interface ProductProps {
   onWishlistChange?: () => void;
 }
 
-const Product: React.FC<ProductProps> = ({ 
-  product, 
-  isInWishlist = false, 
+const Product: React.FC<ProductProps> = ({
+  product,
+  isInWishlist = false,
   wishlistItemId,
-  onWishlistChange 
+  onWishlistChange
 }) => {
   const router = useRouter();
   const [inWishlist, setInWishlist] = useState(isInWishlist);
@@ -42,9 +43,47 @@ const Product: React.FC<ProductProps> = ({
   const [isCartLoading, setIsCartLoading] = useState(false);
   const [inCart, setInCart] = useState(false);
   const [cartItemId, setCartItemId] = useState<string | undefined>(undefined);
-  const {data: session} = useSession();
+  const [quantity, setQuantity] = useState(1);
+  const [cartQuantity, setCartQuantity] = useState(0);
+  const [isUpdatingCart, setIsUpdatingCart] = useState(false);
+  const { data: session } = useSession();
   const userId = session?.user?.id;
-  
+  const [isLoadingStock, setIsLoadingStock] = useState(true);
+  const [maxStock, setMaxStock] = useState<number>(0);
+
+  // Calculate rating display (using 4.9 from image as default)
+  const rating = 4.9;
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating % 1 >= 0.5;
+
+  // Assume a default stock if not provided
+  useEffect(() => {
+    const fetchProductStock = async () => {
+      if (!product.id) return;
+
+      setIsLoadingStock(true);
+      try {
+        const response = await fetch(`/api/products/count?productId=${product.id}`);
+
+        if (response.ok) {
+          const { data } = await response.json();
+          setMaxStock(data.stock);
+        } else {
+          // If API fails, fall back to the stock from props
+          setMaxStock(product.stock || 0);
+        }
+      } catch (error) {
+        console.error("Error fetching product stock:", error);
+        // Fallback to product prop on error
+        setMaxStock(product.stock || 0);
+      } finally {
+        setIsLoadingStock(false);
+      }
+    };
+
+    fetchProductStock();
+  }, [product.id, product.stock]);
+
   // Update local state when props change
   useEffect(() => {
     setInWishlist(isInWishlist);
@@ -61,23 +100,27 @@ const Product: React.FC<ProductProps> = ({
   // Function to check if product is in user's cart
   const checkCartStatus = async () => {
     if (!userId) return;
-    
+
     try {
       const response = await fetch(`/api/cart?userId=${userId}`);
-      
+
       if (response.ok) {
         const { data } = await response.json();
-        
+
         if (data && data.items) {
           // Find if this product is in the cart
           const cartItem = data.items.find((item: any) => item.productId === product.id);
-          
+
           if (cartItem) {
             setInCart(true);
             setCartItemId(cartItem.id);
+            setCartQuantity(cartItem.quantity || 1);
+            setQuantity(cartItem.quantity || 1);
           } else {
             setInCart(false);
             setCartItemId(undefined);
+            setCartQuantity(0);
+            setQuantity(1);
           }
         }
       }
@@ -88,7 +131,7 @@ const Product: React.FC<ProductProps> = ({
 
   const handleWishlistToggle = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigating to product page
-    
+
     if (!userId) {
       // Redirect to login if user is not authenticated
       router.push('/login');
@@ -96,7 +139,7 @@ const Product: React.FC<ProductProps> = ({
     }
 
     setIsWishlistLoading(true);
-    
+
     try {
       if (inWishlist && currentWishlistItemId) {
         // Remove from wishlist
@@ -107,7 +150,7 @@ const Product: React.FC<ProductProps> = ({
           },
           body: JSON.stringify({ userId, itemId: currentWishlistItemId }),
         });
-        
+
         if (response.ok) {
           setInWishlist(false);
           setCurrentWishlistItemId(undefined);
@@ -123,7 +166,7 @@ const Product: React.FC<ProductProps> = ({
           },
           body: JSON.stringify({ userId, productId: product.id }),
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           setInWishlist(true);
@@ -141,7 +184,7 @@ const Product: React.FC<ProductProps> = ({
 
   const handleCartToggle = async (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent navigating to product page
-    
+
     if (!userId) {
       // Redirect to login if user is not authenticated
       router.push('/login');
@@ -153,17 +196,19 @@ const Product: React.FC<ProductProps> = ({
     }
 
     setIsCartLoading(true);
-    
+
     try {
       if (inCart && cartItemId) {
         // Remove from cart
         const response = await fetch(`/api/cart/${cartItemId}`, {
           method: 'DELETE',
         });
-        
+
         if (response.ok) {
           setInCart(false);
           setCartItemId(undefined);
+          setCartQuantity(0);
+          setQuantity(1);
         }
       } else {
         // Add to cart
@@ -172,17 +217,18 @@ const Product: React.FC<ProductProps> = ({
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ 
-            userId, 
+          body: JSON.stringify({
+            userId,
             productId: product.id,
-            quantity: 1
+            quantity: quantity
           }),
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           setInCart(true);
           setCartItemId(data.data.id);
+          setCartQuantity(quantity);
         } else {
           const errorData = await response.json();
           console.error("Error adding to cart:", errorData.message);
@@ -195,189 +241,251 @@ const Product: React.FC<ProductProps> = ({
     }
   };
 
+  const updateCartQuantity = async (newQuantity: number) => {
+    if (!userId || !cartItemId || !inCart) return;
+
+    setIsUpdatingCart(true);
+
+    try {
+      const response = await fetch(`/api/cart/${cartItemId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          quantity: newQuantity
+        }),
+      });
+
+      if (response.ok) {
+        setCartQuantity(newQuantity);
+      } else {
+        // Revert to previous quantity on failure
+        setQuantity(cartQuantity);
+        const errorData = await response.json();
+        console.error("Error updating cart quantity:", errorData.message);
+      }
+    } catch (error) {
+      console.error("Error updating cart quantity:", error);
+      // Revert to previous quantity on error
+      setQuantity(cartQuantity);
+    } finally {
+      setIsUpdatingCart(false);
+    }
+  };
+
+  const handleQuantityChange = (newQuantity: number, e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation(); // Prevent navigating to product page
+    }
+
+    // Ensure quantity is within bounds
+    const validQuantity = Math.max(1, Math.min(newQuantity, maxStock));
+
+    if (validQuantity !== quantity) {
+      setQuantity(validQuantity);
+
+      // If product is in cart, update the cart quantity
+      if (inCart) {
+        updateCartQuantity(validQuantity);
+      }
+    }
+  };
+
+  // Format price display
+  const formatPrice = (price: number) => {
+    return `£${price.toFixed(2)}`;
+  };
+
+  // Calculate discount percentage
+  const discountPercentage = product.regularPrice > product.salePrice
+    ? Math.round(((product.regularPrice - product.salePrice) / product.regularPrice) * 100)
+    : 0;
+
   return (
     <div
       onClick={() => router.push(`/products/${product.slug}`)}
-      className="w-80 max-h-[450px] m-2 shrink-0 bg-white border-[1px] border-gray-300 hover:shadow-lg transition-shadow duration-300 relative overflow-hidden group">
-      <div className="absolute top-2 left-2 flex flex-col gap-2 z-10">
-        {product?.tags && product.tags.includes("best choice") && (
-          <div className="bg-amber-500 text-white px-3 py-1 rounded-md text-sm font-medium shadow-md">
-            Best choice
-          </div>
-        )}
-      </div>
+      className="w-64 bg-white border border-gray-150 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden cursor-pointer"
+    >
+      {/* Discount Badge */}
+      {discountPercentage > 0 && (
+        <div className="absolute top-2 left-0 bg-blue-500 text-white px-2 py-1 text-sm font-medium z-10 flex items-center after:content-[''] after:absolute after:top-0 after:right-0 after:border-t-[14px] after:border-b-[14px] after:border-l-[14px] after:border-t-transparent after:border-b-transparent after:border-l-blue-500 after:translate-x-full">
+          -{discountPercentage}%
+        </div>
+      )}
 
-      {/* Favorite Button */}
-      <button 
+      {/* Wishlist Button */}
+      <button
         onClick={handleWishlistToggle}
         disabled={isWishlistLoading}
-        className="absolute top-2 right-2 bg-white w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-gray-100 transition-colors z-10"
+        className="absolute top-2 right-2 z-10"
       >
         {isWishlistLoading ? (
-          <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin"></div>
+          <div className="w-4 h-4 border-2 border-gray-300 border-t-amber-500 rounded-full animate-spin"></div>
         ) : (
           <svg
-            width="20"
-            height="18"
-            viewBox="0 0 20 18"
-            fill={inWishlist ? "#f87171" : "none"}
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill={inWishlist ? "#FFA500" : "none"}
+            stroke={inWishlist ? "#FFA500" : "#000000"}
+            strokeWidth="2"
             xmlns="http://www.w3.org/2000/svg"
           >
             <path
-              d="M10.5166 16.8874C10.2333 16.9957 9.77496 16.9957 9.49163 16.8874C6.99996 15.9707 1.25 12.2541 1.25 6.1207C1.25 3.33333 3.48329 1.08333 6.25413 1.08333C7.88329 1.08333 9.32496 1.83333 10.0041 3.00833C10.6833 1.83333 12.1333 1.08333 13.7541 1.08333C16.525 1.08333 18.7583 3.33333 18.7583 6.1207C18.7583 12.2541 13.0083 15.9707 10.5166 16.8874Z"
-              stroke={inWishlist ? "#f87171" : "#292D32"}
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
             />
           </svg>
         )}
       </button>
 
-      {/* Product Image Container */}
-      <div className="p-4 flex items-center justify-center bg-gray-50 relative overflow-hidden">
-        <Link
-          href={`/products/${product?.slug}`}
-          className="block w-full h-full"
-        >
-          <div className="relative w-40 h-60 mx-auto">
-            <Image
-              src={product?.image}
-              alt={product?.title || "Product image"}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              className="object-contain transition-transform duration-300 group-hover:scale-105"
-              priority={false}
-            />
-          </div>
-        </Link>
+      {/* Product Image */}
+      <div className="relative pt-4 flex items-center justify-center h-48">
+        <Image
+          src={product.image}
+          alt={product.title}
+          width={160}
+          height={160}
+          className="object-contain transition-transform duration-300 hover:scale-105"
+          priority={false}
+        />
       </div>
 
       {/* Product Info */}
-      <div className="px-4">
+      <div className="p-4">
         {/* Product Title */}
-        <h3 className="text-lg font-medium text-gray-800 mb-2 line-clamp-2 ">
-          {product?.title}
+        <h3 className="text-base font-medium text-gray-800 mb-1 line-clamp-2 h-12">
+          {product.title}
         </h3>
-        {product?.shortDescription && (
-          <h4 className="text-md font-medium text-gray-800 mb-2 line-clamp-2 ">
-            {product.shortDescription}
-          </h4>
-        )}
 
         {/* Price Section */}
-        <div className="flex items-center gap-2 mb-4">
-          {product?.regularPrice > product?.salePrice && (
+        <div className="flex flex-col mb-2">
+          <span className="text-amber-500 font-bold text-lg">
+            {formatPrice(product.salePrice)}
+          </span>
+          {product.regularPrice > product.salePrice && (
             <span className="text-gray-500 line-through text-sm">
-              ${product?.regularPrice}
+              {formatPrice(product.regularPrice)}
             </span>
           )}
-          <span className="text-red-500 font-bold text-lg">
-            ${product?.salePrice}
-          </span>
         </div>
 
-        {/* Buttons Section */}
-        <div className="flex gap-2">
-          {product?.inStock || inCart ? (
-            <button
-              onClick={handleCartToggle}
-              disabled={isCartLoading}
-              className={`flex-1 h-12 ${inCart ? 'bg-red-300 hover:bg-red-400' : 'bg-blue-300 hover:bg-blue-400'} text-slate-800 font-semibold px-4 rounded-md transition-colors flex items-center justify-between`}
-            >
-              <span>{isCartLoading ? "Loading..." : inCart ? "Remove from cart" : "Add to cart"}</span>
-              <div className={`w-7 h-7 ${inCart ? 'bg-red-500' : 'bg-amber-500'} rounded-full flex items-center justify-center`}>
-                {isCartLoading ? (
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                ) : inCart ? (
-                  <svg 
-                    width="16" 
-                    height="16" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path 
-                      d="M18 6L6 18M6 6L18 18" 
-                      stroke="white" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                ) : (
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 18 18"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M1.89203 1.9411H3.1399C3.91443 1.9411 4.52402 2.60806 4.45947 3.37543L3.86423 10.5184C3.76382 11.6873 4.68896 12.6914 5.86511 12.6914H13.5029C14.5356 12.6914 15.4392 11.8451 15.5181 10.8196L15.9054 5.44086C15.9914 4.25037 15.0878 3.28219 13.8902 3.28219H4.6316"
-                      stroke="white"
-                      strokeWidth="1.5"
-                      strokeMiterlimit="10"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M12.1116 16.2844C12.6067 16.2844 13.0081 15.883 13.0081 15.3879C13.0081 14.8928 12.6067 14.4915 12.1116 14.4915C11.6165 14.4915 11.2151 14.8928 11.2151 15.3879C11.2151 15.883 11.6165 16.2844 12.1116 16.2844Z"
-                      stroke="white"
-                      strokeWidth="1.5"
-                      strokeMiterlimit="10"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M6.37436 16.2844C6.86946 16.2844 7.27081 15.883 7.27081 15.3879C7.27081 14.8928 6.86946 14.4915 6.37436 14.4915C5.87926 14.4915 5.47791 14.8928 5.47791 15.3879C5.47791 15.883 5.87926 16.2844 6.37436 16.2844Z"
-                      stroke="white"
-                      strokeWidth="1.5"
-                      strokeMiterlimit="10"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                )}
-              </div>
-            </button>
-          ) : (
-            <button
-              disabled
-              className="flex-1 h-12 bg-gray-200 text-gray-500 font-semibold px-4 rounded-md cursor-not-allowed"
-            >
-              Out of stock
-            </button>
-          )}
-
-          <Link
-            href={`/products/${product?.slug}`}
-            className="h-12 w-12 bg-blue-300 hover:bg-blue-400 rounded-md flex items-center justify-center transition-colors"
-          >
+        {/* Rating Stars */}
+        <div className="flex items-center mb-1">
+          {[...Array(5)].map((_, i) => (
             <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
+              key={i}
+              className={`w-4 h-4 ${i < fullStars
+                ? "text-yellow-400"
+                : i === fullStars && hasHalfStar
+                  ? "text-yellow-400"
+                  : "text-gray-300"
+                }`}
+              fill="currentColor"
+              viewBox="0 0 20 20"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <path
-                d="M15.5289 12.1127C15.5289 14.0601 13.9553 15.6338 12.0079 15.6338C10.0605 15.6338 8.48682 14.0601 8.48682 12.1127C8.48682 10.1653 10.0605 8.59167 12.0079 8.59167C13.9553 8.59167 15.5289 10.1653 15.5289 12.1127Z"
-                stroke="#292D32"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path
-                d="M12.008 20.2465C15.4799 20.2465 18.7157 18.2008 20.968 14.66C21.8532 13.2733 21.8532 10.9423 20.968 9.55549C18.7157 6.01475 15.4799 3.96899 12.008 3.96899C8.53612 3.96899 5.30028 6.01475 3.04798 9.55549C2.1628 10.9423 2.1628 13.2733 3.04798 14.66C5.30028 18.2008 8.53612 20.2465 12.008 20.2465Z"
-                stroke="#292D32"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
             </svg>
-          </Link>
+          ))}
+          <span className="ml-1 text-sm font-semibold text-gray-700">{rating}</span>
+
+          {/* Sales Info */}
+          <div className="ml-2 text-xs text-gray-500">
+            4.3 k+ Sold
+          </div>
         </div>
+
+        {/* Quantity Controls Container - Always present but conditionally displaying content */}
+        <div className="min-h-14 mt-2 mb-2">
+          {product.inStock && (
+            <div className="flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center border border-gray-300 rounded-md">
+                <button
+                  onClick={(e) => handleQuantityChange(quantity - 1, e)}
+                  disabled={quantity <= 1 || isUpdatingCart}
+                  className={`px-2 py-1 text-gray-600 hover:bg-gray-100 ${quantity <= 1 ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+                <span className="px-2 py-1 min-w-8 text-center">
+                  {isUpdatingCart ? (
+                    <div className="w-4 h-4 border-2 border-gray-300 border-t-amber-500 rounded-full animate-spin mx-auto"></div>
+                  ) : (
+                    quantity
+                  )}
+                </span>
+                <button
+                  onClick={(e) => handleQuantityChange(quantity + 1, e)}
+                  disabled={quantity >= maxStock || isUpdatingCart}
+                  className={`px-2 py-1 text-gray-600 hover:bg-gray-100 ${quantity >= maxStock ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 5V19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </button>
+              </div>
+              <div className="text-xs text-gray-500">
+                {isLoadingStock ? (
+                  <div className="w-3 h-3 border-2 border-gray-300 border-t-amber-500 rounded-full animate-spin"></div>
+                ) : (
+                  `${maxStock} available`
+                )}
+              </div>
+            </div>
+          )}
+          {!product.inStock && (
+            <div className="flex items-center justify-center py-2 text-sm text-red-500 font-medium">
+              Out of stock
+            </div>
+          )}
+        </div>
+
+        {/* Add to Cart Button */}
+        <button
+          onClick={handleCartToggle}
+          disabled={isCartLoading || (!product.inStock && !inCart)}
+          className={`w-full mt-2 py-2 px-4 rounded-full ${inCart
+            ? 'bg-red-500 hover:bg-red-600 text-white'
+            : 'bg-amber-500 hover:bg-amber-600 text-white'
+            } font-semibold transition-colors flex items-center justify-center ${!product.inStock && !inCart ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+        >
+          {isCartLoading ? (
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+          ) : null}
+          <span>
+            {inCart ? "Remove from cart" : "Add to cart"}
+          </span>
+          <svg
+            className="ml-2"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4H6zM3 6h18"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M16 10a4 4 0 11-8 0"
+              stroke="white"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
       </div>
     </div>
   );

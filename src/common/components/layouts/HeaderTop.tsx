@@ -1,14 +1,23 @@
-import React from 'react'
+"use client"
+import { useRouter } from 'next/navigation'
 
 const HeaderTop = () => {
+    const router = useRouter();
     return (
-        <div className="px-4 justify-between h-12 m-auto mr-16 ml-16 hidden lg:flex md:flex">
-            <div className='flex justify-center items-center'>
-                <div className="text-slate-600 text-sm hover:text-blue-600 cursor-pointer">Need help? Call us: (+98) 0234 456 789</div>
+        <div className="bg-[#F19B12] px-4 justify-between h-12 m-auto mr-16 ml-16 hidden lg:flex md:flex">
+            <div className='flex justify-center items-center w-full'>
+                <div className="text-white font-inter font-medium text-[20px] leading-[150%] tracking-[0%]">
+                    Sign up to get 20% off on your first order. 
+                    <span 
+                    onClick={()=>router.push("/register")}
+                    className='cursor-pointer font-inter font-medium text-[20px] leading-[150%] tracking-[0%] underline'>
+                        Sign Up
+                    </span>
+                </div>
             </div>
             <div className="justify-center items-center gap-5 flex">
                 
-                <div className="justify-center items-center gap-3 flex">
+                {/* <div className="justify-center items-center gap-3 flex">
                     <div className="w-44 h-10 rounded-lg justify-center items-center gap-3 flex hover:bg-slate-300 cursor-pointer">
                         <div className="justify-center items-center flex">
                             <svg className='stroke-slate-600' width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -21,7 +30,7 @@ const HeaderTop = () => {
                         </div>
                         <div className="text-slate-600 text-sm font-normal">Track your order</div>
                     </div>
-                </div>
+                </div> */}
             </div>
         </div>
     )

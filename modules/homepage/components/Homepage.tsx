@@ -3,10 +3,10 @@ import Slider from './Slider'
 import BannerPromotion from './BannerPromotion'
 import TopSeller from './TopSeller'
 import Features from './Features'
-import Testimoni from './Testimoni'
 import Partner from './Partner'
 import FeaturedProducts from './FeaturedProducts'
 import TopDeals from './TopDeals'
+import Newsletter from '@/common/components/layouts/Newsletter'
 
 const Homepage = () => {
     return (
@@ -15,10 +15,10 @@ const Homepage = () => {
             <FeaturedProducts/>
             <TopDeals/>
             <BannerPromotion />
-            <TopSeller />
+            {/* <TopSeller /> */}
             <Features />
-            <Testimoni />
-            <Partner />
+            <Newsletter/>
+            {/* <Partner /> */}
         </>
     )
 }

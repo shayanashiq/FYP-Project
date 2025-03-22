@@ -195,8 +195,8 @@ const TopDeals: React.FC = () => {
   }, [currentIndex]);
 
   return (
-    <>
-      <h1 className="mt-12 mx-12 mb-8 flex flex-col text-cyan-800 text-4xl font-medium">
+    <div className="px-20">
+      <h1 className="mt-12 mb-8 flex flex-col text-cyan-800 text-4xl font-medium">
         Top Deals
       </h1>
       <div className="flex justify-center items-center flex-col w-[96%]">
@@ -219,7 +219,7 @@ const TopDeals: React.FC = () => {
                 {/* Product slider with smooth transition */}
                 <div
                   ref={sliderRef}
-                  className="flex transition-transform duration-500 ease-in-out"
+                  className="flex transition-transform duration-500 ease-in-out space-x-2"
                   style={{ width: "fit-content" }}
                 >
                   {/* Display all potentially visible products with wishlist status */}
@@ -273,11 +273,11 @@ const TopDeals: React.FC = () => {
             )}
           </div>
         </div>
-        <button className="mt-4 mx-auto px-12 py-3 text-xl bg-amber-500 text-white font-semibold hover:bg-amber-600 rounded-lg">
+        <button className="mt-8 mx-auto px-8 py-2 text-xl bg-[#205781] text-white">
           See All
         </button>
       </div>
-    </>
+    </div>
   );
 };
 

@@ -2,7 +2,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import ProductUpdateForm from '../../../../../modules/admin/components/editProduct';
+import ProductUpdateForm from '../../../../../../modules/admin/components/editProduct';
 
 export default function EditProductPage() {
   const params = useParams();

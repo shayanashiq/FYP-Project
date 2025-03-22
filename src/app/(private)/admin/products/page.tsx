@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import SearchBar from '../../../../modules/admin/components/searchbar';
-import ProductTable from '../../../../modules/admin/components/productTable';
+import SearchBar from '../../../../../modules/admin/components/searchbar';
+import ProductTable from '../../../../../modules/admin/components/productTable';
 import { searchProducts } from '@/lib/search';
 import { Plus } from 'lucide-react';
 import { Prisma } from '@prisma/client';
 
-import type { Product as ProductTableProduct } from '../../../../modules/admin/components/productTable';
+import type { Product as ProductTableProduct } from '../../../../../modules/admin/components/productTable';
 
 // Updated interface to match actual API response
 interface ApiProduct {

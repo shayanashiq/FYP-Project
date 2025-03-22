@@ -6,7 +6,11 @@ const config: Config = {
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./modules/**/*.{js,ts,jsx,tsx,mdx}",
-    // "./**/*.{js,ts,jsx,tsx,mdx}",
+  ],
+  safelist: [
+    'bg-[#F19B12]',
+    'bg-[#205781]',
+    'bg-[#D9D9D9]'
   ],
   theme: {
     extend: {

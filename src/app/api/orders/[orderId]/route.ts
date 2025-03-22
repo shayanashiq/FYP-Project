@@ -22,7 +22,7 @@ export async function GET(request: Request, { params }: { params: { orderId: str
   }
 }
 
-// PUT request handler: Update an order and deduct stock
+// PUT request handler: Update an order, deduct stock, and empty cart if order is completed
 export async function PUT(req: Request, { params }: { params: { orderId: string } }) {
   try {
     const { orderId } = params;
@@ -30,7 +30,7 @@ export async function PUT(req: Request, { params }: { params: { orderId: string 
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { items: true, payment: true },
+      include: { items: true, payment: true, user: true },
     });
 
     if (!order) {
@@ -67,6 +67,20 @@ export async function PUT(req: Request, { params }: { params: { orderId: string 
       data: { status },
       include: { items: { include: { product: true } }, payment: true },
     });
+
+    // Empty the cart if order status is CONFIRMED or further in the process
+    if (["CONFIRMED", "SHIPPED", "DELIVERED"].includes(status)) {
+      const userCart = await prisma.cart.findUnique({
+        where: { userId: order.userId },
+      });
+      
+      if (userCart) {
+        // Delete all cart items for this user's cart
+        await prisma.cartItem.deleteMany({
+          where: { cartId: userCart.id },
+        });
+      }
+    }
 
     return NextResponse.json(updatedOrder, { status: 200 });
   } catch (error) {

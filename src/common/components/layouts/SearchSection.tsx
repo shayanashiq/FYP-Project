@@ -7,7 +7,7 @@ const SearchSection = () => {
     const [searchTerm, setSearchTerm] = useState("")
     const [isFocused, setIsFocused] = useState(false)
 
-    const handleSearch = (e:any) => {
+    const handleSearch = (e: any) => {
         e.preventDefault()
         // Handle search logic here
         console.log("Searching for:", searchTerm)
@@ -23,18 +23,21 @@ const SearchSection = () => {
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
                     placeholder="Search products..."
-                    className={`w-full py-2 pl-4 pr-10 text-gray-700 bg-white border rounded-lg 
-                    transition-all duration-200 focus:outline-none
-                    ${isFocused ? 'border-amber-500 shadow-sm' : 'border-gray-300'}`}
+                    className={`w-full py-2 pl-4 pr-10 text-gray-700 bg-white border
+            transition-all duration-200 focus:outline-none
+            ${isFocused ? 'border-amber-500 shadow-sm' : 'border-gray-300'}`}
                 />
-                <button 
+                <button
                     type="submit"
-                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-amber-600 transition-colors"
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 
+            hover:text-amber-600 transition-colors"
                 >
                     <Search size={18} />
                 </button>
             </form>
         </div>
+
+
     )
 }
 
