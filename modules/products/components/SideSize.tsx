@@ -20,17 +20,28 @@ export const SideSize = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   
-  const currentSize = searchParams.get('size') || '';
+  // Get selected sizes as an array
+  const selectedSizes = searchParams.get('size')?.split(',').filter(Boolean) || [];
   
   const handleSizeChange = (sizeId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     
-    if (sizeId === currentSize) {
-      // If clicking the same size, remove the filter
-      params.delete('size');
+    // Get current selected sizes
+    const currentSizes = selectedSizes.slice();
+    
+    // If sizeId is already selected, remove it
+    if (currentSizes.includes(sizeId)) {
+      const updatedSizes = currentSizes.filter(id => id !== sizeId);
+      
+      if (updatedSizes.length === 0) {
+        params.delete('size');
+      } else {
+        params.set('size', updatedSizes.join(','));
+      }
     } else {
-      // Otherwise set the new size
-      params.set('size', sizeId);
+      // Otherwise add it to the selected sizes
+      currentSizes.push(sizeId);
+      params.set('size', currentSizes.join(','));
     }
     
     // Reset to page 1 when changing size
@@ -56,7 +67,7 @@ export const SideSize = () => {
               key={size.id}
               onClick={() => handleSizeChange(size.id)}
               className={`border text-center py-2 text-sm rounded ${
-                currentSize === size.id 
+                selectedSizes.includes(size.id) 
                   ? 'border-blue-600 bg-blue-50 text-blue-600' 
                   : 'border-gray-300 hover:border-gray-400'
               }`}

@@ -18,7 +18,8 @@ const SideCategories = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   
-  const currentCategory = searchParams.get('category') || '';
+  // Get selected categories as an array
+  const selectedCategories = searchParams.get('category')?.split(',').filter(Boolean) || [];
   
   useEffect(() => {
     const fetchCategories = async () => {
@@ -42,12 +43,22 @@ const SideCategories = () => {
   const handleCategoryChange = (categoryId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     
-    if (categoryId === currentCategory) {
-      // If clicking the same category, remove the filter
-      params.delete('category');
+    // Get current selected categories
+    const currentCategories = selectedCategories.slice();
+    
+    // If categoryId is already selected, remove it
+    if (currentCategories.includes(categoryId)) {
+      const updatedCategories = currentCategories.filter(id => id !== categoryId);
+      
+      if (updatedCategories.length === 0) {
+        params.delete('category');
+      } else {
+        params.set('category', updatedCategories.join(','));
+      }
     } else {
-      // Otherwise set the new category
-      params.set('category', categoryId);
+      // Otherwise add it to the selected categories
+      currentCategories.push(categoryId);
+      params.set('category', currentCategories.join(','));
     }
     
     // Reset to page 1 when changing category
@@ -69,25 +80,32 @@ const SideCategories = () => {
       {expanded && (
         <div className="space-y-2 mt-2">
           {loading ? (
-            <div className="animate-pulse">
+            <div className="space-y-2">
               {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="h-5 bg-gray-200 rounded my-2 w-3/4"></div>
+                <div key={i} className="animate-pulse h-4 bg-gray-200 rounded"></div>
               ))}
             </div>
           ) : (
             categories.map((category) => (
               <div key={category.id} className="flex items-center">
-                <button
-                  onClick={() => handleCategoryChange(category.id)}
+                <input 
+                  type="checkbox"
+                  id={`category-${category.id}`}
+                  checked={selectedCategories.includes(category.id)}
+                  onChange={() => handleCategoryChange(category.id)}
+                  className="mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <label 
+                  htmlFor={`category-${category.id}`}
                   className={`text-sm hover:text-blue-600 flex justify-between w-full py-1 ${
-                    currentCategory === category.id ? 'font-medium text-blue-600' : 'text-gray-700'
+                    selectedCategories.includes(category.id) ? 'font-medium text-blue-600' : 'text-gray-700'
                   }`}
                 >
-                  <span>{category.name}</span>
+                  {category.name}
                   {category.count !== undefined && (
-                    <span className="text-gray-500 text-xs">({category.count})</span>
+                    <span className="text-gray-500">({category.count})</span>
                   )}
-                </button>
+                </label>
               </div>
             ))
           )}

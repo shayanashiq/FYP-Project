@@ -8,7 +8,8 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 const productTypes = [
   { id: 'new', name: 'New Arrivals' },
   { id: 'featured', name: 'Featured Products' },
-  { id: 'bestseller', name: 'Best Sellers' },
+  { id: 'bestchoice', name: 'Best Choice' },
+  { id: 'topdeal', name: 'Top Deals' },
   { id: 'sale', name: 'On Sale' }
 ];
 
@@ -18,17 +19,28 @@ const SideProductType = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   
-  const currentType = searchParams.get('type') || '';
+  // Get selected types as an array
+  const selectedTypes = searchParams.get('type')?.split(',').filter(Boolean) || [];
   
   const handleTypeChange = (typeId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     
-    if (typeId === currentType) {
-      // If clicking the same type, remove the filter
-      params.delete('type');
+    // Get current selected types
+    const currentTypes = selectedTypes.slice();
+    
+    // If typeId is already selected, remove it
+    if (currentTypes.includes(typeId)) {
+      const updatedTypes = currentTypes.filter(id => id !== typeId);
+      
+      if (updatedTypes.length === 0) {
+        params.delete('type');
+      } else {
+        params.set('type', updatedTypes.join(','));
+      }
     } else {
-      // Otherwise set the new type
-      params.set('type', typeId);
+      // Otherwise add it to the selected types
+      currentTypes.push(typeId);
+      params.set('type', currentTypes.join(','));
     }
     
     // Reset to page 1 when changing type
@@ -51,14 +63,21 @@ const SideProductType = () => {
         <div className="space-y-2 mt-2">
           {productTypes.map((type) => (
             <div key={type.id} className="flex items-center">
-              <button
-                onClick={() => handleTypeChange(type.id)}
+              <input 
+                type="checkbox"
+                id={`type-${type.id}`}
+                checked={selectedTypes.includes(type.id)}
+                onChange={() => handleTypeChange(type.id)}
+                className="mr-2 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label 
+                htmlFor={`type-${type.id}`}
                 className={`text-sm hover:text-blue-600 w-full text-left py-1 ${
-                  currentType === type.id ? 'font-medium text-blue-600' : 'text-gray-700'
+                  selectedTypes.includes(type.id) ? 'font-medium text-blue-600' : 'text-gray-700'
                 }`}
               >
                 {type.name}
-              </button>
+              </label>
             </div>
           ))}
         </div>

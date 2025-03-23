@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react'
 import SideCategories from './SideCategories'
 import { Separator } from '@/common/components/elements/Separator'
 import SideProductType from './SideProductType'
-import SideColor from './SideColor'
 import { SideSize } from './SideSize'
 import SidePriceRange from './SidePriceRange'
 import BannerPromotion from '../../homepage/components/BannerPromotion'
@@ -208,8 +207,6 @@ const Products = () => {
               <Separator />
               <SidePriceRange />
               <Separator />
-              {/* <SideColor /> */}
-              {/* <Separator /> */}
               <SideSize />
               <Separator />
             </div>
@@ -243,7 +240,6 @@ const Products = () => {
                 <Separator />
                 <SidePriceRange />
                 <Separator />
-                <SideColor />
                 <Separator />
                 <SideSize />
               </div>
@@ -253,87 +249,97 @@ const Products = () => {
           {/* Product listing area */}
           <div className="flex-1">
             {/* Applied filters chips - mobile and desktop */}
-            {hasFilters && (
-              <div className="flex flex-wrap gap-2 mb-4">
-                {category && (
-                  <Chip 
-                    label={`Category: ${category}`}
-                    onRemove={() => {
-                      const params = new URLSearchParams(searchParams.toString());
-                      params.delete('category');
-                      router.push(`?${params.toString()}`);
-                    }}
-                  />
-                )}
-                
-                {minPrice && maxPrice && (
-                  <Chip 
-                    label={`Price: $${minPrice} - $${maxPrice}`}
-                    onRemove={() => {
-                      const params = new URLSearchParams(searchParams.toString());
-                      params.delete('minPrice');
-                      params.delete('maxPrice');
-                      router.push(`?${params.toString()}`);
-                    }}
-                  />
-                )}
-                
-                {minPrice && !maxPrice && (
-                  <Chip 
-                    label={`Price: $${minPrice}+`}
-                    onRemove={() => {
-                      const params = new URLSearchParams(searchParams.toString());
-                      params.delete('minPrice');
-                      router.push(`?${params.toString()}`);
-                    }}
-                  />
-                )}
-                
-                {!minPrice && maxPrice && (
-                  <Chip 
-                    label={`Price: Up to $${maxPrice}`}
-                    onRemove={() => {
-                      const params = new URLSearchParams(searchParams.toString());
-                      params.delete('maxPrice');
-                      router.push(`?${params.toString()}`);
-                    }}
-                  />
-                )}
-                
-                {color && (
-                  <Chip 
-                    label={`Color: ${color}`}
-                    onRemove={() => {
-                      const params = new URLSearchParams(searchParams.toString());
-                      params.delete('color');
-                      router.push(`?${params.toString()}`);
-                    }}
-                  />
-                )}
-                
-                {size && (
-                  <Chip 
-                    label={`Size: ${size.toUpperCase()}`}
-                    onRemove={() => {
-                      const params = new URLSearchParams(searchParams.toString());
-                      params.delete('size');
-                      router.push(`?${params.toString()}`);
-                    }}
-                  />
-                )}
-                
-                {type && (
-                  <Chip 
-                    label={`Type: ${type}`}
-                    onRemove={() => {
-                      const params = new URLSearchParams(searchParams.toString());
-                      params.delete('type');
-                      router.push(`?${params.toString()}`);
-                    }}
-                  />
-                )}
-              </div>
-            )}
+            <div className="flex flex-wrap gap-2 mb-4">
+              {category && (
+                <Chip 
+                  label={`Categories: ${
+                    category.split(',').length > 1 
+                      ? `${category.split(',').length} selected` 
+                      : category
+                  }`}
+                  onRemove={() => {
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.delete('category');
+                    router.push(`?${params.toString()}`);
+                  }}
+                />
+              )}
+              
+              {type && (
+                <Chip 
+                  label={`Types: ${
+                    type.split(',').length > 1 
+                      ? `${type.split(',').length} selected` 
+                      : type
+                  }`}
+                  onRemove={() => {
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.delete('type');
+                    router.push(`?${params.toString()}`);
+                  }}
+                />
+              )}
+              
+              {size && (
+                <Chip 
+                  label={`Sizes: ${
+                    size.split(',').length > 1 
+                      ? `${size.split(',').length} selected` 
+                      : size.toUpperCase()
+                  }`}
+                  onRemove={() => {
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.delete('size');
+                    router.push(`?${params.toString()}`);
+                  }}
+                />
+              )}
+              
+              {minPrice && maxPrice && (
+                <Chip 
+                  label={`Price: $${minPrice} - $${maxPrice}`}
+                  onRemove={() => {
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.delete('minPrice');
+                    params.delete('maxPrice');
+                    router.push(`?${params.toString()}`);
+                  }}
+                />
+              )}
+              
+              {minPrice && !maxPrice && (
+                <Chip 
+                  label={`Price: $${minPrice}+`}
+                  onRemove={() => {
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.delete('minPrice');
+                    router.push(`?${params.toString()}`);
+                  }}
+                />
+              )}
+              
+              {!minPrice && maxPrice && (
+                <Chip 
+                  label={`Price: Up to $${maxPrice}`}
+                  onRemove={() => {
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.delete('maxPrice');
+                    router.push(`?${params.toString()}`);
+                  }}
+                />
+              )}
+              
+              {color && (
+                <Chip 
+                  label={`Color: ${color}`}
+                  onRemove={() => {
+                    const params = new URLSearchParams(searchParams.toString());
+                    params.delete('color');
+                    router.push(`?${params.toString()}`);
+                  }}
+                />
+              )}
+            </div>
             
             {/* Sort dropdown - desktop */}
             <div className="hidden lg:flex justify-between items-center mb-4">

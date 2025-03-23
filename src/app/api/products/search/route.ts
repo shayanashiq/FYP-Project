@@ -48,13 +48,21 @@ export async function GET(request: NextRequest) {
     
     // Parse filters from query params with debug logging
     const search = searchParams.get('search') || '';
-    const categoryId = searchParams.get('category') || '';
+    const categoryParam = searchParams.get('category') || '';
     const minPrice = searchParams.get('minPrice') || '';
     const maxPrice = searchParams.get('maxPrice') || '';
-    const size = searchParams.get('size') || '';
+    const sizeParam = searchParams.get('size') || '';
+    const typeParam = searchParams.get('type') || '';
     const sort = searchParams.get('sort') || 'newest';
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
+    
+    // Convert comma-separated parameter strings to arrays
+    const categories = categoryParam ? categoryParam.split(',').filter(Boolean) : [];
+    const sizes = sizeParam ? sizeParam.split(',').filter(Boolean) : [];
+    const types = typeParam ? typeParam.split(',').filter(Boolean) : [];
+    
+    console.log('Filter arrays:', { categories, sizes, types });
     
     // Calculate pagination
     const skip = (page - 1) * limit;
@@ -62,19 +70,70 @@ export async function GET(request: NextRequest) {
     // Build a cleaner where clause
     let whereClause: any = {};
     
-    // If we have a category ID, explicitly filter by it
-    if (categoryId && categoryId.trim() !== '') {
-      whereClause.categoryId = categoryId;
-    }
-    
-    // Add size filter if it exists
-    if (size && size.trim() !== '') {
-      whereClause.size = {
-        has: size.trim()
+    // Filter by category if specified
+    if (categories.length > 0) {
+      whereClause.categoryId = {
+        in: categories
       };
     }
     
-    // Execute queries with the where clause (without price filters initially)
+    // Add size filter if it exists
+    if (sizes.length > 0) {
+      whereClause.size = {
+        hasSome: sizes
+      };
+    }
+    
+    // Handle "type" filter by mapping to appropriate fields in the Product model
+    if (types.length > 0) {
+      const typeFilters: any[] = [];
+      
+      // Process each type value and create the appropriate filter
+      for (const type of types) {
+        switch (type.toLowerCase()) {
+          case 'featured':
+            typeFilters.push({ isFeatured: true });
+            break;
+          case 'best':
+          case 'bestchoice':
+            typeFilters.push({ isBestChoice: true });
+            break;
+          case 'new':
+            // For new products, filter by createdAt in the last 30 days
+            typeFilters.push({ 
+              createdAt: { 
+                gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) 
+              } 
+            });
+            break;
+          case 'sale':
+          case 'discount':
+            // For discounted products, filter where discount is greater than 0
+            typeFilters.push({ 
+              discount: { 
+                gt: 0 
+              } 
+            });
+            break;
+          case 'topdeal':
+          case 'top':
+            // For top deals, filter where discount is greater than 30%
+            typeFilters.push({ 
+              discount: { 
+                gte: 30 
+              } 
+            });
+            break;
+        }
+      }
+      
+      // Add the type filters to the where clause using OR logic
+      if (typeFilters.length > 0) {
+        whereClause.OR = typeFilters;
+      }
+    }
+    
+    // Execute queries with the where clause
     const [allProducts, totalCount] = await Promise.all([
       prisma.product.findMany({
         where: whereClause,
