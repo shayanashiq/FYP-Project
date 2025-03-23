@@ -208,8 +208,8 @@ const Products = () => {
               <Separator />
               <SidePriceRange />
               <Separator />
-              <SideColor />
-              <Separator />
+              {/* <SideColor /> */}
+              {/* <Separator /> */}
               <SideSize />
               <Separator />
             </div>

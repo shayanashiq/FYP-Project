@@ -51,10 +51,10 @@ export async function GET(request: NextRequest) {
     const categoryId = searchParams.get('category') || '';
     const minPrice = searchParams.get('minPrice') || '';
     const maxPrice = searchParams.get('maxPrice') || '';
+    const size = searchParams.get('size') || '';
     const sort = searchParams.get('sort') || 'newest';
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
-    
     
     // Calculate pagination
     const skip = (page - 1) * limit;
@@ -65,6 +65,13 @@ export async function GET(request: NextRequest) {
     // If we have a category ID, explicitly filter by it
     if (categoryId && categoryId.trim() !== '') {
       whereClause.categoryId = categoryId;
+    }
+    
+    // Add size filter if it exists
+    if (size && size.trim() !== '') {
+      whereClause.size = {
+        has: size.trim()
+      };
     }
     
     // Execute queries with the where clause (without price filters initially)
