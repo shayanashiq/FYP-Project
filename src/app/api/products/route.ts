@@ -1,163 +1,162 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
-const prisma = new PrismaClient();
+// Create a singleton instance of PrismaClient
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+export const prisma = globalForPrisma.prisma || new PrismaClient();
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
 
-// Function to calculate similarity between strings
-function calculateSimilarity(str1: string, str2: string): number {
-  // Convert both strings to lowercase for case-insensitive comparison
-  const s1 = str1.toLowerCase();
-  const s2 = str2.toLowerCase();
-  
-  // If exact match, return maximum similarity
-  if (s1 === s2) return 1;
-  
-  // If one contains the other completely, high similarity
-  if (s1.includes(s2)) return 0.9;
-  if (s2.includes(s1)) return 0.9;
-  
-  // Count matching words
-  const words1 = s1.split(/\s+/);
-  const words2 = s2.split(/\s+/);
-  
-  let matchCount = 0;
-  for (const word1 of words1) {
-    if (word1.length > 2) { // Only consider words with more than 2 characters
-      for (const word2 of words2) {
-        if (word2.length > 2 && (word1.includes(word2) || word2.includes(word1))) {
-          matchCount++;
-          break;
-        }
-      }
-    }
-  }
-  
-  // Return a similarity score based on matching words
-  const maxWords = Math.max(words1.length, words2.length);
-  return maxWords > 0 ? matchCount / maxWords : 0;
-}
+// Define types for query parameters
+type ProductQueryParams = {
+  category?: string;
+  vendorId?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  search?: string;
+  sort?: string;
+  limit: number;
+  page: number;
+  isFeatured: boolean;
+  minDiscount: number;
+};
 
-export async function GET(request: NextRequest) {
+// Define type for response
+type ProductsResponse = {
+  products: Array<any>; // Using 'any' here as the product has computed properties
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+};
+
+// GET /api/products - Get all products with optional filtering
+export async function GET(request: NextRequest): Promise<NextResponse<ProductsResponse | { error: string }>> {
   try {
     const { searchParams } = new URL(request.url);
     
-    // Parse filters from query params with debug logging
-    const search = searchParams.get('search') || '';
-    const categoryId = searchParams.get('category') || '';
-    const minPrice = searchParams.get('minPrice') || '';
-    const maxPrice = searchParams.get('maxPrice') || '';
-    const sort = searchParams.get('sort') || 'newest';
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    // Parse query parameters
+    const queryParams: ProductQueryParams = {
+      category: searchParams.get('category') || undefined,
+      vendorId: searchParams.get('vendorId') || undefined,
+      minPrice: searchParams.get('minPrice') ? parseFloat(searchParams.get('minPrice')!) : undefined,
+      maxPrice: searchParams.get('maxPrice') ? parseFloat(searchParams.get('maxPrice')!) : undefined,
+      search: searchParams.get('search') || undefined,
+      sort: searchParams.get('sort') || undefined,
+      limit: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : 10,
+      page: searchParams.get('page') ? parseInt(searchParams.get('page')!) : 1,
+      isFeatured: searchParams.get('isFeatured') === 'true',
+      minDiscount: searchParams.get('minDiscount') ? parseFloat(searchParams.get('minDiscount')!) : 0,
+    };
     
-    // Log received parameters for debugging
-    console.log('Search API Parameters:', {
-      search,
-      categoryId,
-      minPrice,
-      maxPrice,
-      sort,
-      page,
-      limit
-    });
+    // Build filter object
+    const where: Prisma.ProductWhereInput = {};
     
-    // Calculate pagination
-    const skip = (page - 1) * limit;
-    
-    // Build a cleaner where clause
-    let whereClause: any = {};
-    
-    // If we have a category ID, explicitly filter by it
-    if (categoryId && categoryId.trim() !== '') {
-      whereClause.categoryId = categoryId;
+    if (queryParams.category) {
+      where.categoryId = queryParams.category;
     }
     
-    // Add price filters if they exist
-    if (minPrice || maxPrice) {
-      whereClause.price = {};
-      
-      if (minPrice) {
-        whereClause.price.gte = parseFloat(minPrice);
+    if (queryParams.vendorId) {
+      where.vendorId = queryParams.vendorId;
+    }
+    
+    // Only apply isFeatured filter if explicitly set to true
+    if (queryParams.isFeatured === true) {
+      where.isFeatured = true;
+    }
+    
+    if (queryParams.minPrice !== undefined || queryParams.maxPrice !== undefined) {
+      where.price = {};
+      if (queryParams.minPrice !== undefined) {
+        where.price.gte = new Prisma.Decimal(queryParams.minPrice);
       }
-      
-      if (maxPrice) {
-        whereClause.price.lte = parseFloat(maxPrice);
+      if (queryParams.maxPrice !== undefined) {
+        where.price.lte = new Prisma.Decimal(queryParams.maxPrice);
       }
     }
     
-    // Add search filter if it exists
-    if (search && search.trim() !== '') {
-      // If we already have filters, we need to use AND logic
-      if (Object.keys(whereClause).length > 0) {
-        // Convert existing filters to an AND array
-        const existingFilters = { ...whereClause };
-        whereClause = {
-          AND: [
-            existingFilters,
-            {
-              OR: [
-                { name: { contains: search, mode: 'insensitive' } },
-                { shortDescription: { contains: search, mode: 'insensitive' } },
-                { description: { contains: search, mode: 'insensitive' } },
-              ]
-            }
-          ]
-        };
-      } else {
-        // If no existing filters, just use OR for search
-        whereClause = {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { shortDescription: { contains: search, mode: 'insensitive' } },
-            { description: { contains: search, mode: 'insensitive' } },
-          ]
-        };
-      }
+    // Add filter for minimum discount
+    if (queryParams.minDiscount > 0) {
+      where.discount = {
+        gte: new Prisma.Decimal(queryParams.minDiscount)
+      };
     }
     
-    // Log the final where clause for debugging
-    console.log('Final Prisma where clause:', JSON.stringify(whereClause, null, 2));
+    if (queryParams.search) {
+      where.OR = [
+        { name: { contains: queryParams.search, mode: 'insensitive' } },
+        { description: { contains: queryParams.search, mode: 'insensitive' } }
+      ];
+    }
     
-    // Sort options
-    let orderBy: any;
-    switch (sort) {
-      case 'price-asc':
+    // Build sort object
+    let orderBy: Prisma.ProductOrderByWithRelationInput = {};
+    switch (queryParams.sort) {
+      case 'price_asc':
         orderBy = { price: 'asc' };
         break;
-      case 'price-desc':
+      case 'price_desc':
         orderBy = { price: 'desc' };
         break;
-      case 'name-asc':
-        orderBy = { name: 'asc' };
-        break;
-      case 'name-desc':
-        orderBy = { name: 'desc' };
-        break;
       case 'newest':
-      default:
         orderBy = { createdAt: 'desc' };
+        break;
+      case 'discount_desc':
+        orderBy = { discount: 'desc' };
+        break;
+      default:
+        // Default sorting - highest discount first
+        orderBy = { discount: 'desc' };
     }
     
-    // Execute queries with the new where clause
-    const [products, totalCount] = await Promise.all([
+    // Calculate pagination
+    const skip = (queryParams.page - 1) * queryParams.limit;
+    
+    // Debug logging
+    console.log('Query parameters:', queryParams);
+    console.log('Where clause:', where);
+    
+    // Try a simple query first to test connection
+    try {
+      const testCount = await prisma.product.count();
+      console.log('Total products in database:', testCount);
+    } catch (connectionError) {
+      console.error('Database connection test failed:', connectionError);
+      return NextResponse.json(
+        { error: 'Database connection failed' },
+        { status: 500 }
+      );
+    }
+    
+    // Get products with count
+    const [products, total] = await Promise.all([
       prisma.product.findMany({
-        where: whereClause,
-        include: {
-          category: {
-            select: {
-              id: true,
-              name: true
-            }
-          },
-          subcategory: {
-            select: {
-              id: true,
-              name: true
-            }
-          },
+        where,
+        orderBy,
+        skip,
+        take: queryParams.limit,
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          price: true,
+          stock: true,
+          sku: true,
+          images: true,
+          categoryId: true,
+          vendorId: true,
+          isFeatured: true, 
+          discount: true,
+          isBestChoice: true,
+          color: true,
+          size: true,
+          shortDescription: true,
+          category: true,
           vendor: {
             select: {
               id: true,
+              email: true,
               customerProfile: {
                 select: {
                   firstName: true,
@@ -165,99 +164,128 @@ export async function GET(request: NextRequest) {
                 }
               }
             }
-          },
+          },          
           reviews: {
             select: {
               rating: true
             }
           }
-        },
-        skip,
-        take: limit,
-        orderBy
+        }
       }),
-      prisma.product.count({
-        where: whereClause
-      })
+      prisma.product.count({ where })
     ]);
     
-    // Log product count and categories
-    console.log(`Found ${products.length} products matching criteria`);
-    if (products.length > 0 && categoryId) {
-      const categoryDistribution = products.reduce((acc, product) => {
-        const cat = product.category?.name || 'Unknown';
-        acc[cat] = (acc[cat] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-      
-      console.log('Category distribution in results:', categoryDistribution);
-    }
-    
-    // Post-process products for search term similarity if needed
-    let processedProducts = [...products];
-    
-    if (search) {
-      // Score products by calculated similarity
-      processedProducts = processedProducts.map(product => {
-        const titleSimilarity = calculateSimilarity(product.name, search) * 3;
-        const shortDescSimilarity = calculateSimilarity(product.shortDescription || '', search) * 2;
-        const descSimilarity = calculateSimilarity(product.description || '', search);
-        
-        const overallSimilarity = (titleSimilarity + shortDescSimilarity + descSimilarity) / 6;
-        
-        return {
-          ...product,
-          _similarity: overallSimilarity
-        };
-      });
-      
-      // Filter out products with very low similarity
-      processedProducts = processedProducts.filter(p => (p as any)._similarity > 0.1);
-      
-      // Sort by similarity if searching with default sort
-      if (sort === 'newest') {
-        processedProducts.sort((a, b) => (b as any)._similarity - (a as any)._similarity);
-      }
-    }
+    console.log(`Found ${products.length} products out of ${total} total matching products`);
     
     // Calculate average rating for each product
-    const productsWithRating = processedProducts.map(product => {
-      const avgRating = product.reviews.length > 0
-        ? product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length
+    const productsWithRating = products.map(product => {
+      const ratings = product.reviews.map(review => review.rating);
+      const avgRating = ratings.length > 0 
+        ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length 
         : 0;
       
-      const vendor = product.vendor ? {
-        id: product.vendor.id,
-        name: product.vendor.customerProfile
-          ? `${product.vendor.customerProfile.firstName} ${product.vendor.customerProfile.lastName}`
-          : 'Unknown Vendor'
-      } : null;
-      
+      // Format Decimal fields correctly for JSON response
       return {
         ...product,
+        price: parseFloat(product.price.toString()),
+        discount: product.discount ? parseFloat(product.discount.toString()) : 0,
         avgRating,
-        reviewCount: product.reviews.length,
-        vendor,
-        reviews: undefined,
-        _similarity: undefined,
+        reviewCount: ratings.length
       };
     });
     
-    // Return response with pagination metadata
     return NextResponse.json({
       products: productsWithRating,
       pagination: {
-        total: totalCount,
-        page,
-        limit,
-        totalPages: Math.ceil(totalCount / limit) || 1
+        total,
+        page: queryParams.page,
+        limit: queryParams.limit,
+        totalPages: Math.ceil(total / queryParams.limit)
       }
     });
-    
   } catch (error) {
-    console.error('Error searching products:', error);
+    console.error('Error fetching products:', error instanceof Error ? error.message : error);
+    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack available');
     return NextResponse.json(
-      { error: 'Failed to search products', details: (error as Error).message },
+      { error: 'Failed to fetch products' },
+      { status: 500 }
+    );
+  }
+}
+
+// Type for product creation
+interface CreateProductRequest {
+  name: string;
+  description: string;
+  price: number;
+  stock?: number;
+  sku: string;
+  images: string[];
+  categoryId: string;
+  vendorId?: string;
+  isFeatured: boolean;
+  isBestChoice: boolean;
+  color: string[]; 
+  size: string[]; 
+  discount: number;
+  shortDescription: string;
+}
+
+// POST /api/products - Create a new product
+export async function POST(request: NextRequest): Promise<NextResponse<any>> {
+  try {
+    const body: CreateProductRequest = await request.json();
+    
+    // Validate required fields
+    const { name, description, price, categoryId, discount, isFeatured, isBestChoice, color, size, shortDescription, sku, images } = body;
+    
+    if (!name || !description || price === undefined || !sku || !images || !Array.isArray(images)) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+    
+    try {
+      // Create new product with proper decimal conversion
+      const product = await prisma.product.create({
+        data: {
+          name,
+          description,
+          price: new Prisma.Decimal(price),
+          stock: body.stock || 0,
+          sku: sku,
+          images: images,
+          categoryId,
+          isFeatured: !!isFeatured,
+          discount: discount !== undefined ? new Prisma.Decimal(discount) : null,
+          isBestChoice: !!isBestChoice,
+          color: color || [], 
+          size: size || [], 
+          shortDescription,
+          vendorId: body.vendorId
+        }
+      });
+      
+      // Format Decimal fields for JSON response
+      const formattedProduct = {
+        ...product,
+        price: parseFloat(product.price.toString()),
+        discount: product.discount ? parseFloat(product.discount.toString()) : 0
+      };
+      
+      return NextResponse.json(formattedProduct, { status: 201 });
+    } catch (dbError) {
+      console.error('Database error when creating product:', dbError);
+      return NextResponse.json(
+        { error: 'Database error when creating product', details: dbError instanceof Error ? dbError.message : 'Unknown error' },
+        { status: 500 }
+      );
+    }
+  } catch (error) {
+    console.error('Error creating product:', error instanceof Error ? error.message : error);
+    return NextResponse.json(
+      { error: 'Failed to create product' },
       { status: 500 }
     );
   }

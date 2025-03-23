@@ -104,11 +104,9 @@ const Products = () => {
       if (size) queryParams.set('size', size);
       if (type) queryParams.set('type', type);
       
-      // Debug the actual API call
-      console.log('API call:', `/api/products?${queryParams.toString()}`);
       
       try {
-        const response = await fetch(`/api/products?${queryParams.toString()}`);
+        const response = await fetch(`/api/products/search?${queryParams.toString()}`);
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(`Failed to fetch products: ${errorText}`);

@@ -37,6 +37,11 @@ function calculateSimilarity(str1: string, str2: string): number {
   return maxWords > 0 ? matchCount / maxWords : 0;
 }
 
+// Helper function to calculate discounted price
+function calculateDiscountedPrice(price: number, discountPercentage: number): number {
+  return price * (1 - discountPercentage / 100);
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -50,16 +55,6 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     
-    // Log received parameters for debugging
-    console.log('Search API Parameters:', {
-      search,
-      categoryId,
-      minPrice,
-      maxPrice,
-      sort,
-      page,
-      limit
-    });
     
     // Calculate pagination
     const skip = (page - 1) * limit;
@@ -72,74 +67,8 @@ export async function GET(request: NextRequest) {
       whereClause.categoryId = categoryId;
     }
     
-    // Add price filters if they exist
-    if (minPrice || maxPrice) {
-      whereClause.price = {};
-      
-      if (minPrice) {
-        whereClause.price.gte = parseFloat(minPrice);
-      }
-      
-      if (maxPrice) {
-        whereClause.price.lte = parseFloat(maxPrice);
-      }
-    }
-    
-    // Add search filter if it exists
-    if (search && search.trim() !== '') {
-      // If we already have filters, we need to use AND logic
-      if (Object.keys(whereClause).length > 0) {
-        // Convert existing filters to an AND array
-        const existingFilters = { ...whereClause };
-        whereClause = {
-          AND: [
-            existingFilters,
-            {
-              OR: [
-                { name: { contains: search, mode: 'insensitive' } },
-                { shortDescription: { contains: search, mode: 'insensitive' } },
-                { description: { contains: search, mode: 'insensitive' } },
-              ]
-            }
-          ]
-        };
-      } else {
-        // If no existing filters, just use OR for search
-        whereClause = {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { shortDescription: { contains: search, mode: 'insensitive' } },
-            { description: { contains: search, mode: 'insensitive' } },
-          ]
-        };
-      }
-    }
-    
-    // Log the final where clause for debugging
-    console.log('Final Prisma where clause:', JSON.stringify(whereClause, null, 2));
-    
-    // Sort options
-    let orderBy: any;
-    switch (sort) {
-      case 'price-asc':
-        orderBy = { price: 'asc' };
-        break;
-      case 'price-desc':
-        orderBy = { price: 'desc' };
-        break;
-      case 'name-asc':
-        orderBy = { name: 'asc' };
-        break;
-      case 'name-desc':
-        orderBy = { name: 'desc' };
-        break;
-      case 'newest':
-      default:
-        orderBy = { createdAt: 'desc' };
-    }
-    
-    // Execute queries with the new where clause
-    const [products, totalCount] = await Promise.all([
+    // Execute queries with the where clause (without price filters initially)
+    const [allProducts, totalCount] = await Promise.all([
       prisma.product.findMany({
         where: whereClause,
         include: {
@@ -172,31 +101,54 @@ export async function GET(request: NextRequest) {
             }
           }
         },
-        skip,
-        take: limit,
-        orderBy
+        orderBy: sort === 'price-asc' || sort === 'price-desc' 
+          ? {} // We'll handle price sorting manually after discount calculation
+          : sort === 'name-asc' ? { name: 'asc' } 
+          : sort === 'name-desc' ? { name: 'desc' }
+          : { createdAt: 'desc' }
       }),
       prisma.product.count({
         where: whereClause
       })
     ]);
     
-    // Log product count and categories
-    console.log(`Found ${products.length} products matching criteria`);
-    if (products.length > 0 && categoryId) {
-      const categoryDistribution = products.reduce((acc, product) => {
-        const cat = product.category?.name || 'Unknown';
-        acc[cat] = (acc[cat] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
+    // Calculate discounted prices and filter by price range
+    let processedProducts = allProducts.map(product => {
+      const discountedPrice = calculateDiscountedPrice(
+        product.price, 
+        product.discount || 0
+      );
       
-      console.log('Category distribution in results:', categoryDistribution);
+      return {
+        ...product,
+        originalPrice: product.price,
+        discountedPrice
+      };
+    });
+    
+    // Apply price filtering based on discounted price
+    if (minPrice || maxPrice) {
+      processedProducts = processedProducts.filter(product => {
+        if (minPrice && product.discountedPrice < parseFloat(minPrice)) {
+          return false;
+        }
+        if (maxPrice && product.discountedPrice > parseFloat(maxPrice)) {
+          return false;
+        }
+        return true;
+      });
     }
     
-    // Post-process products for search term similarity if needed
-    let processedProducts = [...products];
-    
-    if (search) {
+    // Handle search filtering
+    if (search && search.trim() !== '') {
+      processedProducts = processedProducts.filter(product => {
+        const nameMatch = product.name.toLowerCase().includes(search.toLowerCase());
+        const shortDescMatch = product.shortDescription?.toLowerCase().includes(search.toLowerCase()) || false;
+        const descMatch = product.description?.toLowerCase().includes(search.toLowerCase()) || false;
+        
+        return nameMatch || shortDescMatch || descMatch;
+      });
+      
       // Score products by calculated similarity
       processedProducts = processedProducts.map(product => {
         const titleSimilarity = calculateSimilarity(product.name, search) * 3;
@@ -220,8 +172,18 @@ export async function GET(request: NextRequest) {
       }
     }
     
+    // Apply custom price sorting based on discounted price
+    if (sort === 'price-asc') {
+      processedProducts.sort((a, b) => a.discountedPrice - b.discountedPrice);
+    } else if (sort === 'price-desc') {
+      processedProducts.sort((a, b) => b.discountedPrice - a.discountedPrice);
+    }
+    
+    // Apply pagination after all filtering and sorting
+    const paginatedProducts = processedProducts.slice(skip, skip + limit);
+    
     // Calculate average rating for each product
-    const productsWithRating = processedProducts.map(product => {
+    const productsWithRating = paginatedProducts.map(product => {
       const avgRating = product.reviews.length > 0
         ? product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length
         : 0;
@@ -247,10 +209,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       products: productsWithRating,
       pagination: {
-        total: totalCount,
+        total: processedProducts.length,  // Updated total count based on filtered results
         page,
         limit,
-        totalPages: Math.ceil(totalCount / limit) || 1
+        totalPages: Math.ceil(processedProducts.length / limit) || 1
       }
     });
     
