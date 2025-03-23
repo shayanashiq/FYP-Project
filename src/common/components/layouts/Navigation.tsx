@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 const Navigation = () => {
     const router = useRouter();
     return (
-        <div className="bg-[#D9D9D9] px-20 justify-between h-12 m-auto hidden lg:flex md:flex items-center">
+        <div className="bg-[#D9D9D9] px-8 justify-between h-12 m-auto hidden lg:flex md:flex items-center">
             <div className=''>
                 <div className='flex gap-8'>
                     <div>

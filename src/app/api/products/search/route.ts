@@ -1,100 +1,122 @@
-// app/api/products/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// Function to calculate similarity score between two strings
-function similarity(s1: string, s2: string): number {
-  s1 = s1.toLowerCase();
-  s2 = s2.toLowerCase();
+// Function to calculate similarity between strings
+function calculateSimilarity(str1: string, str2: string): number {
+  // Convert both strings to lowercase for case-insensitive comparison
+  const s1 = str1.toLowerCase();
+  const s2 = str2.toLowerCase();
   
-  // Simple implementation inspired by difflib
-  const longer = s1.length > s2.length ? s1 : s2;
-  const shorter = s1.length > s2.length ? s2 : s1;
+  // If exact match, return maximum similarity
+  if (s1 === s2) return 1;
   
-  // Early return for edge cases
-  if (longer.length === 0) return 1.0;
-  if (shorter.length === 0) return 0.0;
+  // If one contains the other completely, high similarity
+  if (s1.includes(s2)) return 0.9;
+  if (s2.includes(s1)) return 0.9;
   
-  // Check for exact match or substring
-  if (longer.includes(shorter)) return 0.8 + (0.2 * (shorter.length / longer.length));
+  // Count matching words
+  const words1 = s1.split(/\s+/);
+  const words2 = s2.split(/\s+/);
   
-  // Count matching characters
-  let matches = 0;
-  const longerArray = longer.split('');
-  const shorterArray = shorter.split('');
-  
-  for (const char of shorterArray) {
-    const index = longerArray.indexOf(char);
-    if (index !== -1) {
-      matches++;
-      longerArray[index] = '';  // Mark as used
+  let matchCount = 0;
+  for (const word1 of words1) {
+    if (word1.length > 2) { // Only consider words with more than 2 characters
+      for (const word2 of words2) {
+        if (word2.length > 2 && (word1.includes(word2) || word2.includes(word1))) {
+          matchCount++;
+          break;
+        }
+      }
     }
   }
   
-  return matches / longer.length;
+  // Return a similarity score based on matching words
+  const maxWords = Math.max(words1.length, words2.length);
+  return maxWords > 0 ? matchCount / maxWords : 0;
 }
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     
-    // Parse filters from query params
+    // Parse filters from query params with debug logging
     const search = searchParams.get('search') || '';
-    const categories = searchParams.get('categories') || '';
+    const categoryId = searchParams.get('category') || '';
     const minPrice = searchParams.get('minPrice') || '';
     const maxPrice = searchParams.get('maxPrice') || '';
     const sort = searchParams.get('sort') || 'newest';
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     
+    // Log received parameters for debugging
+    console.log('Search API Parameters:', {
+      search,
+      categoryId,
+      minPrice,
+      maxPrice,
+      sort,
+      page,
+      limit
+    });
+    
     // Calculate pagination
     const skip = (page - 1) * limit;
     
-    // Build query filters
-    const whereClause: any = {};
+    // Build a cleaner where clause
+    let whereClause: any = {};
     
-    // Category filter
-    if (categories) {
-      const categoryIds = categories.split(',').filter(Boolean);
-      if (categoryIds.length > 0) {
-        whereClause.categoryId = {
-          in: categoryIds
+    // If we have a category ID, explicitly filter by it
+    if (categoryId && categoryId.trim() !== '') {
+      whereClause.categoryId = categoryId;
+    }
+    
+    // Add price filters if they exist
+    if (minPrice || maxPrice) {
+      whereClause.price = {};
+      
+      if (minPrice) {
+        whereClause.price.gte = parseFloat(minPrice);
+      }
+      
+      if (maxPrice) {
+        whereClause.price.lte = parseFloat(maxPrice);
+      }
+    }
+    
+    // Add search filter if it exists
+    if (search && search.trim() !== '') {
+      // If we already have filters, we need to use AND logic
+      if (Object.keys(whereClause).length > 0) {
+        // Convert existing filters to an AND array
+        const existingFilters = { ...whereClause };
+        whereClause = {
+          AND: [
+            existingFilters,
+            {
+              OR: [
+                { name: { contains: search, mode: 'insensitive' } },
+                { shortDescription: { contains: search, mode: 'insensitive' } },
+                { description: { contains: search, mode: 'insensitive' } },
+              ]
+            }
+          ]
+        };
+      } else {
+        // If no existing filters, just use OR for search
+        whereClause = {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { shortDescription: { contains: search, mode: 'insensitive' } },
+            { description: { contains: search, mode: 'insensitive' } },
+          ]
         };
       }
     }
     
-    // Price range filter
-    if (minPrice) {
-      whereClause.price = {
-        ...whereClause.price,
-        gte: parseFloat(minPrice)
-      };
-    }
-    
-    if (maxPrice) {
-      whereClause.price = {
-        ...whereClause.price,
-        lte: parseFloat(maxPrice)
-      };
-    }
-    
-    // Search filter - only apply if search term exists AND
-    // 1. No categories selected OR
-    // 2. Only one category selected
-    const categoryIds = categories ? categories.split(',').filter(Boolean) : [];
-    
-    if (search && (categoryIds.length <= 1)) {
-      whereClause.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { shortDescription: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { color: { has: search } },  // Search in array fields
-        { size: { has: search } },   // Search in array fields
-        // Add other searchable fields here
-      ];
-    }
+    // Log the final where clause for debugging
+    console.log('Final Prisma where clause:', JSON.stringify(whereClause, null, 2));
     
     // Sort options
     let orderBy: any;
@@ -116,7 +138,7 @@ export async function GET(request: NextRequest) {
         orderBy = { createdAt: 'desc' };
     }
     
-    // Execute main query to get products
+    // Execute queries with the new where clause
     const [products, totalCount] = await Promise.all([
       prisma.product.findMany({
         where: whereClause,
@@ -159,76 +181,51 @@ export async function GET(request: NextRequest) {
       })
     ]);
     
-    // Post-process results for enhanced search if search term exists and 0 or 1 category selected
-    let processedProducts = products;
+    // Log product count and categories
+    console.log(`Found ${products.length} products matching criteria`);
+    if (products.length > 0 && categoryId) {
+      const categoryDistribution = products.reduce((acc, product) => {
+        const cat = product.category?.name || 'Unknown';
+        acc[cat] = (acc[cat] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      console.log('Category distribution in results:', categoryDistribution);
+    }
     
-    if (search && categoryIds.length <= 1) {
-      // Get all products when no database results or to augment search results
-      if (products.length < limit) {
-        // Get additional products that might match via similarity
-        const additionalProducts = await prisma.product.findMany({
-          where: {
-            // Exclude already found products
-            id: { notIn: products.map(p => p.id) },
-            // Apply category filter if any
-            ...(categoryIds.length === 1 ? { categoryId: categoryIds[0] } : {})
-          },
-          include: {
-            category: { select: { id: true, name: true } },
-            subcategory: { select: { id: true, name: true } },
-            vendor: {
-              select: {
-                id: true,
-                customerProfile: {
-                  select: { firstName: true, lastName: true }
-                }
-              }
-            },
-            reviews: { select: { rating: true } }
-          },
-          take: limit * 5  // Get more to filter by similarity
-        });
+    // Post-process products for search term similarity if needed
+    let processedProducts = [...products];
+    
+    if (search) {
+      // Score products by calculated similarity
+      processedProducts = processedProducts.map(product => {
+        const titleSimilarity = calculateSimilarity(product.name, search) * 3;
+        const shortDescSimilarity = calculateSimilarity(product.shortDescription || '', search) * 2;
+        const descSimilarity = calculateSimilarity(product.description || '', search);
         
-        // Calculate similarity scores for all additional products
-        const scoredProducts = additionalProducts.map(product => {
-          // Calculate similarity with search term for different fields
-          const nameScore = similarity(product.name, search) * 1.0;  // Higher weight for name
-          const shortDescScore = product.shortDescription ? 
-            similarity(product.shortDescription, search) * 0.8 : 0;
-          const descScore = similarity(product.description, search) * 0.6;
-          
-          // Use maximum score among all fields
-          const maxScore = Math.max(nameScore, shortDescScore, descScore);
-          
-          return {
-            product,
-            score: maxScore
-          };
-        });
+        const overallSimilarity = (titleSimilarity + shortDescSimilarity + descSimilarity) / 6;
         
-        // Filter only products with decent similarity
-        const threshold = 0.3;  // Minimum similarity threshold
-        const filteredAdditional = scoredProducts
-          .filter(item => item.score >= threshold)
-          .sort((a, b) => b.score - a.score)  // Sort by score descending
-          .map(item => item.product);
-        
-        // Combine original and additional results, prioritizing original results
-        processedProducts = [
-          ...products,
-          ...filteredAdditional.slice(0, limit - products.length)
-        ];
+        return {
+          ...product,
+          _similarity: overallSimilarity
+        };
+      });
+      
+      // Filter out products with very low similarity
+      processedProducts = processedProducts.filter(p => (p as any)._similarity > 0.1);
+      
+      // Sort by similarity if searching with default sort
+      if (sort === 'newest') {
+        processedProducts.sort((a, b) => (b as any)._similarity - (a as any)._similarity);
       }
     }
     
     // Calculate average rating for each product
     const productsWithRating = processedProducts.map(product => {
-      // Calculate average rating
       const avgRating = product.reviews.length > 0
         ? product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length
         : 0;
       
-      // Format vendor name if available
       const vendor = product.vendor ? {
         id: product.vendor.id,
         name: product.vendor.customerProfile
@@ -236,13 +233,13 @@ export async function GET(request: NextRequest) {
           : 'Unknown Vendor'
       } : null;
       
-      // Return formatted product
       return {
         ...product,
         avgRating,
         reviewCount: product.reviews.length,
         vendor,
-        reviews: undefined // Remove the reviews array since we've calculated the average
+        reviews: undefined,
+        _similarity: undefined,
       };
     });
     
@@ -253,14 +250,14 @@ export async function GET(request: NextRequest) {
         total: totalCount,
         page,
         limit,
-        totalPages: Math.ceil(totalCount / limit)
+        totalPages: Math.ceil(totalCount / limit) || 1
       }
     });
     
   } catch (error) {
     console.error('Error searching products:', error);
     return NextResponse.json(
-      { error: 'Failed to search products' },
+      { error: 'Failed to search products', details: (error as Error).message },
       { status: 500 }
     );
   }

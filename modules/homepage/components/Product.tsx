@@ -294,7 +294,7 @@ const Product: React.FC<ProductProps> = ({
 
   // Format price display
   const formatPrice = (price: number) => {
-    return `£${price.toFixed(2)}`;
+    return `£${price}`;
   };
 
   // Calculate discount percentage
