@@ -6,6 +6,7 @@ import { Separator } from '@/common/components/elements/Separator'
 import SideProductType from './SideProductType'
 import SideColor from './SideColor'
 import { SideSize } from './SideSize'
+import SidePriceRange from './SidePriceRange'
 import BannerPromotion from '../../homepage/components/BannerPromotion'
 import { useSearchParams, useRouter } from 'next/navigation'
 import ProductGrid from './ProductGrid'
@@ -39,6 +40,18 @@ interface Product {
   };
 }
 
+// Chip component for filters
+const Chip = ({ label, onRemove }: { label: string; onRemove: () => void }) => {
+  return (
+    <div className="flex items-center bg-gray-100 rounded-full px-3 py-1 text-sm">
+      <span>{label}</span>
+      <button onClick={onRemove} className="ml-2">
+        <X size={14} />
+      </button>
+    </div>
+  );
+};
+
 const Products = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -57,6 +70,9 @@ const Products = () => {
   const pageParam = searchParams.get('page') || '1';
   const minPrice = searchParams.get('minPrice') || '';
   const maxPrice = searchParams.get('maxPrice') || '';
+  const color = searchParams.get('color') || '';
+  const size = searchParams.get('size') || '';
+  const type = searchParams.get('type') || '';
   
   useEffect(() => {
     const fetchProducts = async () => {
@@ -70,7 +86,10 @@ const Products = () => {
         sort,
         page: pageParam,
         minPrice,
-        maxPrice
+        maxPrice,
+        color,
+        size,
+        type
       });
       
       // Build query URL with correctly named parameters
@@ -81,6 +100,9 @@ const Products = () => {
       if (pageParam) queryParams.set('page', pageParam);
       if (minPrice) queryParams.set('minPrice', minPrice);
       if (maxPrice) queryParams.set('maxPrice', maxPrice);
+      if (color) queryParams.set('color', color);
+      if (size) queryParams.set('size', size);
+      if (type) queryParams.set('type', type);
       
       // Debug the actual API call
       console.log('API call:', `/api/products?${queryParams.toString()}`);
@@ -119,7 +141,7 @@ const Products = () => {
     };
     
     fetchProducts();
-  }, [search, category, sort, pageParam, minPrice, maxPrice]);
+  }, [search, category, sort, pageParam, minPrice, maxPrice, color, size, type]);
   
   const toggleFilters = () => {
     setIsFiltersOpen(!isFiltersOpen);
@@ -131,6 +153,16 @@ const Products = () => {
     params.set('page', page.toString());
     router.push(`?${params.toString()}`);
   };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    const params = new URLSearchParams();
+    if (search) params.set('searchTerm', search);
+    router.push(`?${params.toString()}`);
+  };
+
+  // Check if any filters are applied
+  const hasFilters = category || minPrice || maxPrice || color || size || type;
 
   return (
     <>
@@ -161,9 +193,22 @@ const Products = () => {
           {/* Sidebar filters - desktop */}
           <div className="w-[250px] h-full hidden lg:block pr-6">
             <div className="sticky top-4">
+              {/* Clear filters button */}
+              {hasFilters && (
+                <button
+                  onClick={clearAllFilters}
+                  className="text-sm text-blue-600 hover:text-blue-800 mb-4 flex items-center"
+                >
+                  <X size={16} className="mr-1" />
+                  Clear all filters
+                </button>
+              )}
+              
               <SideCategories />
               <Separator />
               <SideProductType />
+              <Separator />
+              <SidePriceRange />
               <Separator />
               <SideColor />
               <Separator />
@@ -182,9 +227,23 @@ const Products = () => {
                     <X size={20} />
                   </button>
                 </div>
+                
+                {/* Clear filters button */}
+                {hasFilters && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="text-sm text-blue-600 hover:text-blue-800 mb-4 flex items-center"
+                  >
+                    <X size={16} className="mr-1" />
+                    Clear all filters
+                  </button>
+                )}
+                
                 <SideCategories />
                 <Separator />
                 <SideProductType />
+                <Separator />
+                <SidePriceRange />
                 <Separator />
                 <SideColor />
                 <Separator />
@@ -195,25 +254,108 @@ const Products = () => {
           
           {/* Product listing area */}
           <div className="flex-1">
+            {/* Applied filters chips - mobile and desktop */}
+            {hasFilters && (
+              <div className="flex flex-wrap gap-2 mb-4">
+                {category && (
+                  <Chip 
+                    label={`Category: ${category}`}
+                    onRemove={() => {
+                      const params = new URLSearchParams(searchParams.toString());
+                      params.delete('category');
+                      router.push(`?${params.toString()}`);
+                    }}
+                  />
+                )}
+                
+                {minPrice && maxPrice && (
+                  <Chip 
+                    label={`Price: $${minPrice} - $${maxPrice}`}
+                    onRemove={() => {
+                      const params = new URLSearchParams(searchParams.toString());
+                      params.delete('minPrice');
+                      params.delete('maxPrice');
+                      router.push(`?${params.toString()}`);
+                    }}
+                  />
+                )}
+                
+                {minPrice && !maxPrice && (
+                  <Chip 
+                    label={`Price: $${minPrice}+`}
+                    onRemove={() => {
+                      const params = new URLSearchParams(searchParams.toString());
+                      params.delete('minPrice');
+                      router.push(`?${params.toString()}`);
+                    }}
+                  />
+                )}
+                
+                {!minPrice && maxPrice && (
+                  <Chip 
+                    label={`Price: Up to $${maxPrice}`}
+                    onRemove={() => {
+                      const params = new URLSearchParams(searchParams.toString());
+                      params.delete('maxPrice');
+                      router.push(`?${params.toString()}`);
+                    }}
+                  />
+                )}
+                
+                {color && (
+                  <Chip 
+                    label={`Color: ${color}`}
+                    onRemove={() => {
+                      const params = new URLSearchParams(searchParams.toString());
+                      params.delete('color');
+                      router.push(`?${params.toString()}`);
+                    }}
+                  />
+                )}
+                
+                {size && (
+                  <Chip 
+                    label={`Size: ${size.toUpperCase()}`}
+                    onRemove={() => {
+                      const params = new URLSearchParams(searchParams.toString());
+                      params.delete('size');
+                      router.push(`?${params.toString()}`);
+                    }}
+                  />
+                )}
+                
+                {type && (
+                  <Chip 
+                    label={`Type: ${type}`}
+                    onRemove={() => {
+                      const params = new URLSearchParams(searchParams.toString());
+                      params.delete('type');
+                      router.push(`?${params.toString()}`);
+                    }}
+                  />
+                )}
+              </div>
+            )}
+            
             {/* Sort dropdown - desktop */}
-            <div className="hidden lg:flex justify-between items-center mb-6">
+            <div className="hidden lg:flex justify-between items-center mb-4">
               <div className="text-sm text-gray-500">
-                {products.length > 0 ? `Showing ${products.length} of ${totalCount} products` : 'No products found'}
+                Showing {totalCount} {totalCount === 1 ? 'product' : 'products'}
               </div>
               <SortDropdown />
             </div>
             
-            {/* Products grid */}
+            {/* Products grid or no results */}
             {loading ? (
-              <ProductListSkeleton count={12} />
+              <ProductListSkeleton />
             ) : products.length > 0 ? (
               <>
                 <ProductGrid products={products} />
                 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="mt-8 flex justify-center">
-                    <Pagination
+                  <div className="mt-8">
+                    <Pagination 
                       currentPage={currentPage}
                       totalPages={totalPages}
                       onPageChange={handlePageChange}
@@ -222,18 +364,21 @@ const Products = () => {
                 )}
               </>
             ) : (
-              <NoResults
+              <NoResults 
                 title="No products found"
-                description="Try adjusting your search or filter criteria"
+                description="Try changing your search or filter criteria."
               />
             )}
           </div>
         </div>
+        
+        {/* Promotional banner at bottom */}
+        <div className="mt-12">
+          <BannerPromotion />
+        </div>
       </div>
-      
-      <BannerPromotion />
     </>
-  )
-}
+  );
+};
 
-export default Products
+export default Products;

@@ -1,28 +1,71 @@
-import React from 'react'
-import { SIZE } from '@/common/constant/size'
+"use client";
+
+import React, { useState } from 'react';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+
+// You might want to fetch these from an API later
+const sizes = [
+  { id: 'xs', name: 'XS' },
+  { id: 's', name: 'S' },
+  { id: 'm', name: 'M' },
+  { id: 'l', name: 'L' },
+  { id: 'xl', name: 'XL' },
+  { id: 'xxl', name: 'XXL' }
+];
 
 export const SideSize = () => {
-    return (
-        <>
-            <div className="flex justify-between mb-3">
-                <div className="text-sky-900 font-semibold">Size</div>
-            </div>
-            <div className="flex justify-between mb-3">
-                <div className="text-sky-900">0 selected</div>
-                <a href="#" className="text-sky-900 text-sm">Reset</a>
-            </div>
-            {SIZE.map((size, index) => (
-                <div key={index} className="flex justify-between items-center mb-3">
-                    <label className="flex items-center space-x-2">
-                        <input id={size.name} type="checkbox" className="h-6 w-6 rounded-md bg-slate-300 checked:bg-slate-700 focus:ring-0"
-                        // checked={}
-                        // onChange={} 
-                        />
-                        <label htmlFor={size.name} className='ml-0 text-gray-800'>{size.name}</label>
-                    </label>
-                    <div className="text-sky-900">5</div>
-                </div>
-            ))}
-        </>
-    )
-}
+  const [expanded, setExpanded] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  
+  const currentSize = searchParams.get('size') || '';
+  
+  const handleSizeChange = (sizeId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (sizeId === currentSize) {
+      // If clicking the same size, remove the filter
+      params.delete('size');
+    } else {
+      // Otherwise set the new size
+      params.set('size', sizeId);
+    }
+    
+    // Reset to page 1 when changing size
+    params.set('page', '1');
+    
+    router.push(`${pathname}?${params.toString()}`);
+  };
+  
+  return (
+    <div className="py-4">
+      <div 
+        className="flex justify-between items-center cursor-pointer mb-3"
+        onClick={() => setExpanded(!expanded)}
+      >
+        <h3 className="font-medium text-sm uppercase">Size</h3>
+        {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+      </div>
+      
+      {expanded && (
+        <div className="grid grid-cols-3 gap-2 mt-2">
+          {sizes.map((size) => (
+            <button
+              key={size.id}
+              onClick={() => handleSizeChange(size.id)}
+              className={`border text-center py-2 text-sm rounded ${
+                currentSize === size.id 
+                  ? 'border-blue-600 bg-blue-50 text-blue-600' 
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+            >
+              {size.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
