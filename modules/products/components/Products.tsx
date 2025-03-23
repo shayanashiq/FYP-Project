@@ -27,12 +27,7 @@ const Products = () => {
                     <SideSize />
                     <Separator />
                 </div>
-                {/* <div className="max-w-full ml-8 flex flex-wrap ">
-                    {PRODUCTS.map((product, index) => (
-                        <Product key={`${product.id}-${index}`} product={product} />
-
-                    ))}
-                </div> */}
+                
             </div>
             <BannerPromotion />
         </>

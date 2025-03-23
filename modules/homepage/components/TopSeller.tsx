@@ -8,7 +8,7 @@ const TopSeller = () => {
     return (
         <div className="container mx-auto px-4">
             <div className="flex flex-col lg:flex-row justify-center items-center gap-5 mb-5">
-                <Card className="w-full lg:w-[830px] h-auto lg:h-[500px] p-4 lg:p-0 justify-center items-center gap-5 lg:gap-10 flex flex-col lg:flex-row relative">
+                <Card className="w-full lg:w-[830px] h-auto lg:h-[500px] p-4 lg:p-0 justify-center items-center gap-5 lg:gap-10 flex flex-col lg:flex-row relative border border-zinc-200">
                     <img className="p-3 rounded-2xl max-w-full h-auto" src="/assets/img/jbl-bar.png" alt="JBL Bar" />
                     <div className="justify-center items-center flex absolute bottom-4 lg:bottom-10">
                         <DotSlide count={1} />
@@ -55,7 +55,7 @@ const TopSeller = () => {
                     </div>
                 </Card>
                 <div className="flex flex-col w-full lg:w-auto">
-                    <div className="w-full lg:w-[500px] h-auto sm:h-60 rounded-2xl border border-zinc-400 flex-col justify-center items-center gap-4 inline-flex mb-5 cursor-pointer hover:bg-slate-100 p-4">
+                    <div className="w-full lg:w-[500px] h-auto sm:h-60 rounded-2xl border border-zinc-200 flex-col justify-center items-center gap-4 inline-flex mb-5 cursor-pointer hover:bg-slate-100 p-4">
                         <div className="flex flex-col sm:flex-row justify-start items-center gap-4 sm:gap-6 lg:gap-12">
                             <img className="w-full sm:w-60 lg:w-72 h-auto sm:h-36 lg:h-44 p-2 relative rounded-2xl" src="https://source.unsplash.com/288x176?gaming" alt="Gaming" />
                             <div className="flex-col justify-center items-center sm:items-start gap-2 sm:gap-4 inline-flex mt-3 sm:mt-0">
@@ -65,7 +65,7 @@ const TopSeller = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="w-full lg:w-[500px] h-auto sm:h-60 rounded-2xl border border-zinc-400 flex-col justify-center items-center gap-4 inline-flex cursor-pointer hover:bg-slate-100 p-4">
+                    <div className="w-full lg:w-[500px] h-auto sm:h-60 rounded-2xl border border-zinc-200 flex-col justify-center items-center gap-4 inline-flex cursor-pointer hover:bg-slate-100 p-4">
                         <div className="flex flex-col sm:flex-row justify-start items-center gap-4 sm:gap-6 lg:gap-12">
                             <img className="w-full sm:w-60 lg:w-72 h-auto sm:h-36 lg:h-44 p-2 relative rounded-2xl" src="https://source.unsplash.com/288x176?laptop" alt="Laptop" />
                             <div className="flex-col justify-center items-center sm:items-start gap-2 sm:gap-4 inline-flex mt-3 sm:mt-0">

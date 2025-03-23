@@ -40,7 +40,7 @@ const HeaderBottom = () => {
           </a>
 
           {/* Center section with search bar for md+ screens */}
-          <div className="hidden md:block flex-grow mx-4 max-w-[600px] w-full">
+          <div className="hidden md:block flex-grow mx-4 max-w-[610px] w-full">
             <SearchSection />
           </div>
           
