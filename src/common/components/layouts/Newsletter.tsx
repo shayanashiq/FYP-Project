@@ -3,7 +3,7 @@ import React from 'react';
 const Newsletter: React.FC = () => {
     return (
         <div className='px-20 mt-12'>
-            <div className="bg-amber-500 py-8 px-4 rounded-lg">
+            <div className="bg-amber-500 py-8  rounded-lg">
             <h2 className="text-white text-3xl font-bold text-center mb-4">Subscribe to our newsletter</h2>
             
             <p className="text-white text-center mb-6 max-w-3xl mx-auto">

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
 // Define types for your API response data
@@ -37,6 +37,8 @@ const CategoryDropdown = () => {
     const [categories, setCategories] = useState<FormattedCategory[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [dropdownTop, setDropdownTop] = useState(0);
+    const buttonRef = useRef<HTMLButtonElement>(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -74,12 +76,21 @@ const CategoryDropdown = () => {
         fetchCategories();
     }, []);
 
+    // Calculate dropdown position when opening
+    useEffect(() => {
+        if (isOpen && buttonRef.current) {
+            const buttonRect = buttonRef.current.getBoundingClientRect();
+            const top = buttonRect.bottom;
+            setDropdownTop(top);
+        }
+    }, [isOpen]);
+
     // Close dropdown when clicking outside
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as Node;
             const dropdownContainer = document.getElementById('category-dropdown-container');
-            
+
             if (dropdownContainer && !dropdownContainer.contains(target)) {
                 setIsOpen(false);
             }
@@ -101,9 +112,10 @@ const CategoryDropdown = () => {
     return (
         <div
             id="category-dropdown-container"
-            className="relative"
+            className="relative flex justify-center md:justify-start"
         >
-            <button 
+            <button
+                ref={buttonRef}
                 className="flex items-center gap-1 text-[#FFFFFF] font-inter font-medium text-[20px] leading-[150%] tracking-[0%] align-middle hover:text-amber-300 transition-colors px-3 py-6"
                 onClick={toggleDropdown}
             >
@@ -119,7 +131,10 @@ const CategoryDropdown = () => {
             </button>
 
             {isOpen && (
-                <div className="fixed left-0 right-0 w-full bg-white shadow-lg z-40 border-t border-gray-200" style={{ top: 'calc(var(--header-height, 84px) + 40px)' }}>
+                <div 
+                    className="fixed left-0 right-0 w-full bg-white shadow-lg z-40 border-t border-gray-200"
+                    style={{ top: `${dropdownTop}px` }}
+                >
                     <div className="container mx-auto px-4 py-6">
                         {loading ? (
                             <div className="flex justify-center items-center py-4">

@@ -51,6 +51,7 @@ const rightProducts = [
 const Slider = () => {
     const [currentSlide, setCurrentSlide] = useState(0);
     const [isPaused, setIsPaused] = useState(false);
+    const [showCardsOnMobile, setShowCardsOnMobile] = useState(false);
 
     useEffect(() => {
         if (isPaused) return; // Stop sliding when paused
@@ -83,7 +84,7 @@ const Slider = () => {
         alert('Shop now');
     };
 
-    const goToSlide = (index: number) => {
+    const goToSlide = (index) => {
         setCurrentSlide(index);
         setIsPaused(true); // Pause automatic sliding when manually navigating
     };
@@ -102,53 +103,67 @@ const Slider = () => {
         setIsPaused(true);
     };
 
+    const toggleMobileCards = () => {
+        setShowCardsOnMobile(!showCardsOnMobile);
+    };
+
     return (
-        <div className="w-[90%] mx-auto mt-20">
-            <div className="flex gap-4">
-                {/* Main Slider (Left Side) */}
-                <div className="w-2/3 bg-gray-100 rounded-lg relative overflow-hidden">
+        <div className="w-[90%] mx-auto mt-8 md:mt-20">
+            {/* Mobile Toggle Button (only visible on mobile) */}
+            {/* <div className="md:hidden mb-4 flex justify-between items-center">
+                <h2 className="text-xl font-bold">Featured Products</h2>
+                <button 
+                    onClick={toggleMobileCards}
+                    className="bg-blue-500 text-white px-3 py-1 rounded-md text-sm"
+                >
+                    {showCardsOnMobile ? 'Hide Cards' : 'Show More Cards'}
+                </button>
+            </div> */}
+            
+            <div className="flex flex-col md:flex-row md:gap-4">
+                {/* Main Slider (Full width on mobile, 2/3 width on md+) */}
+                <div className="w-full md:w-2/3 bg-gray-100 rounded-lg relative overflow-hidden">
                     {sliderData.map((slide, index) => (
                         <div
                             key={index}
-                            className={`${currentSlide === index ? 'block' : 'hidden'} p-8`}
+                            className={`${currentSlide === index ? 'block' : 'hidden'} p-4 md:p-8`}
                         >
-                            <div className="flex items-center justify-between">
-                                <div className="flex flex-col space-y-4 max-w-md">
-                                    <div className="text-blue-500 text-sm font-medium">{slide.subtitle}</div>
-                                    <h2 className="text-4xl font-bold text-gray-900">{slide.title}</h2>
-                                    <p className="text-gray-700 text-sm mb-6">{slide.description}</p>
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                                <div className="flex flex-col space-y-2 md:space-y-4 max-w-md">
+                                    <div className="text-blue-500 text-xs md:text-sm font-medium">{slide.subtitle}</div>
+                                    <h2 className="text-2xl md:text-4xl font-bold text-gray-900">{slide.title}</h2>
+                                    <p className="text-gray-700 text-xs md:text-sm mb-4 md:mb-6">{slide.description}</p>
 
                                     <Button
                                         onClick={handleClick}
-                                        className="w-40 bg-amber-500 text-white text-sm font-medium hover:bg-amber-600"
+                                        className="w-32 md:w-40 bg-amber-500 text-white text-xs md:text-sm font-medium hover:bg-amber-600"
                                     >
                                         {slide.buttonText} <span className="ml-2">→</span>
                                     </Button>
                                 </div>
 
-                                <div className="relative">
-                                    <div className="absolute -top-10 -right-10 bg-blue-500 text-white rounded-full w-24 h-24 flex items-center justify-center text-xl font-bold">
+                                <div className="relative mt-4 md:mt-0">
+                                    <div className="absolute -top-6 right-0 md:-top-10 md:-right-10 bg-blue-500 text-white rounded-full w-16 h-16 md:w-24 md:h-24 flex items-center justify-center text-base md:text-xl font-bold">
                                         {slide.price}
                                     </div>
                                     <img
                                         src={slide.image}
                                         alt={slide.title}
-                                        className="max-h-80 object-contain"
+                                        className="max-h-48 md:max-h-80 mx-auto md:mx-0 object-contain"
                                     />
                                 </div>
                             </div>
 
                             {/* Navigation Controls */}
-                            <div className="absolute bottom-4 left-8 flex items-center space-x-4">
+                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 md:left-8 md:translate-x-0 flex items-center space-x-4">
                                 {/* Previous Arrow */}
                                 <button
                                     onClick={goToPrevSlide}
                                     className="w-4 h-4 flex items-center justify-center"
                                 >
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M16 4L8 12L16 20" stroke="gray" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                                        <path d="M16 4L8 12L16 20" stroke="gray" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
-
                                 </button>
 
                                 {/* Navigation Dots */}
@@ -169,19 +184,18 @@ const Slider = () => {
                                     className="w-4 h-4 flex items-center justify-center"
                                 >
                                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M8 4L16 12L8 20" stroke="gray" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+                                        <path d="M8 4L16 12L8 20" stroke="gray" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                                     </svg>
-
                                 </button>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                {/* Right Side Products */}
-                <div className="w-1/3 flex flex-col gap-4">
+                {/* Right Side Products - Hidden by default on mobile, shown when toggled or always visible on md+ */}
+                <div className={`${showCardsOnMobile ? 'block' : 'hidden'} md:block w-full md:w-1/3 flex flex-col gap-4 mt-4 md:mt-0`}>
                     {/* Top Product - Google Pixel */}
-                    <div className="bg-gray-900 text-white p-4 rounded-lg relative h-1/2">
+                    <div className="bg-gray-900 text-white p-4 rounded-lg relative h-40 md:h-1/2">
                         <div className="absolute top-3 right-3 bg-yellow-400 text-black text-xs font-bold px-2 py-1 rounded">
                             {rightProducts[0].discount}
                         </div>
@@ -198,13 +212,13 @@ const Slider = () => {
                             <img
                                 src={rightProducts[0].image}
                                 alt={rightProducts[0].title}
-                                className="h-28 object-contain"
+                                className="h-20 md:h-28 object-contain"
                             />
                         </div>
                     </div>
 
                     {/* Bottom Product - Xiaomi FlipBuds */}
-                    <div className="bg-gray-100 p-4 rounded-lg h-1/2">
+                    <div className="bg-gray-100 p-4 rounded-lg h-40 md:h-1/2">
                         <div className="flex justify-between">
                             <div>
                                 <h3 className="text-lg font-medium text-gray-900">{rightProducts[1].title}</h3>
@@ -220,7 +234,7 @@ const Slider = () => {
                             <img
                                 src={rightProducts[1].image}
                                 alt={rightProducts[1].title}
-                                className="h-28 object-contain"
+                                className="h-20 md:h-28 object-contain"
                             />
                         </div>
                     </div>

@@ -15,10 +15,8 @@ const Homepage = () => {
             <FeaturedProducts/>
             <TopDeals/>
             <BannerPromotion />
-            {/* <TopSeller /> */}
+            <TopSeller />
             <Features />
-            <Newsletter/>
-            {/* <Partner /> */}
         </>
     )
 }

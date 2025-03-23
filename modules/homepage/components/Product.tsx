@@ -305,7 +305,7 @@ const Product: React.FC<ProductProps> = ({
   return (
     <div
       onClick={() => router.push(`/products/${product.slug}`)}
-      className="w-64 bg-white border border-gray-150 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden cursor-pointer"
+      className="w-68 bg-white border border-gray-150 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden cursor-pointer"
     >
       {/* Discount Badge */}
       {discountPercentage > 0 && (

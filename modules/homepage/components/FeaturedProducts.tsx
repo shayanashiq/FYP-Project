@@ -141,11 +141,11 @@ const FeaturedProducts: React.FC = () => {
   const secondRowProducts = products.slice(5, 10);
 
   return (
-    <div className="px-20">
-      <h1 className="mt-12 mb-8 flex flex-col text-cyan-800 text-4xl font-medium">
+    <div className="px-4 sm:px-8 md:px-12 lg:px-20">
+      <h1 className="mt-8 md:mt-12 mb-4 md:mb-8 text-cyan-800 text-2xl md:text-3xl lg:text-4xl font-medium text-center md:text-left">
         Featured Products
       </h1>
-      <div className="px-8 flex justify-center items-center flex-col w-full">
+      <div className="flex justify-center items-center flex-col w-full">
         <div className="container mx-auto">
           {loading ? (
             <div className="flex justify-center items-center h-64">
@@ -160,25 +160,10 @@ const FeaturedProducts: React.FC = () => {
               <p className="text-gray-500">No featured products available.</p>
             </div>
           ) : (
-            <div className="px-4">
-              {/* First row of products */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
-                {firstRowProducts.map((product) => {
-                  const { isInWishlist, wishlistItemId } = getWishlistInfo(product.id);
-                  return (
-                    <Product 
-                      key={product.id} 
-                      product={product} 
-                      isInWishlist={isInWishlist}
-                      wishlistItemId={wishlistItemId}
-                    />
-                  );
-                })}
-              </div>
-              
-              {/* Second row of products */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-                {secondRowProducts.map((product) => {
+            <div>
+              {/* Products grid - mobile first approach */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+                {products.map((product) => {
                   const { isInWishlist, wishlistItemId } = getWishlistInfo(product.id);
                   return (
                     <Product 
@@ -193,7 +178,7 @@ const FeaturedProducts: React.FC = () => {
             </div>
           )}
         </div>
-        <button className="mt-8 mx-auto px-8 py-2 text-xl bg-[#205781] text-white">
+        <button className="mt-6 md:mt-8 px-6 py-2 text-lg md:text-xl bg-[#205781] text-white rounded-md hover:bg-[#1a4a70] transition-colors">
           See All
         </button>
       </div>

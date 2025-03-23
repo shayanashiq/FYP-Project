@@ -4,7 +4,7 @@ import FooterMenu from './FooterMenu'
 
 const Footer = () => {
     return (
-        <div className="bg-[sky-100]">
+        <div>
             <FooterMenu />
         </div>
     )

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Product, { ProductType } from "./Product";
 
@@ -56,9 +56,6 @@ const TopDeals: React.FC = () => {
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
-  const [isAnimating, setIsAnimating] = useState<boolean>(false);
-  const sliderRef = useRef<HTMLDivElement>(null);
 
   // Fetch user's wishlist if logged in
   useEffect(() => {
@@ -101,7 +98,7 @@ const TopDeals: React.FC = () => {
         console.log('Fetching top deals products with discount >= 20%');
         
         // Update the API endpoint to filter for products with discount >= 20%
-        const response = await fetch('/api/products?minDiscount=20&limit=50');
+        const response = await fetch('/api/products?minDiscount=20&limit=10');
         
         if (!response.ok) {
           throw new Error(`Failed to fetch top deals products: ${response.status}`);
@@ -130,7 +127,7 @@ const TopDeals: React.FC = () => {
             salePrice: salePrice,
             tags: [
               ...(product.isBestChoice ? ["best choice"] : []),
-              "sale", // Add 'sale' tag directly as a string, not as an array
+              "sale", 
               // Add other tag logic as needed
             ],
             inStock: product.stock > 0,
@@ -154,126 +151,55 @@ const TopDeals: React.FC = () => {
     fetchTopDeals();
   }, []);
 
-  // Function to handle next/prev clicks
-  const handleNext = (): void => {
-    if (currentIndex + 4 < products.length && !isAnimating) {
-      setIsAnimating(true);
-      setCurrentIndex(currentIndex + 4);
-
-      // Reset animation state after animation completes
-      setTimeout(() => {
-        setIsAnimating(false);
-      }, 500);
-    }
+  // Helper function to check if a product is in the wishlist
+  const getWishlistInfo = (productId: string) => {
+    const wishlistItem = wishlistItems.find(item => item.productId === productId);
+    return {
+      isInWishlist: !!wishlistItem,
+      wishlistItemId: wishlistItem?.id
+    };
   };
-
-  const handlePrev = (): void => {
-    if (currentIndex - 4 >= 0 && !isAnimating) {
-      setIsAnimating(true);
-      setCurrentIndex(currentIndex - 4);
-
-      // Reset animation state after animation completes
-      setTimeout(() => {
-        setIsAnimating(false);
-      }, 500);
-    }
-  };
-
-  // Calculate which products to show in the current view plus next items for smooth transition
-  const visibleProducts = products.slice(
-    Math.max(0, currentIndex - 4),
-    Math.min(products.length, currentIndex + 8)
-  );
-
-  // Update transform style when currentIndex changes
-  useEffect(() => {
-    if (sliderRef.current) {
-      sliderRef.current.style.transform = `translateX(-${
-        currentIndex * 21.25
-      }rem)`;
-    }
-  }, [currentIndex]);
 
   return (
-    <div className="px-20">
-      <h1 className="mt-12 mb-8 flex flex-col text-cyan-800 text-4xl font-medium">
+    <div className="px-4 sm:px-8 md:px-12 lg:px-20">
+      <h1 className="mt-8 md:mt-12 mb-4 md:mb-8 text-cyan-800 text-2xl md:text-3xl lg:text-4xl font-medium text-center md:text-left">
         Top Deals
       </h1>
-      <div className="flex justify-center items-center flex-col w-[96%]">
-        <div className="container mx-auto relative">
-          <div className="w-full overflow-hidden relative px-10">
-            {loading ? (
-              <div className="flex justify-center items-center h-64">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-800"></div>
+      <div className="flex justify-center items-center flex-col w-full">
+        <div className="container mx-auto">
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-800"></div>
+            </div>
+          ) : error && products.length === 0 ? (
+            <div className="flex justify-center items-center h-64">
+              <p className="text-red-500">Error loading deals: {error}</p>
+            </div>
+          ) : products.length === 0 ? (
+            <div className="flex justify-center items-center h-64">
+              <p className="text-gray-500">No top deals right now.</p>
+            </div>
+          ) : (
+            <div>
+              {/* Products grid - mobile first approach */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2 sm:gap-4">
+                {products.map((product) => {
+                  const { isInWishlist, wishlistItemId } = getWishlistInfo(product.id);
+                  return (
+                    <Product 
+                      key={product.id} 
+                      product={product} 
+                      isInWishlist={isInWishlist}
+                      wishlistItemId={wishlistItemId}
+                      onWishlistChange={refreshWishlist}
+                    />
+                  );
+                })}
               </div>
-            ) : error && products.length === 0 ? (
-              <div className="flex justify-center items-center h-64">
-                <p className="text-red-500">Error loading deals: {error}</p>
-              </div>
-            ) : products.length === 0 ? (
-              <div className="flex justify-center items-center h-64">
-                <p className="text-gray-500">No top deals right now.</p>
-              </div>
-            ) : (
-              <>
-                {/* Product slider with smooth transition */}
-                <div
-                  ref={sliderRef}
-                  className="flex transition-transform duration-500 ease-in-out space-x-2"
-                  style={{ width: "fit-content" }}
-                >
-                  {/* Display all potentially visible products with wishlist status */}
-                  {visibleProducts.map((product, index) => {
-                    // Find if this product is in the wishlist
-                    const wishlistItem = wishlistItems.find(item => item.productId === product.id);
-                    const isInWishlist = !!wishlistItem;
-                    
-                    return (
-                      <Product 
-                        key={`${product.id}-${index}`} 
-                        product={product} 
-                        isInWishlist={isInWishlist}
-                        wishlistItemId={wishlistItem?.id}
-                        onWishlistChange={refreshWishlist}
-                      />
-                    );
-                  })}
-                </div>
-
-                {/* Left Arrow */}
-                {currentIndex > 0 && (
-                  <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-white via-white/30 to-transparent z-10 pointer-events-none">
-                    <button
-                      onClick={handlePrev}
-                      className="absolute left-2 top-1/2 transform -translate-y-1/2 h-12 w-12 flex items-center justify-center rounded-full bg-gray-300 hover:bg-gray-400 shadow-md transition-all duration-300 pointer-events-auto"
-                      aria-label="Previous products"
-                    >
-                      <span className="text-3xl text-gray-700 hover:text-gray-900 transition-transform transform hover:scale-110">
-                        &lt;
-                      </span>
-                    </button>
-                  </div>
-                )}
-
-                {/* Right Arrow */}
-                {currentIndex + 4 < products.length && (
-                  <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-white via-white/30 to-transparent z-10 pointer-events-none">
-                    <button
-                      onClick={handleNext}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 h-12 w-12 flex items-center justify-center rounded-full bg-gray-300 hover:bg-gray-400 shadow-md transition-all duration-300 pointer-events-auto"
-                      aria-label="Next products"
-                    >
-                      <span className="text-3xl text-gray-700 hover:text-gray-900 transition-transform transform hover:scale-110">
-                        &gt;
-                      </span>
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+            </div>
+          )}
         </div>
-        <button className="mt-8 mx-auto px-8 py-2 text-xl bg-[#205781] text-white">
+        <button className="mt-6 md:mt-8 px-6 py-2 text-lg md:text-xl bg-[#205781] text-white rounded-md hover:bg-[#1a4a70] transition-colors">
           See All
         </button>
       </div>
