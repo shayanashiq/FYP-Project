@@ -8,11 +8,7 @@ import CartSection from '@/common/components/layouts/CartSection'
 import CategoryDropdown from './CategoryDropdown'
 import { Menu, X, Search } from 'lucide-react'
 
-interface HeaderBottomProps {
-  logoSrc: string;
-}
-
-const HeaderBottom: React.FC<HeaderBottomProps> = ({ logoSrc }) => {
+const HeaderBottom = () => {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
@@ -39,7 +35,7 @@ const HeaderBottom: React.FC<HeaderBottomProps> = ({ logoSrc }) => {
             }}
             className="flex-shrink-0"
           >
-            <Image src={logoSrc} alt="Logo" width={500} height={500} className="h-16 w-16 md:h-24 md:w-24" />
+            <Image src={"/logo"} alt="Logo" width={500} height={500} className="h-16 w-16 md:h-24 md:w-24" />
           </a>
 
           {/* Center section with search bar for md+ screens */}

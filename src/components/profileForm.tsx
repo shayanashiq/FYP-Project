@@ -82,7 +82,7 @@ const CustomerProfileForm: React.FC = () => {
     formData.append('image', file);
     
     // Upload to your image storage API
-    const response = await fetch('/api/upload-image', {
+    const response = await fetch('/api/upload', {
       method: 'POST',
       body: formData,
     });
