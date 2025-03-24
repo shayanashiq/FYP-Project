@@ -1,14 +1,41 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { useSession, signOut } from 'next-auth/react'
 
-const CartSection = () => {
+interface NavItem {
+    name: string;
+    icon: React.ReactNode;
+    onClick: (e: React.MouseEvent) => void;
+    count: number | null;
+    dropdownItems?: Array<{
+        name: string;
+        onClick: () => void;
+    }>;
+}
+
+const CartSection: React.FC = () => {
     const router = useRouter();
     const { data: session } = useSession();
-    const [cartCount, setCartCount] = useState(0);
-    const [wishlistCount, setWishlistCount] = useState(0);
+    const [cartCount, setCartCount] = useState<number>(0);
+    const [wishlistCount, setWishlistCount] = useState<number>(0);
+    const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsDropdownOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     // Fetch counts from API when session or component changes
     useEffect(() => {
@@ -37,7 +64,17 @@ const CartSection = () => {
         fetchCounts();
     }, [session]);
 
-    const navItems = [
+    const toggleDropdown = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setIsDropdownOpen(!isDropdownOpen);
+    };
+
+    // Simple logout function using next-auth signOut
+    const handleLogout = () => {
+        signOut({ redirect: true, callbackUrl: '/login' });
+    };
+
+    const navItems: NavItem[] = [
         {
             name: session ? "Wishlist" : "Sign in",
             icon: (
@@ -45,10 +82,9 @@ const CartSection = () => {
                     <path d="M13.4094 20.81C13.0694 20.93 12.5094 20.93 12.1694 20.81C9.26943 19.82 2.78943 15.69 2.78943 8.69001C2.78943 5.60001 5.27943 3.10001 8.34943 3.10001C10.1694 3.10001 11.7794 3.98001 12.7894 5.34001C13.7994 3.98001 15.4194 3.10001 17.2294 3.10001C20.2994 3.10001 22.7894 5.60001 22.7894 8.69001C22.7894 15.69 16.3094 19.82 13.4094 20.81Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
             ),
-            onClick: () => router.push(session ? "/account/wishlist" : "/login"),
+            onClick: (e: React.MouseEvent) => router.push(session ? "/account/wishlist" : "/login"),
             count: session ? wishlistCount : null
         },
-
         {
             name: "Cart",
             icon: (
@@ -59,9 +95,10 @@ const CartSection = () => {
                     <path d="M8.99995 8H21" stroke="currentColor" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
             ),
-            onClick: () => router.push("/account/cart"),
+            onClick: (e: React.MouseEvent) => router.push("/account/cart"),
             count: session ? cartCount : null
         },
+        // Profile item with dropdown
         {
             name: session ? "Account" : "Sign in",
             icon: (
@@ -70,43 +107,90 @@ const CartSection = () => {
                     <path d="M21.3794 22C21.3794 18.13 17.5294 15 12.7894 15C8.04943 15 4.19943 18.13 4.19943 22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
             ),
-            onClick: () => router.push(session ? "/account" : "/login"),
-            count: null
+            onClick: session ? toggleDropdown : (e: React.MouseEvent) => router.push("/login"),
+            count: null,
+            dropdownItems: session ? [
+                {
+                    name: "Account",
+                    onClick: () => router.push("/account")
+                },
+                {
+                    name: "Orders",
+                    onClick: () => router.push("/account/orders")
+                },
+                {
+                    name: "Browsing History",
+                    onClick: () => router.push("/account/history")
+                },
+                // Add the Logout option
+                {
+                    name: "Logout",
+                    onClick: handleLogout
+                }
+            ] : undefined
         },
     ];
 
     return (
         <div className="flex items-center justify-end space-x-4">
             {navItems.map((item, index) => (
-                <button
-                    key={index}
-                    onClick={item.onClick}
-                    className="relative px-2 py-2 text-white "
-                >
-                    {/* Icon Container */}
-                    <div className="relative inline-block" style={{ width: '25px', height: '25px' }}>
-                        {item.icon}
+                <div key={index} className="relative">
+                    <button
+                        onClick={item.onClick}
+                        className={`relative px-2 py-2 text-white hover:text-blue-100 transition-colors duration-200 ${isDropdownOpen && index === navItems.length - 1 ? 'text-blue-100' : ''}`}
+                    >
+                        {/* Icon Container */}
+                        <div className="relative inline-block" style={{ width: '25px', height: '25px' }}>
+                            {item.icon}
+                            
+                            {/* Count Badge */}
+                            {typeof item.count === "number" && item.count > 0 && (
+                                <div 
+                                    className="absolute bg-white text-black text-xs font-medium rounded-full flex items-center justify-center shadow-md"
+                                    style={{ 
+                                        width: '16px', 
+                                        height: '16px', 
+                                        top: '-6px', 
+                                        right: '-6px',
+                                        zIndex: 10
+                                    }}
+                                >
+                                    {item.count}
+                                </div>
+                            )}
+                        </div>
                         
-                        {/* Count Badge */}
-                        {typeof item.count === "number" && item.count > 0 && (
-                            <div 
-                                className="absolute bg-white text-black text-xs font-medium rounded-full flex items-center justify-center shadow-md"
-                                style={{ 
-                                    width: '16px', 
-                                    height: '16px', 
-                                    top: '-6px', 
-                                    right: '-6px',
-                                    zIndex: 10
-                                }}
-                            >
-                                {item.count}
+                        {/* Text Label */}
+                        <span className="ml-2 text-sm font-medium hidden sm:inline-block">{item.name}</span>
+                    </button>
+
+                    {/* Dropdown for Account */}
+                    {index === navItems.length - 1 && item.dropdownItems && isDropdownOpen && (
+                        <div 
+                            ref={dropdownRef}
+                            className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg py-2 z-50 border border-gray-200"
+                            style={{ minWidth: '200px' }}
+                        >
+                            <div className="px-4 py-2 border-b border-gray-100">
+                                <p className="text-md font-semibold text-gray-800">My Account</p>
+                                <p className="text-sm font-semibold text-gray-500 py-1">{session?.user.email}</p>
                             </div>
-                        )}
-                    </div>
-                    
-                    {/* Text Label */}
-                    <span className="ml-2 text-sm font-medium hidden sm:inline-block">{item.name}</span>
-                </button>
+                            {item.dropdownItems.map((dropdownItem, dropdownIndex) => (
+                                <button
+                                    key={dropdownIndex}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsDropdownOpen(false);
+                                        dropdownItem.onClick();
+                                    }}
+                                    className="block w-full text-left px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
+                                >
+                                    {dropdownItem.name}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
             ))}
         </div>
     );
