@@ -1,7 +1,7 @@
 import React from "react";
 import LoginPic from "@/assets/images/login-page.png";
 import PasswordPic from "@/assets/images/password.png";
-import verifyPic from "@/assets/images/verify-img.png";
+import verifyPic from "@/assets/myImages/otp.png";
 import RegisterP from "@/assets/images/login-bg.jpeg";
 import Image from "next/image";
 

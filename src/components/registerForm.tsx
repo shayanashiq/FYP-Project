@@ -110,10 +110,10 @@ export default function ClientLoginForm() {
       >
         {({ errors, touched, isSubmitting, handleSubmit }) => (
           <Form onSubmit={handleSubmit}>
-            <div className="flex flex-col space-y-2 relative w-full font-custom">
+            <div className="mt-8 flex flex-col space-y-2 relative w-full">
               <label
                 htmlFor="email"
-                className="text-black text-[17px] leading-[20px] font-semibold"
+                className=" text-black text-[17px] leading-[20px] font-semibold"
               >
                 Email address <span className="text-red-500">*</span>
               </label>
@@ -132,7 +132,7 @@ export default function ClientLoginForm() {
               
               <button
                 type="submit"
-                className="bg-gradient-to-b from-[#579FE1] to-[#2290F3] text-white font-medium text-base py-2 px-4 rounded mt-2"
+                className="bg-[#F19B12] text-white font-medium text-base py-2 px-4 rounded mt-2"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Signing up..." : "Continue"}

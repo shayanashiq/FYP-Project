@@ -195,7 +195,7 @@ function ClientLoginForm() {
 
               <button
                 type="submit"
-                className={`bg-gradient-to-b from-[#579FE1] to-[#2290F3] text-base font-medium text-white py-2 ${
+                className={`bg-[#F19B12] rounded-md text-base font-medium text-white py-2 ${
                   isSubmitting || loading ? "opacity-50 cursor-not-allowed" : ""
                 }`}
                 disabled={isSubmitting || loading}
@@ -215,7 +215,7 @@ function ClientLoginForm() {
 
       <button
         onClick={handleGoogleSignIn}
-        className="flex justify-center py-2 w-full bg-white font-custom text-base font-normal text-black border-blue-300 border-2"
+        className="flex justify-center py-2 w-full bg-white font-custom text-base font-normal text-black border-[#F19B12] border-2"
       >
         <Image
           width={50}

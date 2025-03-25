@@ -81,7 +81,7 @@ function ClientPasswordForm() {
 
   return (
     <form
-      className="w-full max-w-[410px] flex flex-col items-center space-y-4 font-custom"
+      className="w-full max-w-[410px] flex flex-col items-center space-y-4 "
       onSubmit={formik.handleSubmit}
     >
       <div className="relative w-full">
@@ -102,7 +102,7 @@ function ClientPasswordForm() {
             value={formik.values.password}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            className={`w-full border p-2 py-4 px-6 rounded-[6.56px] text-sm focus:border-blue-500 font-custom focus:outline-none ${
+            className={`w-full border p-2 py-4 px-6 rounded-[6.56px] text-sm focus:border-blue-500  focus:outline-none ${
               formik.touched.password && formik.errors.password
                 ? "border-red-500"
                 : "border-blue-500"
@@ -141,7 +141,7 @@ function ClientPasswordForm() {
             value={formik.values.confirmPassword}
             onChange={formik.handleChange}
             onBlur={formik.handleBlur}
-            className={`w-full p-2 border px-6 py-4 rounded-[6.56px] text-sm font-custom focus:border-blue-500 focus:outline-none ${
+            className={`w-full p-2 border px-6 py-4 rounded-[6.56px] text-sm  focus:border-blue-500 focus:outline-none ${
               formik.touched.confirmPassword && formik.errors.confirmPassword
                 ? "border-red-500"
                 : "border-blue-500"
@@ -165,7 +165,7 @@ function ClientPasswordForm() {
 
       {loading ? (
         <button
-          className="w-full rounded-[6.56px] bg-gradient-to-b from-[#579FE1] to-[#2290F3]"
+          className="w-full rounded-[6.56px] py-3 bg-[#F19B12] text-[#FFFFFF]"
           type="button"
           disabled
         >
@@ -173,7 +173,7 @@ function ClientPasswordForm() {
         </button>
       ) : (
         <button
-          className="w-full rounded-[6.56px] bg-gradient-to-b from-[#579FE1] to-[#2290F3]"
+          className="w-full rounded-[6.56px] py-3 bg-[#F19B12] text-[#FFFFFF]"
           type="submit"
           disabled={formik.isSubmitting || !formik.isValid || loading}
         >

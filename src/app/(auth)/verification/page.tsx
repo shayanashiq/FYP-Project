@@ -6,15 +6,15 @@ import logo from "@/assets/images/dark-ava-logo.png";
 
 export default function Verification() {
   useEffect(() => {
-    document.title = "Verification - AVA Health";
+    document.title = "Verification - Lyalla and Lora";
 
     const metaDescription = document.querySelector("meta[name='description']");
     if (metaDescription) {
-      metaDescription.setAttribute("content", "Verify your AVA Health account");
+      metaDescription.setAttribute("content", "Verify your Lyalla and Lora account");
     } else {
       const newMetaDescription = document.createElement("meta");
       newMetaDescription.name = "description";
-      newMetaDescription.content = "Verify your AVA Health account";
+      newMetaDescription.content = "Verify your Lyalla and Lora account";
       document.head.appendChild(newMetaDescription);
     }
   }, []);
@@ -23,15 +23,13 @@ export default function Verification() {
     <AuthLayout>
       <section className="w-full h-screen flex flex-col justify-center items-center">
         <div>
-          <img
-            className="max-w-[450px] w-full m-auto"
-            src={logo.src}
-            alt="AVA Health"
-          />
+          <div className="text-center text-[40px] font-bold text-[#F19B12]">
+            Lyalla and Lora
+          </div>
           <div className="flex flex-col items-center space-y-1 lg:space-y-1 p-5 mt-[50px]">
-            <h1 className="font-semibold leading-[28.8px] md:leading-[48.8px] text-[24px] md:text-[36px] lg:text-[40px] text-center font-custom">
-              Enter The 6-Digit Verification <br />
-              Code Sent To Your Email
+            <h1 className="font-semibold leading-[28.8px] md:leading-[48.8px] text-[24px] md:text-[36px] lg:text-[40px] text-center">
+              Enter The 6-Digit Verification Code <br />
+               Sent To Your Email
             </h1>
           </div>
         </div>
