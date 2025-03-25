@@ -28,9 +28,7 @@ export async function GET() {
   try {
     const customerProfile = await prisma.customerProfile.findFirst({
       where: {
-        user: {
-          id: userId
-        }
+        userId: userId
       }
     });
 
@@ -60,15 +58,21 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { firstName, lastName, imageUrl, phone, address, city, country, zipCode } = body;
+    const { 
+      firstName, 
+      lastName, 
+      imageUrl, 
+      phone, 
+      streetAddress, 
+      city, 
+      state, 
+      postalCode, 
+      country 
+    } = body;
 
     // Check if profile already exists
     const existingProfile = await prisma.customerProfile.findFirst({
-      where: {
-        user: {
-          id: userId
-        }
-      }
+      where: { userId }
     });
 
     if (existingProfile) {
@@ -85,13 +89,12 @@ export async function POST(request: NextRequest) {
         lastName,
         imageUrl,
         phone,
-        address,
+        streetAddress,
         city,
+        state,
+        postalCode,
         country,
-        zipCode,
-        user: {
-          connect: { id: userId }
-        }
+        userId
       }
     });
 
@@ -141,7 +144,17 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { firstName, lastName, imageUrl, phone, address, city, country, zipCode } = body;
+    const { 
+      firstName, 
+      lastName, 
+      imageUrl, 
+      phone, 
+      streetAddress, 
+      city, 
+      state, 
+      postalCode, 
+      country 
+    } = body;
 
     const customerProfile = await prisma.customerProfile.update({
       where: {
@@ -152,10 +165,11 @@ export async function PUT(request: NextRequest) {
         lastName,
         imageUrl,
         phone,
-        address,
+        streetAddress,
         city,
-        country,
-        zipCode
+        state,
+        postalCode,
+        country
       }
     });
 

@@ -1,3 +1,4 @@
+// app/api/orders/[orderId]/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 
@@ -5,16 +6,23 @@ import prisma from "@/lib/prisma";
 export async function GET(request: Request, { params }: { params: { orderId: string } }) {
   try {
     const { orderId } = params;
-
+    
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { items: { include: { product: true } }, payment: true },
+      include: {
+        items: { 
+          include: { 
+            product: true 
+          } 
+        },
+        payment: true
+      },
     });
-
+    
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
-
+    
     return NextResponse.json({ data: order }, { status: 200 });
   } catch (error) {
     console.error("Order retrieval error:", error);
@@ -26,11 +34,36 @@ export async function GET(request: Request, { params }: { params: { orderId: str
 export async function PUT(req: Request, { params }: { params: { orderId: string } }) {
   try {
     const { orderId } = params;
-    const { status, paymentMethod, paymentStatus } = await req.json();
+    const {
+      shippingFirstName,
+      shippingLastName,
+      shippingStreet,
+      shippingCity,
+      shippingState,
+      shippingPostalCode,
+      shippingCountry,
+      shippingPhone,
+      
+      billingFirstName,
+      billingLastName,
+      billingStreet,
+      billingCity,
+      billingState,
+      billingPostalCode,
+      billingCountry,
+      
+      email,
+      paymentMethod,
+      status
+    } = await req.json();
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { items: true, payment: true, user: true },
+      include: { 
+        items: true, 
+        payment: true, 
+        user: true 
+      },
     });
 
     if (!order) {
@@ -42,12 +75,12 @@ export async function PUT(req: Request, { params }: { params: { orderId: string 
       where: { orderId },
       update: {
         method: paymentMethod || order.payment?.method,
-        status: paymentStatus || order.payment?.status,
+        status: status || order.payment?.status,
       },
       create: {
         orderId,
         method: paymentMethod || "UNKNOWN",
-        status: paymentStatus || "PENDING",
+        status: status || "PENDING",
       },
     });
 
@@ -56,16 +89,41 @@ export async function PUT(req: Request, { params }: { params: { orderId: string 
       order.items.map((item) =>
         prisma.product.update({
           where: { id: item.productId },
-          data: { stock: { decrement: item.quantity } },
+          data: { 
+            stock: { decrement: item.quantity } 
+          },
         })
       )
     );
 
-    // Update the order status
+    // Update the order with all details
     const updatedOrder = await prisma.order.update({
       where: { id: orderId },
-      data: { status },
-      include: { items: { include: { product: true } }, payment: true },
+      data: {
+        shippingFirstName,
+        shippingLastName,
+        shippingStreet,
+        shippingCity,
+        shippingState,
+        shippingPostalCode,
+        shippingCountry,
+        shippingPhone,
+        
+        billingFirstName,
+        billingLastName,
+        billingStreet,
+        billingCity,
+        billingState,
+        billingPostalCode,
+        billingCountry,
+        
+        email,
+        status
+      },
+      include: { 
+        items: { include: { product: true } }, 
+        payment: true 
+      },
     });
 
     // Empty the cart if order status is CONFIRMED or further in the process
@@ -73,7 +131,7 @@ export async function PUT(req: Request, { params }: { params: { orderId: string 
       const userCart = await prisma.cart.findUnique({
         where: { userId: order.userId },
       });
-      
+
       if (userCart) {
         // Delete all cart items for this user's cart
         await prisma.cartItem.deleteMany({

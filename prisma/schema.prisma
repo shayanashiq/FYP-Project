@@ -38,16 +38,20 @@ model Otp {
   expiresAt DateTime @map("expires_at")
 }
 
-model CustomerProfile{
+model CustomerProfile {
   id                String      @id @default(uuid())
   firstName         String      @default("")
   lastName          String      @default("")
   phone             String?
   imageUrl          String?
-  address           String?
+  
+  // More detailed address fields
+  streetAddress     String?
   city              String?
+  state             String?
+  postalCode        String?
   country           String?
-  zipCode           String?
+  
   userId            String      @unique
   user              User        @relation(fields: [userId], references: [id])
   createdAt         DateTime    @default(now())
@@ -163,16 +167,38 @@ model WishlistItem {
 
 //// ==================== ORDERS & PAYMENTS ==================== ////
 model Order {
-  id           String       @id @default(uuid())
-  userId       String
-  user         User         @relation(fields: [userId], references: [id])
-  items        OrderItem[]
-  totalPrice   Decimal
-  status       OrderStatus  @default(PENDING)
-  payment      Payment?
-  shipment     Shipment?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id                  String       @id @default(uuid())
+  userId              String
+  user                User         @relation(fields: [userId], references: [id])
+  items               OrderItem[]
+  
+  // Shipping Address Details
+  shippingFirstName   String
+  shippingLastName    String
+  shippingStreet      String
+  shippingCity        String
+  shippingState       String?
+  shippingPostalCode  String
+  shippingCountry     String
+  shippingPhone       String
+  
+  // Billing Address Details
+  billingFirstName    String?
+  billingLastName     String?
+  billingStreet       String?
+  billingCity         String?
+  billingState        String?
+  billingPostalCode   String?
+  billingCountry      String?
+  
+  totalPrice          Decimal
+  status              OrderStatus  @default(PENDING)
+  payment             Payment?
+  shipment            Shipment?
+  
+  email               String
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
 }
 
 model OrderItem {
