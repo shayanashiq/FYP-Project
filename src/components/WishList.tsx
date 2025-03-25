@@ -151,19 +151,18 @@ export default function Wishlist() {
       {/* Tab Navigation */}
       <div className="bg-gray-100 p-4 flex border-b">
         <button
-          onClick={() => setActiveTab("profile")}
+          onClick={() => router.push("/account")}
           className={`mr-4 py-2 px-4 rounded-t ${activeTab === "profile" ? "bg-white border-t border-l border-r font-bold" : ""}`}
         >
           Profile
         </button>
         <button
-          onClick={() => setActiveTab("orders")}
+          onClick={() => router.push("/account/orders")}
           className={`mr-4 py-2 px-4 rounded-t ${activeTab === "orders" ? "bg-white border-t border-l border-r font-bold" : ""}`}
         >
           My Orders
         </button>
         <button
-          onClick={() => setActiveTab("wishlist")}
           className={`mr-4 py-2 px-4 rounded-t ${activeTab === "wishlist" ? "bg-white border-t border-l border-r font-bold" : ""}`}
         >
           Wishlist

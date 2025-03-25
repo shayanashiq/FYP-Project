@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
 
 export default function Account() {
     const router = useRouter();
@@ -28,19 +27,18 @@ export default function Account() {
             {/* Tab Navigation */}
             <div className="bg-gray-100 p-4 flex border-b">
                 <button
-                    onClick={() => setActiveTab("profile")}
                     className={`mr-4 py-2 px-4 rounded-t ${activeTab === "profile" ? "bg-white border-t border-l border-r font-bold" : ""}`}
                 >
                     Profile
                 </button>
                 <button
-                    onClick={() => setActiveTab("orders")}
+                    onClick={() => router.push("/account/orders")}
                     className={`mr-4 py-2 px-4 rounded-t ${activeTab === "orders" ? "bg-white border-t border-l border-r font-bold" : ""}`}
                 >
                     My Orders
                 </button>
                 <button
-                    onClick={() => setActiveTab("wishlist")}
+                    onClick={() => router.push("/account/wishlist")}
                     className={`mr-4 py-2 px-4 rounded-t ${activeTab === "wishlist" ? "bg-white border-t border-l border-r font-bold" : ""}`}
                 >
                     Wishlist
@@ -49,7 +47,6 @@ export default function Account() {
 
             {/* Content Area */}
             <div className="bg-white p-6 rounded-b-lg border border-grey-200">
-                {activeTab === "profile" && (
                     <div>
                         <div className="flex flex-col md:flex-row">
                             <div className="md:w-1/3 mb-6 md:mb-0 pr-0 md:pr-6">
@@ -136,35 +133,8 @@ export default function Account() {
                             </div>
                         </div>
                     </div>
-                )}
 
-                {activeTab === "orders" && (
-                    <div>
-                        <h2 className="text-xl font-bold mb-4">My Orders</h2>
-                        <div className="border rounded-lg overflow-hidden">
-                            <div className="p-6 text-center">
-                                <p className="text-gray-500">You haven't placed any orders yet.</p>
-                                <Link href="/" className="mt-4 inline-block bg-orange-500 text-white py-2 px-6 rounded">
-                                    Start Shopping
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                {activeTab === "wishlist" && (
-                    <div>
-                        <h2 className="text-xl font-bold mb-4">My Wishlist</h2>
-                        <div className="border rounded-lg overflow-hidden">
-                            <div className="p-6 text-center">
-                                <p className="text-gray-500">Your wishlist is empty.</p>
-                                <Link href="/" className="mt-4 inline-block bg-orange-500 text-white py-2 px-6 rounded">
-                                    Start Shopping
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                
             </div>
         </div>
     );
