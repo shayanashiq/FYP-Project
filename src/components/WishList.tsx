@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -37,20 +37,7 @@ export default function Wishlist() {
   const [isLoading, setIsLoading] = useState(true);
   const [cartLoadingItems, setCartLoadingItems] = useState<{ [key: string]: boolean }>({});
 
-  useEffect(() => {
-    // Redirect if not authenticated
-    if (status === "unauthenticated") {
-      router.push("/login");
-      return;
-    }
-
-    // Fetch wishlist items if authenticated and wishlist tab is active
-    if (status === "authenticated" && session?.user?.id && activeTab === "wishlist") {
-      fetchWishlist(session.user.id);
-    }
-  }, [status, session, activeTab, router]);
-
-  const fetchWishlist = async (userId: string) => {
+  const fetchWishlist = useCallback(async (userId: string) => {
     try {
       setIsLoading(true);
       const response = await fetch(`/api/wishlist?userId=${userId}`, {
@@ -69,7 +56,14 @@ export default function Wishlist() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // Only fetch wishlist if authenticated and on wishlist tab
+    if (status === "authenticated" && session?.user?.id) {
+      fetchWishlist(session.user.id);
+    }
+  }, [status, session?.user?.id, fetchWishlist]);
 
   const removeFromWishlist = async (itemId: string) => {
     if (!session?.user?.id) return;
@@ -135,6 +129,7 @@ export default function Wishlist() {
     }
   };
 
+  // Remove redirect logic from useEffect
   if (status === "loading") {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
