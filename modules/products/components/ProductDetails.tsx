@@ -1,12 +1,9 @@
 "use client"
 
-
 import { Card } from '@/common/components/elements/Card'
 import { Separator } from '@/common/components/elements/Separator'
-import Star from '@/common/components/elements/Star'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation';
-import Image from 'next/image'
 
 // Define TypeScript interfaces
 interface Review {
@@ -36,7 +33,7 @@ interface Product {
   name: string;
   description?: string;
   price: number;
-  discount: number;
+  discount: number; // Now represents percentage
   stock: number;
   sku?: string;
   images?: string[];
@@ -49,6 +46,93 @@ interface Product {
   reviewCount: number;
 }
 
+// Updated Star component with precise rating
+const Star: React.FC<{ count: number }> = ({ count }) => {
+  return (
+    <div className="flex">
+      {[1, 2, 3, 4, 5].map((star) => {
+        // Calculate the fill percentage for the current star
+        const fillPercentage = Math.max(0, Math.min(1, Math.max(0, count - (star - 1))));
+
+        return (
+          <svg
+            key={star}
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#D3D3D3"
+            strokeWidth={2}
+          >
+            {/* Background (grey) star path */}
+            <path
+              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+            />
+
+            {/* Filled (golden) star path with dynamic clip */}
+            <defs>
+              <clipPath id={`starClip-${star}`}>
+                <rect
+                  x="0"
+                  y="0"
+                  width={`${fillPercentage * 24}`}
+                  height="24"
+                />
+              </clipPath>
+            </defs>
+            <path
+              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+              fill="#FFD700"
+              clipPath={`url(#starClip-${star})`}
+            />
+          </svg>
+        );
+      })}
+    </div>
+  );
+};
+const StarNew: React.FC<{ count: number }> = ({ count }) => {
+  return (
+    <div className="flex">
+      {[1, 2, 3, 4, 5].map((star) => {
+        // Calculate the percentage fill for the current star
+        const fillPercentage = Math.max(0, Math.min(1, count - (star - 1))) * 100;
+
+        return (
+          <div key={star} className="relative w-5 h-5">
+            {/* Background Star (Grey) */}
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="absolute top-0 left-0 w-full h-full"
+              viewBox="0 0 24 24"
+              stroke="#D3D3D3"
+              fill="#D3D3D3"
+            >
+              <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+            </svg>
+
+            {/* Foreground Star (Gold) with mask */}
+            <div
+              className="absolute top-0 left-0 h-full"
+              style={{ width: `${fillPercentage}%`, overflow: "hidden" }}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                className="w-full h-full"
+                viewBox="0 0 24 24"
+                fill="#FFD700"
+              >
+                <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+              </svg>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+
 const ProductDetails: React.FC = () => {
   const params = useParams();
   const id = params.id;
@@ -57,7 +141,11 @@ const ProductDetails: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(1);
-  const [activeTab, setActiveTab] = useState<'description' | 'reviews'>('reviews');
+
+  // Zoom state
+  const [isZoomed, setIsZoomed] = useState(false);
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
+  const imageContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -73,6 +161,8 @@ const ProductDetails: React.FC = () => {
 
         const data = await response.json();
         setProduct(data);
+        // Reset image index when new product is loaded
+        setCurrentImageIndex(0);
       } catch (error) {
         console.error('Error fetching product:', error);
       } finally {
@@ -82,20 +172,6 @@ const ProductDetails: React.FC = () => {
 
     fetchProduct();
   }, [id]);
-
-  const handlePrevImage = (): void => {
-    if (!product?.images?.length) return;
-    setCurrentImageIndex(prev =>
-      prev === 0 ? product.images!.length - 1 : prev - 1
-    );
-  };
-
-  const handleNextImage = (): void => {
-    if (!product?.images?.length) return;
-    setCurrentImageIndex(prev =>
-      prev === product.images!.length - 1 ? 0 : prev + 1
-    );
-  };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const value = parseInt(e.target.value);
@@ -108,9 +184,36 @@ const ProductDetails: React.FC = () => {
     product && setQuantity(prev => (prev < product.stock ? prev + 1 : prev));
   };
 
-
   const decreaseQuantity = (): void => {
     setQuantity(prev => prev > 1 ? prev - 1 : 1);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isZoomed || !imageContainerRef.current) return;
+
+    const container = imageContainerRef.current;
+    const rect = container.getBoundingClientRect();
+
+    // Calculate mouse position as a percentage
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    setZoomPosition({ x, y });
+  };
+
+  // Calculate average rating dynamically
+  const calculateAverageRating = () => {
+    if (!product?.reviews || product.reviews.length === 0) return 0;
+
+    const totalRating = product.reviews.reduce((sum, review) => sum + review.rating, 0);
+    return totalRating / product.reviews.length;
+  };
+
+  // Calculate discounted price
+  const calculateDiscountedPrice = () => {
+    if (!product) return 0;
+    // Discount is a percentage, so calculate the discounted price
+    return product.price * (1 - product.discount / 100);
   };
 
   if (loading) {
@@ -129,51 +232,76 @@ const ProductDetails: React.FC = () => {
     );
   }
 
-  // Use placeholder images if product doesn't have images
-  const images = product.images
-
   return (
     <div className='container mx-auto'>
       <div className='min-h-full flex flex-col lg:flex-row py-14'>
         <div className="w-full lg:w-1/2 h-full justify-center items-center gap-5 flex flex-col">
-          <Card className="w-full max-w-[500px] h-96 justify-center items-center gap-5 flex relative cursor-pointer hover:bg-slate-100">
-            {images && (
-              <img
-                className='p-5 max-h-full max-w-full object-contain'
-                src={images[currentImageIndex]}
-                alt={product.name}
-              />
+          <div
+            ref={imageContainerRef}
+            className="w-full max-w-[500px] h-96 relative overflow-hidden group"
+            onMouseEnter={() => setIsZoomed(true)}
+            onMouseLeave={() => setIsZoomed(false)}
+            onMouseMove={handleMouseMove}
+          >
+            {product.images && product.images.length > 0 && (
+              <div
+                className="w-full h-full relative"
+                style={{
+                  transform: isZoomed ? 'scale(2)' : 'scale(1)',
+                  transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                  transition: 'transform 0.2s ease-out',
+                  cursor: isZoomed ? 'zoom-in' : 'zoom-in'
+                }}
+              >
+                <img
+                  src={product.images[currentImageIndex]}
+                  alt={`${product.name} - Image ${currentImageIndex + 1}`}
+                  className="w-full h-full object-contain p-5"
+                />
+              </div>
             )}
 
-            {/* Left Arrow */}
+            {/* Previous Image Button */}
             <button
-              onClick={handlePrevImage}
-              className="absolute left-2 bg-white bg-opacity-70 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-100"
-              aria-label="Previous image"
+              onClick={() => {
+                if (!product?.images?.length) return;
+                setCurrentImageIndex(prev =>
+                  prev === 0 ? product.images!.length - 1 : prev - 1
+                );
+              }}
+              className="absolute left-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-100 z-10"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
 
-            {/* Right Arrow */}
+            {/* Next Image Button */}
             <button
-              onClick={handleNextImage}
-              className="absolute right-2 bg-white bg-opacity-70 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-100"
-              aria-label="Next image"
+              onClick={() => {
+                if (!product?.images?.length) return;
+                setCurrentImageIndex(prev =>
+                  prev === product.images!.length - 1 ? 0 : prev + 1
+                );
+              }}
+              className="absolute right-2 top-1/2 -translate-y-1/2 bg-white bg-opacity-70 rounded-full w-10 h-10 flex items-center justify-center hover:bg-opacity-100 z-10"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
-          </Card>
+          </div>
 
+          {/* Thumbnail Images */}
           <div className="flex m-auto flex-wrap gap-5 group">
-            {images && images.map((img, index) => (
-              <Card
+            {product.images && product.images.map((img, index) => (
+              <div
                 key={index}
                 onClick={() => setCurrentImageIndex(index)}
-                className={`w-28 h-28 md:w-36 md:h-32 justify-center items-center gap-5 flex relative cursor-pointer ${currentImageIndex === index ? 'ring-2 ring-sky-900' : 'hover:bg-slate-100'
+                className={`w-28 h-28 md:w-36 md:h-32 justify-center items-center flex relative cursor-pointer 
+                  ${currentImageIndex === index
+                    ? 'ring-2 ring-sky-900'
+                    : 'hover:bg-slate-100'
                   }`}
               >
                 <img
@@ -181,7 +309,7 @@ const ProductDetails: React.FC = () => {
                   alt={`Product image ${index + 1}`}
                   className="max-h-full max-w-full object-contain p-2"
                 />
-              </Card>
+              </div>
             ))}
           </div>
         </div>
@@ -190,22 +318,28 @@ const ProductDetails: React.FC = () => {
           <div className="w-full max-w-[500px] h-full lg:h-auto lg:w-full flex-col gap-2 flex mt-10 lg:mt-0 mx-auto px-4 lg:px-0">
             <div className="flex-col gap-2.5 flex">
               <div className="text-sky-900 font-semibold text-2xl">{product.name}</div>
-              {product.discount ? (
-                <div className="text-red-600 text-2xl font-semibold">
-                  ${product.price - product.discount}{" "}
-                  <span className="text-neutral-600 line-through text-xl">${product.price}</span>
+              {product.discount > 0 ? (
+                <div className="flex items-center gap-3">
+                  <div className="text-red-600 text-2xl font-semibold">
+                    ${calculateDiscountedPrice()}
+                  </div>
+                  <div className="text-neutral-600 line-through text-xl">
+                    ${product.price}
+                  </div>
+                  <div className="text-green-600 text-base font-medium">
+                    {product.discount}% OFF
+                  </div>
                 </div>
               ) : (
                 <div className="text-neutral-600 text-2xl font-semibold">${product.price}</div>
               )}
             </div>
 
-
             <div className="justify-normal gap-2.5 flex items-center">
-              <Star count={Math.round(product.avgRating || 5)} />
+              <Star count={calculateAverageRating()} />
               <div className="text-neutral-600 text-sm font-medium">
-                {product.reviewCount > 0
-                  ? `${product.reviewCount} review${product.reviewCount !== 1 ? 's' : ''}`
+                {product.reviews.length > 0
+                  ? `${calculateAverageRating().toFixed(1)} / 5 from ${product.reviews.length} review${product.reviews.length !== 1 ? 's' : ''}`
                   : 'No reviews'
                 }
               </div>
@@ -290,17 +424,16 @@ const ProductDetails: React.FC = () => {
             <div className="flex flex-wrap gap-3 mt-3">
               <button
                 disabled={product.stock <= 0}
-                className='w-full sm:w-56 h-16 bg-amber-500 text-white text-lg font-medium rounded-full disabled:bg-gray-400 disabled:cursor-not-allowed'
+                className='w-full sm:w-56 h-16 bg-amber-500 text-white text-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed'
               >
                 Add to cart
               </button>
               <button
                 disabled={product.stock <= 0}
-                className='w-full sm:w-56 h-16 bg-amber-500 text-white text-lg font-medium rounded-full disabled:bg-gray-400 disabled:cursor-not-allowed'
+                className='w-full sm:w-56 h-16 bg-amber-500 text-white text-lg font-medium  disabled:bg-gray-400 disabled:cursor-not-allowed'
               >
                 Buy it now
               </button>
-              
             </div>
 
             <Separator />
@@ -331,8 +464,6 @@ const ProductDetails: React.FC = () => {
         </div>
       </div>
 
-
-
       <div className='p-5 flex flex-col justify-center items-center m-auto'>
         <Card className="w-[85%] p-8 flex flex-col gap-3">
           <span className='font-semibold text-sky-900 text-xl mb-2'>Product Description</span>
@@ -340,29 +471,50 @@ const ProductDetails: React.FC = () => {
             {product.description || 'No description available for this product.'}
           </div>
         </Card>
-        <Card className="w-[85%] p-8 flex flex-col gap-3">
+        <Card className="w-[85%] p-8 flex flex-col gap-3 mt-5">
           <span className='font-semibold text-sky-900 text-xl'>Customer Reviews</span>
 
           {product.reviews && product.reviews.length > 0 ? (
-            <div className="flex flex-col gap-4 mt-2">
+            <div className="flex flex-col gap-6 mt-4">
               {product.reviews.map((review) => (
                 <div key={review.id} className="border-b pb-4">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{review.user?.name || 'Anonymous'}</span>
-                    <Star count={review.rating} />
+                  <div className="flex items-start gap-4">
+                    {/* User Avatar Placeholder */}
+                    <div className="w-10 h-10 flex items-center justify-center bg-gray-200 rounded-full text-gray-600 font-semibold">
+                      {review.user?.customerProfile?.firstName?.[0]?.toUpperCase() || 'A'}
+                    </div>
+
+                    <div className="flex-1">
+                      {/* User Info & Rating */}
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-gray-900">
+                            {review.user?.customerProfile?.firstName + " " + review.user?.customerProfile?.lastName || 'Anonymous'}
+                          </span>
+                          <StarNew count={review.rating} />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+
+                      {/* Review Content */}
+                      <p className="mt-2 text-gray-700 leading-relaxed">{review.comment}</p>
+
+                      {/* Date */}
+                      <span className="text-sm text-gray-600">Rating: {review.rating} / 5</span>
+
+
+                    </div>
                   </div>
-                  <p className="mt-2 text-gray-700">{review.comment}</p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    {new Date(review.createdAt).toLocaleDateString()}
-                  </p>
                 </div>
               ))}
             </div>
           ) : (
-            <span className='text-slate-500'>No reviews yet</span>
+            <div className="text-center text-slate-500 mt-4 py-6 border rounded-lg">
+              No reviews yet. Be the first to leave a review!
+            </div>
           )}
-
-          <button className='bg-sky-900 text-white w-36 h-10 mt-4'>Write a review</button>
         </Card>
       </div>
     </div>

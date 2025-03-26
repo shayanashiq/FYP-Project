@@ -249,7 +249,7 @@ model Review {
   user      User     @relation(fields: [userId], references: [id])
   productId String
   product   Product  @relation(fields: [productId], references: [id])
-  rating    Int
+  rating    Float
   comment   String?
   createdAt DateTime @default(now())
 }

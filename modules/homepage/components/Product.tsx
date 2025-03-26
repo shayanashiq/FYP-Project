@@ -304,13 +304,14 @@ const Product: React.FC<ProductProps> = ({
 
   return (
     <div
-      onClick={() => router.push(`/products/${product.slug}`)}
+      onClick={() => router.push(`/products/${product.id}`)}
       className="w-68 bg-white border border-gray-150 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden cursor-pointer"
     >
       {/* Discount Badge */}
       {discountPercentage > 0 && (
-        <div className="absolute top-2 left-0 bg-blue-500 text-white px-2 py-1 text-sm font-medium z-10 flex items-center after:content-[''] after:absolute after:top-0 after:right-0 after:border-t-[14px] after:border-b-[14px] after:border-l-[14px] after:border-t-transparent after:border-b-transparent after:border-l-blue-500 after:translate-x-full">
-          -{discountPercentage}%
+        <div className="absolute top-2 left-0 bg-blue-500 text-white px-2 py-1 text-xs font-medium z-10 flex items-center after:content-[''] after:absolute after:top-0 after:right-0 after:border-t-[14px] after:border-b-[14px] after:border-l-[14px] after:border-t-transparent after:border-b-transparent after:border-l-blue-500 after:translate-x-full">
+          {/* -{discountPercentage}% */}
+          Best Choice
         </div>
       )}
 
@@ -346,7 +347,7 @@ const Product: React.FC<ProductProps> = ({
           alt={product.title}
           width={160}
           height={160}
-          className="object-contain transition-transform duration-300 hover:scale-105"
+          className="object-contain w-full h-full transition-transform duration-300 hover:scale-105"
           priority={false}
         />
       </div>
@@ -359,15 +360,36 @@ const Product: React.FC<ProductProps> = ({
         </h3>
 
         {/* Price Section */}
-        <div className="flex flex-col mb-2">
-          <span className="text-amber-500 font-bold text-lg">
-            {formatPrice(product.salePrice)}
-          </span>
-          {product.regularPrice > product.salePrice && (
-            <span className="text-gray-500 line-through text-sm">
-              {formatPrice(product.regularPrice)}
+        <div className="flex justify-between">
+          <div className="flex items-center space-x-2 flex-row mb-2">
+            <span className="text-amber-500 font-bold text-lg">
+              {formatPrice(product.salePrice)}
             </span>
-          )}
+            {product.regularPrice > product.salePrice && (
+              <span className="text-gray-500 line-through text-sm">
+                {formatPrice(product.regularPrice)}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center min-h-14 mb-3">
+            {product.inStock && (
+              <div className="flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
+                <div className="text-xs text-gray-500">
+                  {isLoadingStock ? (
+                    <div className="w-3 h-3 border-2 border-gray-300 border-t-amber-500 rounded-full animate-spin"></div>
+                  ) : (
+                    `${maxStock} available`
+                  )}
+                </div>
+              </div>
+            )}
+            {!product.inStock && (
+              <div className="flex items-center justify-center py-2 text-sm text-red-500 font-medium">
+                Out of stock
+              </div>
+            )}
+          </div>
+
         </div>
 
         {/* Rating Stars */}
@@ -396,61 +418,11 @@ const Product: React.FC<ProductProps> = ({
           </div>
         </div>
 
-        {/* Quantity Controls Container - Always present but conditionally displaying content */}
-        <div className="min-h-14 mt-2 mb-2">
-          {product.inStock && (
-            <div className="flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
-              <div className="flex items-center border border-gray-300 rounded-md">
-                <button
-                  onClick={(e) => handleQuantityChange(quantity - 1, e)}
-                  disabled={quantity <= 1 || isUpdatingCart}
-                  className={`px-2 py-1 text-gray-600 hover:bg-gray-100 ${quantity <= 1 ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
-                >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-                <span className="px-2 py-1 min-w-8 text-center">
-                  {isUpdatingCart ? (
-                    <div className="w-4 h-4 border-2 border-gray-300 border-t-amber-500 rounded-full animate-spin mx-auto"></div>
-                  ) : (
-                    quantity
-                  )}
-                </span>
-                <button
-                  onClick={(e) => handleQuantityChange(quantity + 1, e)}
-                  disabled={quantity >= maxStock || isUpdatingCart}
-                  className={`px-2 py-1 text-gray-600 hover:bg-gray-100 ${quantity >= maxStock ? 'opacity-50 cursor-not-allowed' : ''
-                    }`}
-                >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 5V19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M5 12H19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              </div>
-              <div className="text-xs text-gray-500">
-                {isLoadingStock ? (
-                  <div className="w-3 h-3 border-2 border-gray-300 border-t-amber-500 rounded-full animate-spin"></div>
-                ) : (
-                  `${maxStock} available`
-                )}
-              </div>
-            </div>
-          )}
-          {!product.inStock && (
-            <div className="flex items-center justify-center py-2 text-sm text-red-500 font-medium">
-              Out of stock
-            </div>
-          )}
-        </div>
-
         {/* Add to Cart Button */}
         <button
           onClick={handleCartToggle}
           disabled={isCartLoading || (!product.inStock && !inCart)}
-          className={`w-full mt-2 py-2 px-4 rounded-full ${inCart
+          className={`w-full mt-2 py-2 px-4  ${inCart
             ? 'bg-red-500 hover:bg-red-600 text-white'
             : 'bg-amber-500 hover:bg-amber-600 text-white'
             } font-semibold transition-colors flex items-center justify-center ${!product.inStock && !inCart ? 'opacity-50 cursor-not-allowed' : ''
