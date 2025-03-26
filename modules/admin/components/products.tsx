@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Trash } from 'lucide-react';
+import Product from '../../homepage/components/Product';
 // Define types based on your API
 interface Product {
     id: string;

@@ -157,7 +157,7 @@ const Recommendations: React.FC = () => {
   };
 
   return (
-    <div className="px-4 sm:px-8 md:px-12 lg:px-20">
+    <div className="px-4 sm:px-8 md:px-12 lg:px-20  pb-20">
       <h1 className="mt-8 md:mt-12 mb-4 md:mb-8 text-cyan-800 text-2xl md:text-3xl lg:text-3xl font-medium text-center md:text-left">
         You Might Also Like
       </h1>
@@ -194,9 +194,7 @@ const Recommendations: React.FC = () => {
             </div>
           )}
         </div>
-        <button className="mt-6 md:mt-8 px-6 py-2 text-lg md:text-xl bg-[#205781] text-white rounded-md hover:bg-[#1a4a70] transition-colors">
-          See All
-        </button>
+        
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import WishList from "@/components/WishList"
 import HeaderBottom from "@/common/components/layouts/HeaderBottom";
 import HeaderTop from "@/common/components/layouts/HeaderTop";
 import Navigation from "@/common/components/layouts/Navigation";
+import Footer from "@/common/components/layouts/FooterMenu";
 
 const Page = () => {
     return (
@@ -10,6 +11,7 @@ const Page = () => {
             <HeaderBottom />
             <Navigation />
             <WishList />
+            <Footer/>
         </>
     )
 }

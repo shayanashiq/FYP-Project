@@ -205,11 +205,11 @@ export default function Wishlist() {
                       <div className="flex items-center gap-2 mt-1">
                         {item.product.discount && item.product.discount > 0 ? (
                           <>
+                            <span className="text-red-500 font-bold">
+                              ${(Number(item.product.price) - (Number(item.product.discount)*Number(item.product.price)/100)).toFixed(2)}
+                            </span>
                             <span className="text-gray-500 line-through text-sm">
                               ${Number(item.product.price).toFixed(2)}
-                            </span>
-                            <span className="text-red-500 font-bold">
-                              ${(Number(item.product.price) - Number(item.product.discount)).toFixed(2)}
                             </span>
                           </>
                         ) : (

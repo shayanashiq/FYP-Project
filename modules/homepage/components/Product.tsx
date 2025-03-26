@@ -447,12 +447,12 @@ const Product: React.FC<ProductProps> = ({
         </div>
 
         {/* Rating Stars */}
-        <div className="flex items-center mb-1">
+        <div className="flex items-center mb-4">
           <Star count={calculateAverageRating()} />
           {/* Sales Info */}
-          <div className="ml-2 text-xs text-gray-500">
+          {/* <div className="ml-2 text-xs text-gray-500">
             4.3 k+ Sold
-          </div>
+          </div> */}
         </div>
 
         {/* Add to Cart Button */}

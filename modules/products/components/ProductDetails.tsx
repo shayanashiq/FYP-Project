@@ -466,7 +466,7 @@ const ProductDetails: React.FC = () => {
       </div>
 
       <div className='p-5 flex flex-col justify-center items-center m-auto'>
-        <Card className="w-[85%] p-8 flex flex-col gap-3">
+        <Card className="w-[85%] p-8 flex flex-col gap-3 border border-grey-200">
           <span className='font-semibold text-sky-900 text-2xl mb-2'>Product Description</span>
           <div className="text-gray-800">
             {product.shortDescription || 'No description available for this product.'}
