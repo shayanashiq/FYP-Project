@@ -5,6 +5,7 @@ import HeaderTop from '@/common/components/layouts/HeaderTop'
 import ProductDetails from '../../../../modules/products/components/ProductDetails'
 import React from 'react'
 import Navigation from '@/common/components/layouts/Navigation'
+import Recommendations from '../../../../modules/products/components/Recommendations'
 
 const ProductDetail = () => {
     return (
@@ -12,8 +13,8 @@ const ProductDetail = () => {
             <HeaderTop />
             <HeaderBottom />
             <Navigation/>
-            {/* <Broadcum /> */}
             <ProductDetails />
+            <Recommendations/>
             <Footer />
         </main>
     )
