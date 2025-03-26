@@ -107,7 +107,7 @@ const ProductDetails: React.FC = () => {
   const increaseQuantity = (): void => {
     product && setQuantity(prev => (prev < product.stock ? prev + 1 : prev));
   };
-  
+
 
   const decreaseQuantity = (): void => {
     setQuantity(prev => prev > 1 ? prev - 1 : 1);
@@ -139,10 +139,10 @@ const ProductDetails: React.FC = () => {
           <Card className="w-full max-w-[500px] h-96 justify-center items-center gap-5 flex relative cursor-pointer hover:bg-slate-100">
             {images && (
               <img
-              className='p-5 max-h-full max-w-full object-contain'
-              src={images[currentImageIndex]}
-              alt={product.name}
-            />
+                className='p-5 max-h-full max-w-full object-contain'
+                src={images[currentImageIndex]}
+                alt={product.name}
+              />
             )}
 
             {/* Left Arrow */}
@@ -300,18 +300,7 @@ const ProductDetails: React.FC = () => {
               >
                 Buy it now
               </button>
-              <button
-                className="w-16 h-16 bg-zinc-100 rounded-full justify-center items-center flex hover:bg-amber-600 group"
-                aria-label="Add to wishlist"
-              >
-                <div className="w-9 h-9 justify-center items-center flex">
-                  <div className="w-9 h-9 relative">
-                    <svg className="group-hover:stroke-white stroke-slate-600" width="36" height="36" viewBox="0 0 15 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M7.873 13.4797C7.66835 13.5519 7.33128 13.5519 7.12663 13.4797C5.38111 12.8838 1.48077 10.3979 1.48077 6.18459C1.48077 4.32471 2.97952 2.81995 4.82736 2.81995C5.92283 2.81995 6.89189 3.34962 7.49981 4.16821C8.10774 3.34962 9.08282 2.81995 10.1723 2.81995C12.0201 2.81995 13.5189 4.32471 13.5189 6.18459C13.5189 10.3979 9.61852 12.8838 7.873 13.4797Z" strokeWidth="0.902856" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
-                </div>
-              </button>
+              
             </div>
 
             <Separator />
@@ -342,55 +331,39 @@ const ProductDetails: React.FC = () => {
         </div>
       </div>
 
-      <div className="flex gap-5 w-full h-full p-5 justify-center items-center">
-        <button
-          onClick={() => setActiveTab('description')}
-          className={`w-36 h-12 rounded-2xl border border-slate-400 font-semibold ${activeTab === 'description' ? 'bg-sky-900 text-white' : ''}`}
-        >
-          Description
-        </button>
-        <button
-          onClick={() => setActiveTab('reviews')}
-          className={`w-36 h-12 rounded-2xl border border-slate-400 font-semibold ${activeTab === 'reviews' ? 'bg-sky-900 text-white' : ''}`}
-        >
-          Reviews
-        </button>
-      </div>
 
-      <div className='p-5 flex justify-center items-center m-auto'>
-        {activeTab === 'description' ? (
-          <Card className="w-[85%] p-8 flex flex-col gap-3">
-            <span className='font-semibold text-sky-900 text-xl mb-2'>Product Description</span>
-            <div className="text-gray-700">
-              {product.description || 'No description available for this product.'}
-            </div>
-          </Card>
-        ) : (
-          <Card className="w-[85%] p-8 flex flex-col gap-3">
-            <span className='font-semibold text-sky-900 text-xl'>Customer Reviews</span>
 
-            {product.reviews && product.reviews.length > 0 ? (
-              <div className="flex flex-col gap-4 mt-2">
-                {product.reviews.map((review) => (
-                  <div key={review.id} className="border-b pb-4">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{review.user?.name || 'Anonymous'}</span>
-                      <Star count={review.rating} />
-                    </div>
-                    <p className="mt-2 text-gray-700">{review.comment}</p>
-                    <p className="text-sm text-gray-500 mt-1">
-                      {new Date(review.createdAt).toLocaleDateString()}
-                    </p>
+      <div className='p-5 flex flex-col justify-center items-center m-auto'>
+        <Card className="w-[85%] p-8 flex flex-col gap-3">
+          <span className='font-semibold text-sky-900 text-xl mb-2'>Product Description</span>
+          <div className="text-gray-700">
+            {product.description || 'No description available for this product.'}
+          </div>
+        </Card>
+        <Card className="w-[85%] p-8 flex flex-col gap-3">
+          <span className='font-semibold text-sky-900 text-xl'>Customer Reviews</span>
+
+          {product.reviews && product.reviews.length > 0 ? (
+            <div className="flex flex-col gap-4 mt-2">
+              {product.reviews.map((review) => (
+                <div key={review.id} className="border-b pb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{review.user?.name || 'Anonymous'}</span>
+                    <Star count={review.rating} />
                   </div>
-                ))}
-              </div>
-            ) : (
-              <span className='text-slate-500'>No reviews yet</span>
-            )}
+                  <p className="mt-2 text-gray-700">{review.comment}</p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    {new Date(review.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <span className='text-slate-500'>No reviews yet</span>
+          )}
 
-            <button className='bg-sky-900 text-white w-36 h-10 mt-4'>Write a review</button>
-          </Card>
-        )}
+          <button className='bg-sky-900 text-white w-36 h-10 mt-4'>Write a review</button>
+        </Card>
       </div>
     </div>
   )

@@ -1,28 +1,28 @@
-// app/api/orders/[orderId]/route.ts
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { PaymentStatus, OrderStatus } from "@prisma/client";
 
 // GET request handler: Fetch an order by ID
 export async function GET(request: Request, { params }: { params: { orderId: string } }) {
   try {
     const { orderId } = params;
-    
+
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
-        items: { 
-          include: { 
-            product: true 
-          } 
+        items: {
+          include: {
+            product: true
+          }
         },
         payment: true
       },
     });
-    
+
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
-    
+
     return NextResponse.json({ data: order }, { status: 200 });
   } catch (error) {
     console.error("Order retrieval error:", error);
@@ -43,7 +43,7 @@ export async function PUT(req: Request, { params }: { params: { orderId: string 
       shippingPostalCode,
       shippingCountry,
       shippingPhone,
-      
+
       billingFirstName,
       billingLastName,
       billingStreet,
@@ -51,7 +51,7 @@ export async function PUT(req: Request, { params }: { params: { orderId: string 
       billingState,
       billingPostalCode,
       billingCountry,
-      
+
       email,
       paymentMethod,
       status
@@ -59,10 +59,10 @@ export async function PUT(req: Request, { params }: { params: { orderId: string 
 
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: { 
-        items: true, 
-        payment: true, 
-        user: true 
+      include: {
+        items: true,
+        payment: true,
+        user: true
       },
     });
 
@@ -70,17 +70,22 @@ export async function PUT(req: Request, { params }: { params: { orderId: string 
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
+    // Ensure payment status is a valid PaymentStatus enum
+    const paymentStatus = status === 'COMPLETED'
+      ? PaymentStatus.COMPLETED
+      : PaymentStatus.PENDING;
+
     // Ensure the payment record exists
     await prisma.payment.upsert({
       where: { orderId },
       update: {
         method: paymentMethod || order.payment?.method,
-        status: status || order.payment?.status,
+        status: paymentStatus,
       },
       create: {
         orderId,
-        method: paymentMethod || "UNKNOWN",
-        status: status || "PENDING",
+        method: paymentMethod || "STRIPE",
+        status: paymentStatus,
       },
     });
 
@@ -89,8 +94,8 @@ export async function PUT(req: Request, { params }: { params: { orderId: string 
       order.items.map((item) =>
         prisma.product.update({
           where: { id: item.productId },
-          data: { 
-            stock: { decrement: item.quantity } 
+          data: {
+            stock: { decrement: item.quantity }
           },
         })
       )
@@ -108,7 +113,7 @@ export async function PUT(req: Request, { params }: { params: { orderId: string 
         shippingPostalCode,
         shippingCountry,
         shippingPhone,
-        
+
         billingFirstName,
         billingLastName,
         billingStreet,
@@ -116,13 +121,13 @@ export async function PUT(req: Request, { params }: { params: { orderId: string 
         billingState,
         billingPostalCode,
         billingCountry,
-        
+
         email,
-        status
+        status: status as OrderStatus
       },
-      include: { 
-        items: { include: { product: true } }, 
-        payment: true 
+      include: {
+        items: { include: { product: true } },
+        payment: true
       },
     });
 
