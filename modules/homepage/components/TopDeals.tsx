@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Product, { ProductType } from "./Product";
+import ProductListSkeleton from "../../products/components/ProductListSkeleton";
 
 // Updated ProductType to match API response
 interface ApiProductType {
@@ -122,7 +123,8 @@ const TopDeals: React.FC = () => {
             title: product.name,
             description: product.description || "",
             shortDescription: product.shortDescription || "",
-            image: product.images && product.images.length > 0 ? product.images[0] : "/assets/img/8-1.png",
+            image: product.images && product.images.length > 0 ? product.images[0] : "",
+            reviews: product.reviews && product.reviews.length > 0 ? product.reviews : [],
             regularPrice: product.price,
             salePrice: salePrice,
             tags: [
@@ -168,9 +170,7 @@ const TopDeals: React.FC = () => {
       <div className="flex justify-center items-center flex-col w-full">
         <div className="container mx-auto">
           {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-800"></div>
-            </div>
+            <ProductListSkeleton/>
           ) : error && products.length === 0 ? (
             <div className="flex justify-center items-center h-64">
               <p className="text-red-500">Error loading deals: {error}</p>

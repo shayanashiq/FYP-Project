@@ -162,8 +162,21 @@ export async function GET(request: NextRequest) {
             }
           },
           reviews: {
-            select: {
-              rating: true
+            include: {
+              user: {
+                select: {
+                  customerProfile: {
+                    select: {
+                      firstName: true,
+                      lastName: true,
+                      imageUrl: true
+                    }
+                  }
+                }
+              }
+            },
+            orderBy: {
+              createdAt: 'desc' // Most recent reviews first
             }
           }
         },
@@ -181,13 +194,13 @@ export async function GET(request: NextRequest) {
     // Calculate discounted prices and filter by price range
     let processedProducts = allProducts.map(product => {
       const discountedPrice = calculateDiscountedPrice(
-        product.price, 
-        product.discount || 0
+        product.price.toNumber(), 
+        product.discount?.toNumber() || 0
       );
       
       return {
         ...product,
-        originalPrice: product.price,
+        originalPrice: product.price.toNumber(),
         discountedPrice
       };
     });
@@ -248,7 +261,7 @@ export async function GET(request: NextRequest) {
     // Apply pagination after all filtering and sorting
     const paginatedProducts = processedProducts.slice(skip, skip + limit);
     
-    // Calculate average rating for each product
+    // Calculate average rating and process reviews
     const productsWithRating = paginatedProducts.map(product => {
       const avgRating = product.reviews.length > 0
         ? product.reviews.reduce((sum, review) => sum + review.rating, 0) / product.reviews.length
@@ -261,12 +274,25 @@ export async function GET(request: NextRequest) {
           : 'Unknown Vendor'
       } : null;
       
+      // Process reviews to include reviewer details
+      const processedReviews = product.reviews.map(review => ({
+        id: review.id,
+        rating: review.rating,
+        comment: review.comment,
+        createdAt: review.createdAt,
+        reviewer: {
+          firstName: review.user?.customerProfile?.firstName || 'Anonymous',
+          lastName: review.user?.customerProfile?.lastName || '',
+          profileImage: review.user?.customerProfile?.imageUrl || null
+        }
+      }));
+
       return {
         ...product,
         avgRating,
         reviewCount: product.reviews.length,
+        reviews: processedReviews, // Include processed reviews
         vendor,
-        reviews: undefined,
         _similarity: undefined,
       };
     });

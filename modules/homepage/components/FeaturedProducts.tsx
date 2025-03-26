@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Product, { ProductType } from "./Product";
 import { useSession } from "next-auth/react";
+import ProductListSkeleton from "../../products/components/ProductListSkeleton";
 
 interface WishlistItem {
   id: string;
@@ -148,9 +149,7 @@ const FeaturedProducts: React.FC = () => {
       <div className="flex justify-center items-center flex-col w-full">
         <div className="container mx-auto">
           {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-cyan-800"></div>
-            </div>
+            <ProductListSkeleton/>
           ) : error && products.length === 0 ? (
             <div className="flex justify-center items-center h-64">
               <p className="text-red-500">Error loading featured products: {error}</p>

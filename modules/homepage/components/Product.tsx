@@ -348,8 +348,8 @@ const Product: React.FC<ProductProps> = ({
 
   // Format price display
   const formatPrice = (price: number) => {
-    let newPrice = price.toFixed(2)
-    return `£${newPrice}`;
+    
+    return `£${price}`;
   };
 
   // Calculate discount percentage
@@ -449,6 +449,7 @@ const Product: React.FC<ProductProps> = ({
         {/* Rating Stars */}
         <div className="flex items-center mb-4">
           <Star count={calculateAverageRating()} />
+          {/* {product.avgRating} */}
           {/* Sales Info */}
           {/* <div className="ml-2 text-xs text-gray-500">
             4.3 k+ Sold
