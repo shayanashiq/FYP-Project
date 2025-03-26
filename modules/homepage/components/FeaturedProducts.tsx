@@ -78,13 +78,13 @@ const FeaturedProducts: React.FC = () => {
           title: product.name,
           description: product.description || "",
           shortDescription: product.shortDescription || "",
-          image: product.images && product.images.length > 0 ? product.images[0] : "/assets/img/8-1.png",
+          image: product.images && product.images.length > 0 ? product.images[0] : "",
+          reviews: product.reviews && product.reviews.length > 0 ? product.reviews : [],
           regularPrice: product.price,
           salePrice: product.discount ? product.price - (product.price * product.discount / 100) : product.price,
           tags: [
             ...(product.isBestChoice ? ["best choice"] : []),
             ...(product.discount ? ["sale"] : []),
-            // Add other tag logic as needed
           ],
           inStock: product.stock > 0,
           slug: product.sku || product.id,

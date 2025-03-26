@@ -32,6 +32,7 @@ interface Product {
   id: string;
   name: string;
   description?: string;
+  shortDescription?: string;
   price: number;
   discount: number; // Now represents percentage
   stock: number;
@@ -466,8 +467,11 @@ const ProductDetails: React.FC = () => {
 
       <div className='p-5 flex flex-col justify-center items-center m-auto'>
         <Card className="w-[85%] p-8 flex flex-col gap-3">
-          <span className='font-semibold text-sky-900 text-xl mb-2'>Product Description</span>
-          <div className="text-gray-700">
+          <span className='font-semibold text-sky-900 text-2xl mb-2'>Product Description</span>
+          <div className="text-gray-800">
+            {product.shortDescription || 'No description available for this product.'}
+          </div>
+          <div className="text-gray-800">
             {product.description || 'No description available for this product.'}
           </div>
         </Card>
