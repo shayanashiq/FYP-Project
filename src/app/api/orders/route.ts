@@ -11,14 +11,6 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Invalid order data" }, { status: 400 });
         }
 
-        // Validate shipping information
-        if (!body.shippingFirstName || !body.shippingLastName || 
-            !body.shippingStreet || !body.shippingCity || 
-            !body.shippingPostalCode || !body.shippingCountry || 
-            !body.shippingPhone) {
-            return NextResponse.json({ error: "Incomplete shipping information" }, { status: 400 });
-        }
-
         // Validate email for guest orders
         if (!body.userId && (!body.guestEmail || !body.guestEmail.includes('@'))) {
             return NextResponse.json({ error: "Valid email is required for guest orders" }, { status: 400 });
@@ -31,31 +23,6 @@ export async function POST(request: Request) {
                 .mul(new Prisma.Decimal(1).sub(new Prisma.Decimal(item.discountPercentage || 0).div(100)));
             return acc.add(finalPrice);
         }, new Prisma.Decimal(0));
-
-        // Prepare shipping and billing data
-        const shippingData = {
-            shippingFirstName: body.shippingFirstName,
-            shippingLastName: body.shippingLastName,
-            shippingStreet: body.shippingStreet,
-            shippingCity: body.shippingCity,
-            shippingState: body.shippingState || null,
-            shippingPostalCode: body.shippingPostalCode,
-            shippingCountry: body.shippingCountry,
-            shippingPhone: body.shippingPhone,
-            email: body.email || body.guestEmail, // Use email or guestEmail
-        };
-
-        const billingData = body.useSameAddress 
-            ? {} 
-            : {
-                billingFirstName: body.billingFirstName || null,
-                billingLastName: body.billingLastName || null,
-                billingStreet: body.billingStreet || null,
-                billingCity: body.billingCity || null,
-                billingState: body.billingState || null,
-                billingPostalCode: body.billingPostalCode || null,
-                billingCountry: body.billingCountry || null,
-            };
 
         // Check product availability and stock
         for (const item of body.items) {
@@ -72,16 +39,22 @@ export async function POST(request: Request) {
 
         // Create order with guest support
         const order = await prisma.$transaction(async (prisma) => {
-            // Create the order
+            // Create the order with empty strings for required fields
             const createdOrder = await prisma.order.create({
                 data: {
-                    userId: body.userId || undefined, // Optional user ID
-                    isGuestOrder: !body.userId, // Set guest order flag
+                    userId: body.userId || undefined,
+                    isGuestOrder: !body.userId,
                     guestEmail: !body.userId ? body.guestEmail : undefined,
                     totalPrice,
                     status: "PENDING",
-                    ...shippingData,
-                    ...billingData,
+                    // Provide empty strings for required fields
+                    shippingFirstName: "",
+                    shippingLastName: "",
+                    shippingStreet: "",
+                    shippingCity: "",
+                    shippingPostalCode: "",
+                    shippingCountry: "",
+                    shippingPhone: "",
                     items: {
                         create: body.items.map((item: any) => ({
                             productId: item.productId,

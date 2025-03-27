@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
@@ -68,6 +68,8 @@ interface CustomerProfile {
     phone?: string;
 }
 
+const GUEST_EMAIL_KEY = 'guestEmail';
+
 const CheckoutPage = () => {
     const { data: session } = useSession();
     const router = useRouter();
@@ -79,6 +81,7 @@ const CheckoutPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [processingPayment, setProcessingPayment] = useState(false);
+    const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 
     // Comprehensive form data state
     const [formData, setFormData] = useState({
@@ -113,6 +116,65 @@ const CheckoutPage = () => {
         cardName: ''
     });
 
+    // Get guest cart ID from localStorage
+    const getGuestCartId = useCallback(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('guestCartId');
+        }
+        return null;
+    }, []);
+
+    // Create order and proceed to checkout
+    const createOrderAndProceedToCheckout = useCallback(async () => {
+        if ((!session?.user?.id && !getGuestCartId()) || !orderId) return;
+    
+        try {
+            setIsCreatingOrder(true);
+            setError(null);
+    
+            const orderItems = order?.items.map(item => ({
+                productId: item.product.id,
+                quantity: item.quantity,
+                unitPrice: typeof item.product.price === 'string' 
+                    ? parseFloat(item.product.price) 
+                    : item.product.price,
+                discountPercentage: 0 // You can add discount logic here if needed
+            })) || [];
+    
+            const requestBody: any = {
+                items: orderItems,
+                useSameAddress: true,
+            };
+    
+            if (session?.user?.id) {
+                requestBody.userId = session.user.id;
+                requestBody.email = session.user.email;
+            } else {
+                const guestCartId = getGuestCartId();
+                requestBody.guestCartId = guestCartId;
+                requestBody.guestEmail = localStorage.getItem("guestEmail") || null;
+            }
+    
+            const response = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody),
+            });
+    
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to create order');
+            }
+    
+            const { data } = await response.json();
+            router.push(`/account/checkout?orderId=${data.id}`);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'An unknown error occurred');
+        } finally {
+            setIsCreatingOrder(false);
+        }
+    }, [order, session, router, getGuestCartId, orderId]);
+
     // Fetch customer profile
     const fetchCustomerProfile = async () => {
         if (!session?.user?.id) return;
@@ -134,21 +196,38 @@ const CheckoutPage = () => {
 
     // Fetch order details
     const fetchOrder = async () => {
-        if (!session?.user?.id || !orderId) {
+        if (!orderId) {
             return;
         }
-
+    
         try {
-            const response = await fetch(`/api/orders/${orderId}`);
-
+            // Construct query parameters
+            const queryParams = new URLSearchParams();
+            
+            if (session?.user?.id) {
+                queryParams.append('userId', session.user.id);
+            } else {
+                const guestEmail = localStorage.getItem(GUEST_EMAIL_KEY);
+                if (guestEmail) {
+                    console.log("email")
+                    queryParams.append('guestEmail', guestEmail);
+                } else {
+                    console.log("no email")
+                    // If no session and no guest email, we can't proceed
+                    throw new Error('Guest email is required for guest checkout');
+                }
+            }
+    
+            const response = await fetch(`/api/orders/${orderId}?${queryParams.toString()}`);
+    
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to fetch order');
+                throw new Error(errorData.error || errorData.message || 'Failed to fetch order');
             }
-
+    
             const { data } = await response.json();
             setOrder(data);
-
+    
             // Pre-fill form data if order exists
             if (data) {
                 setFormData(prev => ({
@@ -161,7 +240,7 @@ const CheckoutPage = () => {
                     shippingPostalCode: data.shippingPostalCode || '',
                     shippingCountry: data.shippingCountry || '',
                     shippingPhone: data.shippingPhone || '',
-
+    
                     billingFirstName: data.billingFirstName || '',
                     billingLastName: data.billingLastName || '',
                     billingStreet: data.billingStreet || '',
@@ -169,7 +248,7 @@ const CheckoutPage = () => {
                     billingState: data.billingState || '',
                     billingPostalCode: data.billingPostalCode || '',
                     billingCountry: data.billingCountry || '',
-
+    
                     email: data.email || (session?.user?.email || ''),
                     paymentMethod: data.payment?.method || 'CREDIT_CARD'
                 }));
@@ -179,6 +258,65 @@ const CheckoutPage = () => {
         }
     };
 
+    const processPayment = async () => {
+        if (!order) return;
+
+        try {
+            setProcessingPayment(true);
+            setError(null);
+
+            // Prepare order update payload
+            const orderUpdatePayload = {
+                // Shipping details
+                shippingFirstName: formData.shippingFirstName,
+                shippingLastName: formData.shippingLastName,
+                shippingStreet: formData.shippingStreet,
+                shippingCity: formData.shippingCity,
+                shippingState: formData.shippingState,
+                shippingPostalCode: formData.shippingPostalCode,
+                shippingCountry: formData.shippingCountry,
+                shippingPhone: formData.shippingPhone,
+
+                // Billing details
+                billingFirstName: formData.useSameAddress ? null : formData.billingFirstName,
+                billingLastName: formData.useSameAddress ? null : formData.billingLastName,
+                billingStreet: formData.useSameAddress ? null : formData.billingStreet,
+                billingCity: formData.useSameAddress ? null : formData.billingCity,
+                billingState: formData.useSameAddress ? null : formData.billingState,
+                billingPostalCode: formData.useSameAddress ? null : formData.billingPostalCode,
+                billingCountry: formData.useSameAddress ? null : formData.billingCountry,
+
+                // Authentication
+                ...(session?.user?.id ? { userId: session.user.id } : { guestEmail: localStorage.getItem(GUEST_EMAIL_KEY) }),
+
+                // Email and payment details
+                email: formData.email,
+                paymentMethod: formData.paymentMethod,
+                status: OrderStatus.CONFIRMED 
+            };
+
+            // Update order and process payment
+            const response = await fetch(`/api/orders/${order.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderUpdatePayload),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || errorData.message || 'Payment processing failed');
+            }
+
+            // Redirect to order confirmation
+            router.push(`/account/orders/confirmation?orderId=${order.id}`);
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Payment processing failed. Please try again.');
+        } finally {
+            setProcessingPayment(false);
+        }
+    };
     // Use Effects for data fetching and pre-filling
     useEffect(() => {
         const fetchData = async () => {
@@ -248,86 +386,41 @@ const CheckoutPage = () => {
         return numPrice.toFixed(2);
     };
 
-    // Process Payment
-    const processPayment = async () => {
-        if (!session?.user?.id || !order) return;
+    
 
-        try {
-            setProcessingPayment(true);
-            setError(null);
-
-            // Prepare order update payload
-            const orderUpdatePayload = {
-                // Shipping details
-                shippingFirstName: formData.shippingFirstName,
-                shippingLastName: formData.shippingLastName,
-                shippingStreet: formData.shippingStreet,
-                shippingCity: formData.shippingCity,
-                shippingState: formData.shippingState,
-                shippingPostalCode: formData.shippingPostalCode,
-                shippingCountry: formData.shippingCountry,
-                shippingPhone: formData.shippingPhone,
-
-                // Billing details
-                billingFirstName: formData.useSameAddress ? null : formData.billingFirstName,
-                billingLastName: formData.useSameAddress ? null : formData.billingLastName,
-                billingStreet: formData.useSameAddress ? null : formData.billingStreet,
-                billingCity: formData.useSameAddress ? null : formData.billingCity,
-                billingState: formData.useSameAddress ? null : formData.billingState,
-                billingPostalCode: formData.useSameAddress ? null : formData.billingPostalCode,
-                billingCountry: formData.useSameAddress ? null : formData.billingCountry,
-
-                // Email and payment details
-                email: formData.email,
-                paymentMethod: formData.paymentMethod,
-                status: OrderStatus.CONFIRMED 
-            };
-
-            // Update order and process payment
-            const response = await fetch(`/api/orders/${order.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(orderUpdatePayload),
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Payment processing failed');
-            }
-
-            // Simulate payment processing
-            await new Promise(resolve => setTimeout(resolve, 1500));
-
-            // Redirect to order confirmation
-            // router.push(`/account/orders/confirmation?orderId=${order.id}`);
-
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Payment processing failed. Please try again.');
-        } finally {
-            setProcessingPayment(false);
-        }
-    };
-
-    if (loading) {
+    if (loading || isCreatingOrder) {
         return <div className="flex justify-center items-center h-64">Loading checkout...</div>;
     }
 
     if (error) {
-        return <div className="text-red-500 p-4 bg-red-50 rounded">{error}</div>;
+        return (
+            <div className="p-12 mx-auto">
+                <div className="text-red-500 p-4 bg-red-50 rounded">{error}</div>
+                <div className="text-center mt-4">
+                    <button
+                        onClick={() => router.push('/cart')}
+                        className="text-blue-600 hover:text-blue-800 transition-colors"
+                    >
+                        Return to Cart
+                    </button>
+                </div>
+            </div>
+        );
     }
 
-    if (!order) {
+    if (!order && !isCreatingOrder) {
         return (
-            <div className="bg-white p-6 rounded-lg  text-center">
-                <h2 className="text-xl font-semibold mb-4">Order Not Found</h2>
-                <p className="text-gray-600 mb-4">The order you're looking for doesn't exist or you don't have permission to view it.</p>
-                <button
-                    onClick={() => router.push('/products')}
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
-                    Continue Shopping
-                </button>
+            <div className="p-12 mx-auto">
+                <div className="bg-white p-6 rounded-lg  text-center">
+                    <h2 className="text-xl font-semibold mb-4">Order Not Found</h2>
+                    <p className="text-gray-600 mb-4">The order you're looking for doesn't exist or you don't have permission to view it.</p>
+                    <button
+                        onClick={() => router.push('/products')}
+                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                    >
+                        Continue Shopping
+                    </button>
+                </div>
             </div>
         );
     }
@@ -350,7 +443,7 @@ const CheckoutPage = () => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200">
-                                {order.items.map((item) => (
+                                {order?.items.map((item) => (
                                     <tr key={item.id}>
                                         <td className="px-4 py-3">
                                             <div className="flex items-center">
@@ -382,7 +475,7 @@ const CheckoutPage = () => {
                             <tfoot className="bg-gray-50">
                                 <tr>
                                     <td colSpan={2} className="px-4 py-3 text-right font-semibold">Total:</td>
-                                    <td className="px-4 py-3 text-right font-semibold">${formatPrice(order.totalPrice)}</td>
+                                    <td className="px-4 py-3 text-right font-semibold">${formatPrice(order?.totalPrice)}</td>
                                 </tr>
                             </tfoot>
                         </table>
@@ -759,7 +852,7 @@ const CheckoutPage = () => {
                         disabled={processingPayment}
                         className="w-full bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed"
                     >
-                        {processingPayment ? 'Processing Payment...' : `Pay $${formatPrice(order.totalPrice)}`}
+                        {processingPayment ? 'Processing Payment...' : `Pay $${formatPrice(order?.totalPrice)}`}
                     </button>
                 </div>
             </div>

@@ -33,13 +33,18 @@ interface Cart {
 }
 
 const GUEST_CART_KEY = 'guestCartId';
+const GUEST_EMAIL_KEY = 'guestEmail';
+
 
 const CartDisplay: React.FC = () => {
     const { data: session, status } = useSession();
     const [cart, setCart] = useState<Cart | null>(null);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+    const [showEmailModal, setShowEmailModal] = useState(false);
+    const [email, setEmail] = useState('');
+    const [emailError, setEmailError] = useState('');
     const router = useRouter();
 
     const getGuestCartId = useCallback(() => {
@@ -52,57 +57,51 @@ const CartDisplay: React.FC = () => {
         }
     }, []);
 
+    const validateEmail = (email: string) => {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    };
+
     const fetchCart = useCallback(async () => {
-        const userId = session?.user?.id;
-        const guestCartId = getGuestCartId();
-
-        // If no user and no guest cart ID, stop loading and set empty cart
-        if (!userId && !guestCartId) {
-            setLoading(false);
-            setCart({ id: '', userId: null, items: [] });
-            return;
-        }
-
-        if (loading) return;
-
         try {
             setLoading(true);
             setError(null);
 
+            const userId = session?.user?.id;
+            const guestCartId = getGuestCartId();
+
+            if (!userId && !guestCartId) {
+                setCart({ id: '', userId: null, items: [] });
+                return;
+            }
+
             const response = await fetch(`/api/cart?${userId ? `userId=${userId}` : `guestCartId=${guestCartId}`}`, {
-                headers: {
-                    'Cache-Control': 'no-cache'
-                }
+                headers: { 'Cache-Control': 'no-cache' }
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to fetch cart');
+                throw new Error('Failed to fetch cart');
             }
 
             const { data, cartId, isGuestCart } = await response.json();
-            
+
             if (isGuestCart && cartId && !guestCartId) {
                 setGuestCartId(cartId);
             }
 
             setCart(data);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred');
+            setError(err instanceof Error ? err.message : 'Failed to load cart');
         } finally {
             setLoading(false);
         }
-    }, [session?.user?.id, loading, getGuestCartId, setGuestCartId]);
+    }, [session?.user?.id, getGuestCartId, setGuestCartId]);
 
     useEffect(() => {
-        fetchCart();
-    }, [fetchCart]);
-
-    useEffect(() => {
-        if (status === 'authenticated' || getGuestCartId()) {
+        if (status !== 'loading') {
             fetchCart();
         }
-    }, [status, fetchCart, getGuestCartId]);
+    }, [status, fetchCart]);
 
     const updateQuantity = useCallback(async (productId: string, newQuantity: number) => {
         const userId = session?.user?.id;
@@ -129,9 +128,9 @@ const CartDisplay: React.FC = () => {
             }
 
             if (cart) {
-                const updatedItems = cart.items.map(item => 
-                    item.productId === productId 
-                        ? { ...item, quantity: newQuantity } 
+                const updatedItems = cart.items.map(item =>
+                    item.productId === productId
+                        ? { ...item, quantity: newQuantity }
                         : item
                 );
                 setCart({ ...cart, items: updatedItems });
@@ -201,18 +200,33 @@ const CartDisplay: React.FC = () => {
         return { total, items: calculatedItems };
     }, [cart]);
 
-    const createOrderAndProceedToCheckout = useCallback(async () => {
-        if (!session?.user?.id || !cart || cart.items.length === 0) return;
-    
+    const createOrderAndProceedToCheckout = useCallback(async (guestEmail?: string) => {
+        if (!cart || cart.items.length === 0) {
+            setError('Your cart is empty');
+            return;
+        }
+
         try {
             setIsCreatingOrder(true);
             setError(null);
-    
+
+            // Validate guest email if not logged in
+            if (!session?.user && !guestEmail) {
+                throw new Error('Email is required for guest checkout');
+            }
+
+            if (guestEmail) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(guestEmail)) {
+                    throw new Error('Please enter a valid email address');
+                }
+            }
+
             const orderItems = cart.items.map(item => ({
                 productId: item.productId,
                 quantity: item.quantity,
-                unitPrice: typeof item.product.price === 'string' 
-                    ? parseFloat(item.product.price) 
+                unitPrice: typeof item.product.price === 'string'
+                    ? parseFloat(item.product.price)
                     : item.product.price,
                 discountPercentage: item.product.discount
                     ? (typeof item.product.discount === 'string'
@@ -220,33 +234,56 @@ const CartDisplay: React.FC = () => {
                         : item.product.discount)
                     : 0
             }));
-    
+
+            const requestBody = {
+                items: orderItems,
+                ...(session?.user
+                    ? { userId: session.user.id }
+                    : { guestEmail: guestEmail?.toLowerCase().trim() })
+            };
+
             const response = await fetch('/api/orders', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    userId: session.user.id,
-                    items: orderItems,
-                    email: session.user.email,
-                    useSameAddress: true
-                }),
+                body: JSON.stringify(requestBody),
             });
-    
+
             if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.message || 'Failed to create order');
+                throw new Error(errorData.error || errorData.message || 'Failed to create order');
             }
-    
+
             const { data } = await response.json();
+
+
+
             router.push(`/account/checkout?orderId=${data.id}`);
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'An unknown error occurred');
+            setError(err instanceof Error ? err.message : 'Failed to create order');
         } finally {
             setIsCreatingOrder(false);
         }
     }, [cart, session, router]);
+
+    const handleProceedToCheckout = () => {
+        if (session?.user) {
+            createOrderAndProceedToCheckout();
+        } else {
+            setShowEmailModal(true);
+        }
+    };
+
+    const handleEmailSubmit = () => {
+        if (!validateEmail(email)) {
+            setEmailError('Please enter a valid email address');
+            return;
+        }
+        setEmailError('');
+        localStorage.setItem(GUEST_EMAIL_KEY, email.toLowerCase().trim());
+        createOrderAndProceedToCheckout(email);
+    };
 
     if (loading) {
         return <div className="flex justify-center items-center h-64">Loading your cart...</div>;
@@ -364,7 +401,7 @@ const CartDisplay: React.FC = () => {
 
                 <div className="mt-6 flex justify-end">
                     <button
-                        onClick={createOrderAndProceedToCheckout}
+                        onClick={handleProceedToCheckout}
                         disabled={isCreatingOrder}
                         className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors disabled:bg-blue-400 disabled:cursor-not-allowed"
                     >
@@ -372,6 +409,37 @@ const CartDisplay: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            {showEmailModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg max-w-md w-full">
+                        <h3 className="text-lg font-semibold mb-4">Enter Your Email</h3>
+                        <p className="text-gray-600 mb-4">Please provide your email address to proceed with checkout.</p>
+                        <input
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            placeholder="your@email.com"
+                            className="w-full p-2 border border-gray-300 rounded mb-2"
+                        />
+                        {emailError && <p className="text-red-500 text-sm mb-2">{emailError}</p>}
+                        <div className="flex justify-end space-x-2">
+                            <button
+                                onClick={() => setShowEmailModal(false)}
+                                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleEmailSubmit}
+                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                            >
+                                Continue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

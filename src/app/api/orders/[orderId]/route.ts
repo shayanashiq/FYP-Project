@@ -2,152 +2,157 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { PaymentStatus, OrderStatus } from "@prisma/client";
 
-// GET request handler: Fetch an order by ID
-export async function GET(request: Request, { params }: { params: { orderId: string } }) {
-  try {
-    const { orderId } = params;
-
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-      include: {
-        items: {
-          include: {
-            product: true
-          }
-        },
-        payment: true
-      },
-    });
-
-    if (!order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({ data: order }, { status: 200 });
-  } catch (error) {
-    console.error("Order retrieval error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-  }
+async function validateOrderAccess(orderId: string, userId?: string, guestEmail?: string) {
+  if (!userId && !guestEmail) return null;
+  
+  const order = await prisma.order.findUnique({
+      where: { 
+          id: orderId,
+          OR: [
+              { userId: userId || undefined },
+              { 
+                  isGuestOrder: true, 
+                  guestEmail: guestEmail || undefined 
+              }
+          ]
+      }
+  });
+  return order;
 }
 
-// PUT request handler: Update an order, deduct stock, and empty cart if order is completed
+export async function GET(request: Request, { params }: { params: { orderId: string } }) {
+    try {
+        const { orderId } = params;
+        const url = new URL(request.url);
+        const userId = url.searchParams.get('userId');
+        const guestEmail = url.searchParams.get('guestEmail');
+
+        if (!userId && !guestEmail) {
+            return NextResponse.json(
+                { error: "User ID or Guest Email is required" }, 
+                { status: 400 }
+            );
+        }
+
+        const order = await validateOrderAccess(
+          orderId, 
+          userId || undefined, 
+          guestEmail || undefined
+      );
+        if (!order) {
+            return NextResponse.json(
+                { error: "Order not found or unauthorized" }, 
+                { status: 404 }
+            );
+        }
+
+        const orderWithDetails = await prisma.order.findUnique({
+            where: { id: orderId },
+            include: {
+                items: {
+                    include: {
+                        product: true
+                    }
+                },
+                payment: true
+            },
+        });
+
+        return NextResponse.json({ data: orderWithDetails }, { status: 200 });
+    } catch (error) {
+        console.error("Order retrieval error:", error);
+        return NextResponse.json(
+            { error: "Internal Server Error" }, 
+            { status: 500 }
+        );
+    }
+}
+
 export async function PUT(req: Request, { params }: { params: { orderId: string } }) {
   try {
-    const { orderId } = params;
-    const {
-      shippingFirstName,
-      shippingLastName,
-      shippingStreet,
-      shippingCity,
-      shippingState,
-      shippingPostalCode,
-      shippingCountry,
-      shippingPhone,
+      const { orderId } = params;
+      const { userId, guestEmail, ...body } = await req.json();
 
-      billingFirstName,
-      billingLastName,
-      billingStreet,
-      billingCity,
-      billingState,
-      billingPostalCode,
-      billingCountry,
+      // Validate email if it's a guest order
+      if (!userId && guestEmail) {
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(guestEmail)) {
+              return NextResponse.json(
+                  { error: "Invalid email format" },
+                  { status: 400 }
+              );
+          }
+      }
 
-      email,
-      paymentMethod,
-      status
-    } = await req.json();
+      // Validate order access
+      const order = await validateOrderAccess(
+          orderId, 
+          userId || undefined, 
+          guestEmail || undefined
+      );
 
-    const order = await prisma.order.findUnique({
-      where: { id: orderId },
-      include: {
-        items: true,
-        payment: true,
-        user: true
-      },
-    });
+      if (!order) {
+          return NextResponse.json(
+              { error: "Order not found or unauthorized" }, 
+              { status: 404 }
+          );
+      }
 
-    if (!order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    }
+      // Process payment
+      const paymentStatus = body.status === 'CONFIRMED'
+          ? PaymentStatus.COMPLETED
+          : PaymentStatus.PENDING;
 
-    // Ensure payment status is a valid PaymentStatus enum
-    const paymentStatus = status === 'COMPLETED'
-      ? PaymentStatus.COMPLETED
-      : PaymentStatus.PENDING;
-
-    // Ensure the payment record exists
-    await prisma.payment.upsert({
-      where: { orderId },
-      update: {
-        method: paymentMethod || order.payment?.method,
-        status: paymentStatus,
-      },
-      create: {
-        orderId,
-        method: paymentMethod || "STRIPE",
-        status: paymentStatus,
-      },
-    });
-
-    // Deduct stock for ordered items
-    await Promise.all(
-      order.items.map((item) =>
-        prisma.product.update({
-          where: { id: item.productId },
-          data: {
-            stock: { decrement: item.quantity }
+      // Upsert payment record
+      await prisma.payment.upsert({
+          where: { orderId },
+          update: {
+              method: body.paymentMethod,
+              status: paymentStatus,
           },
-        })
-      )
-    );
-
-    // Update the order with all details
-    const updatedOrder = await prisma.order.update({
-      where: { id: orderId },
-      data: {
-        shippingFirstName,
-        shippingLastName,
-        shippingStreet,
-        shippingCity,
-        shippingState,
-        shippingPostalCode,
-        shippingCountry,
-        shippingPhone,
-
-        billingFirstName,
-        billingLastName,
-        billingStreet,
-        billingCity,
-        billingState,
-        billingPostalCode,
-        billingCountry,
-
-        email,
-        status: status as OrderStatus
-      },
-      include: {
-        items: { include: { product: true } },
-        payment: true
-      },
-    });
-
-    // Empty the cart if order status is CONFIRMED or further in the process
-    if (["CONFIRMED", "SHIPPED", "DELIVERED"].includes(status)) {
-      const userCart = await prisma.cart.findUnique({
-        where: { userId: order.userId },
+          create: {
+              orderId,
+              method: body.paymentMethod || "CREDIT_CARD",
+              status: paymentStatus,
+          },
       });
 
-      if (userCart) {
-        // Delete all cart items for this user's cart
-        await prisma.cartItem.deleteMany({
-          where: { cartId: userCart.id },
-        });
-      }
-    }
+      // Update the order
+      const updatedOrder = await prisma.order.update({
+          where: { id: orderId },
+          data: {
+              shippingFirstName: body.shippingFirstName,
+              shippingLastName: body.shippingLastName,
+              shippingStreet: body.shippingStreet,
+              shippingCity: body.shippingCity,
+              shippingState: body.shippingState,
+              shippingPostalCode: body.shippingPostalCode,
+              shippingCountry: body.shippingCountry,
+              shippingPhone: body.shippingPhone,
 
-    return NextResponse.json(updatedOrder, { status: 200 });
+              billingFirstName: body.billingFirstName,
+              billingLastName: body.billingLastName,
+              billingStreet: body.billingStreet,
+              billingCity: body.billingCity,
+              billingState: body.billingState,
+              billingPostalCode: body.billingPostalCode,
+              billingCountry: body.billingCountry,
+
+              status: body.status as OrderStatus,
+              ...(!userId && guestEmail ? { guestEmail: guestEmail.toLowerCase().trim() } : {})
+          },
+          include: {
+              items: { include: { product: true } },
+              payment: true
+          },
+      });
+
+      return NextResponse.json({ data: updatedOrder }, { status: 200 });
   } catch (error) {
-    console.error("Order update error:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+      console.error("Order update error:", error);
+      return NextResponse.json(
+          { error: "Internal Server Error" }, 
+          { status: 500 }
+      );
   }
 }
