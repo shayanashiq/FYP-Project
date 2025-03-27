@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { v4 as uuidv4 } from 'uuid';
 
 interface Review {
   id: string;
@@ -30,7 +31,7 @@ export interface ProductType {
   salePrice: number;
   tags?: string[] | null;
   inStock: boolean;
-  stock?: number; // Added stock property
+  stock?: number;
   slug: string;
 }
 
@@ -41,7 +42,6 @@ interface ProductProps {
   onWishlistChange?: () => void;
 }
 
-
 const Star: React.FC<{ count: number }> = ({ count }) => {
   return (
     <div className="flex">
@@ -50,7 +50,6 @@ const Star: React.FC<{ count: number }> = ({ count }) => {
 
         return (
           <div key={star} className="relative w-5 h-5">
-            {/* Background Star (Grey) */}
             <svg
               className="absolute inset-0"
               width="24"
@@ -62,7 +61,6 @@ const Star: React.FC<{ count: number }> = ({ count }) => {
               <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/>
             </svg>
 
-            {/* Foreground (Gold) Star with Clipping */}
             <div className="absolute inset-0 overflow-hidden" style={{ width: `${fillPercentage * 100}%` }}>
               <svg
                 width="24"
@@ -80,7 +78,6 @@ const Star: React.FC<{ count: number }> = ({ count }) => {
     </div>
   );
 };
-
 
 const Product: React.FC<ProductProps> = ({
   product,
@@ -102,6 +99,19 @@ const Product: React.FC<ProductProps> = ({
   const userId = session?.user?.id;
   const [isLoadingStock, setIsLoadingStock] = useState(true);
   const [maxStock, setMaxStock] = useState<number>(0);
+  const [guestCartId, setGuestCartId] = useState<string | null>(null);
+
+  // Generate or retrieve guest cart ID
+  useEffect(() => {
+    const storedGuestCartId = localStorage.getItem('guestCartId');
+    if (!storedGuestCartId) {
+      const newGuestCartId = uuidv4();
+      localStorage.setItem('guestCartId', newGuestCartId);
+      setGuestCartId(newGuestCartId);
+    } else {
+      setGuestCartId(storedGuestCartId);
+    }
+  }, []);
 
   const calculateAverageRating = () => {
     if (!product?.reviews || product.reviews.length === 0) return 0;
@@ -109,8 +119,6 @@ const Product: React.FC<ProductProps> = ({
     return totalRating / product.reviews.length;
   };
 
-
-  // Assume a default stock if not provided
   useEffect(() => {
     const fetchProductStock = async () => {
       if (!product.id) return;
@@ -123,12 +131,10 @@ const Product: React.FC<ProductProps> = ({
           const { data } = await response.json();
           setMaxStock(data.stock);
         } else {
-          // If API fails, fall back to the stock from props
           setMaxStock(product.stock || 0);
         }
       } catch (error) {
         console.error("Error fetching product stock:", error);
-        // Fallback to product prop on error
         setMaxStock(product.stock || 0);
       } finally {
         setIsLoadingStock(false);
@@ -138,31 +144,29 @@ const Product: React.FC<ProductProps> = ({
     fetchProductStock();
   }, [product.id, product.stock]);
 
-  // Update local state when props change
   useEffect(() => {
     setInWishlist(isInWishlist);
     setCurrentWishlistItemId(wishlistItemId);
   }, [isInWishlist, wishlistItemId]);
 
-  // Check if product is in cart when component mounts or user changes
   useEffect(() => {
-    if (userId) {
+    if (userId || guestCartId) {
       checkCartStatus();
     }
-  }, [userId, product.id]);
+  }, [userId, guestCartId, product.id]);
 
-  // Function to check if product is in user's cart
   const checkCartStatus = async () => {
-    if (!userId) return;
-
     try {
-      const response = await fetch(`/api/cart?userId=${userId}`);
+      const queryParams = userId 
+        ? `userId=${userId}` 
+        : `guestCartId=${guestCartId}`;
+
+      const response = await fetch(`/api/cart?${queryParams}`);
 
       if (response.ok) {
         const { data } = await response.json();
 
         if (data && data.items) {
-          // Find if this product is in the cart
           const cartItem = data.items.find((item: any) => item.productId === product.id);
 
           if (cartItem) {
@@ -184,10 +188,9 @@ const Product: React.FC<ProductProps> = ({
   };
 
   const handleWishlistToggle = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent navigating to product page
+    e.stopPropagation();
 
     if (!userId) {
-      // Redirect to login if user is not authenticated
       router.push('/login');
       return;
     }
@@ -196,7 +199,6 @@ const Product: React.FC<ProductProps> = ({
 
     try {
       if (inWishlist && currentWishlistItemId) {
-        // Remove from wishlist
         const response = await fetch('/api/wishlist', {
           method: 'DELETE',
           headers: {
@@ -208,11 +210,9 @@ const Product: React.FC<ProductProps> = ({
         if (response.ok) {
           setInWishlist(false);
           setCurrentWishlistItemId(undefined);
-          // Notify parent component about the change
           if (onWishlistChange) onWishlistChange();
         }
       } else {
-        // Add to wishlist
         const response = await fetch('/api/wishlist', {
           method: 'POST',
           headers: {
@@ -225,7 +225,6 @@ const Product: React.FC<ProductProps> = ({
           const data = await response.json();
           setInWishlist(true);
           setCurrentWishlistItemId(data.data.id);
-          // Notify parent component about the change
           if (onWishlistChange) onWishlistChange();
         }
       }
@@ -237,25 +236,34 @@ const Product: React.FC<ProductProps> = ({
   };
 
   const handleCartToggle = async (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent navigating to product page
-
-    if (!userId) {
-      // Redirect to login if user is not authenticated
-      router.push('/login');
-      return;
-    }
+    e.stopPropagation();
 
     if (!product.inStock && !inCart) {
-      return; // Don't proceed if product is out of stock and not already in cart
+      return;
     }
 
     setIsCartLoading(true);
 
     try {
+      const cartPayload = userId 
+        ? { userId, productId: product.id, quantity }
+        : { 
+            guestCartId, 
+            productId: product.id, 
+            quantity 
+          };
+
       if (inCart && cartItemId) {
-        // Remove from cart
-        const response = await fetch(`/api/cart/${cartItemId}`, {
+        const id = cartItemId;
+        const response = await fetch(`/api/cart/${id}`, {
           method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...(userId ? { userId } : { guestCartId }),
+            itemId: cartItemId
+          }),
         });
 
         if (response.ok) {
@@ -263,25 +271,23 @@ const Product: React.FC<ProductProps> = ({
           setCartItemId(undefined);
           setCartQuantity(0);
           setQuantity(1);
+        } else {
+          const errorData = await response.json();
+          console.error('Delete Cart Item Error:', errorData);
         }
       } else {
-        // Add to cart
         const response = await fetch('/api/cart', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            userId,
-            productId: product.id,
-            quantity: quantity
-          }),
+          body: JSON.stringify(cartPayload),
         });
 
         if (response.ok) {
           const data = await response.json();
           setInCart(true);
-          setCartItemId(data.data.id);
+          setCartItemId(data.data.cartItem.id);
           setCartQuantity(quantity);
         } else {
           const errorData = await response.json();
@@ -296,17 +302,22 @@ const Product: React.FC<ProductProps> = ({
   };
 
   const updateCartQuantity = async (newQuantity: number) => {
-    if (!userId || !cartItemId || !inCart) return;
+    if (!userId && !guestCartId || !cartItemId || !inCart) return;
 
     setIsUpdatingCart(true);
 
     try {
+      const queryParams = userId 
+        ? { userId } 
+        : { guestCartId };
+
       const response = await fetch(`/api/cart/${cartItemId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          ...queryParams,
           quantity: newQuantity
         }),
       });
@@ -314,14 +325,12 @@ const Product: React.FC<ProductProps> = ({
       if (response.ok) {
         setCartQuantity(newQuantity);
       } else {
-        // Revert to previous quantity on failure
         setQuantity(cartQuantity);
         const errorData = await response.json();
         console.error("Error updating cart quantity:", errorData.message);
       }
     } catch (error) {
       console.error("Error updating cart quantity:", error);
-      // Revert to previous quantity on error
       setQuantity(cartQuantity);
     } finally {
       setIsUpdatingCart(false);
@@ -330,29 +339,24 @@ const Product: React.FC<ProductProps> = ({
 
   const handleQuantityChange = (newQuantity: number, e?: React.MouseEvent) => {
     if (e) {
-      e.stopPropagation(); // Prevent navigating to product page
+      e.stopPropagation();
     }
 
-    // Ensure quantity is within bounds
     const validQuantity = Math.max(1, Math.min(newQuantity, maxStock));
 
     if (validQuantity !== quantity) {
       setQuantity(validQuantity);
 
-      // If product is in cart, update the cart quantity
       if (inCart) {
         updateCartQuantity(validQuantity);
       }
     }
   };
 
-  // Format price display
   const formatPrice = (price: number) => {
-    
-    return `£${price}`;
+    return `£${price.toFixed(2)}`;
   };
 
-  // Calculate discount percentage
   const discountPercentage = product.regularPrice > product.salePrice
     ? Math.round(((product.regularPrice - product.salePrice) / product.regularPrice) * 100)
     : 0;
@@ -362,14 +366,12 @@ const Product: React.FC<ProductProps> = ({
       onClick={() => router.push(`/products/${product.id}`)}
       className="w-68 bg-white border border-gray-150 shadow-sm hover:shadow-md transition-shadow duration-300 relative overflow-hidden cursor-pointer"
     >
-      {/* Discount Badge */}
       {discountPercentage > 0 && (
         <div className="absolute top-2 left-0 bg-blue-500 text-white px-2 py-1 text-xs font-medium z-10 flex items-center after:content-[''] after:absolute after:top-0 after:right-0 after:border-t-[14px] after:border-b-[14px] after:border-l-[14px] after:border-t-transparent after:border-b-transparent after:border-l-blue-500 after:translate-x-full">
           -{discountPercentage}%
         </div>
       )}
 
-      {/* Wishlist Button */}
       <button
         onClick={handleWishlistToggle}
         disabled={isWishlistLoading}
@@ -394,7 +396,6 @@ const Product: React.FC<ProductProps> = ({
         )}
       </button>
 
-      {/* Product Image */}
       <div className="relative pt-4 flex items-center justify-center h-48">
         <Image
           src={product.image}
@@ -406,14 +407,11 @@ const Product: React.FC<ProductProps> = ({
         />
       </div>
 
-      {/* Product Info */}
       <div className="p-4">
-        {/* Product Title */}
         <h3 className="text-base font-medium text-gray-800 mb-1 line-clamp-2 h-12">
           {product.title}
         </h3>
 
-        {/* Price Section */}
         <div className="flex justify-between">
           <div className="flex items-center space-x-2 flex-row mb-2">
             <span className="text-amber-500 font-bold text-lg">
@@ -443,20 +441,12 @@ const Product: React.FC<ProductProps> = ({
               </div>
             )}
           </div>
-
         </div>
 
-        {/* Rating Stars */}
         <div className="flex items-center mb-4">
           <Star count={calculateAverageRating()} />
-          {/* {product.avgRating} */}
-          {/* Sales Info */}
-          {/* <div className="ml-2 text-xs text-gray-500">
-            4.3 k+ Sold
-          </div> */}
         </div>
 
-        {/* Add to Cart Button */}
         <button
           onClick={handleCartToggle}
           disabled={isCartLoading || (!product.inStock && !inCart)}

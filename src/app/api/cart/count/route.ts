@@ -1,39 +1,38 @@
 // app/api/cart/count/route.js
 
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { PrismaClient } from '@prisma/client';
+import { getServerSession } from "next-auth";
+import { cookies } from "next/headers";
 
 const prisma = new PrismaClient();
 
 export async function GET() {
   try {
-    // Get the user session
+    // Support both session-based and guest cart identification
     const session = await getServerSession();
+    const guestCartId = cookies().get('guestCartId')?.value;
     
-    if (!session || !session.user || !session.user.email) {
-      return NextResponse.json({ count: 0 }, { status: 401 });
+    if (!session?.user?.email && !guestCartId) {
+      return NextResponse.json({ count: 0 }, { status: 200 });
     }
     
-    // Find the user by email
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: { cart: { include: { items: true } } }
+    // Query for cart based on either user email or guest cart ID
+    const cart = await prisma.cart.findFirst({
+      where: {
+        OR: [
+          { user: { email: session?.user?.email } },
+          { id: guestCartId }
+        ]
+      },
+      include: { items: true }
     });
     
-    // If user doesn't exist or doesn't have a cart yet
-    if (!user || !user.cart) {
-      return NextResponse.json({ count: 0 });
-    }
-    
-    // Calculate the total number of items in cart
-    const count = user.cart.items.reduce((total, item) => total + item.quantity, 0);
+    const count = cart?.items.reduce((total, item) => total + item.quantity, 0) || 0;
     
     return NextResponse.json({ count });
   } catch (error) {
     console.error('Error fetching cart count:', error);
-    return NextResponse.json({ error: 'Failed to fetch cart count' }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
+    return NextResponse.json({ count: 0 }, { status: 200 });
   }
 }

@@ -8,17 +8,32 @@ const Navigation = () => {
         <div className="bg-[#D9D9D9] px-8 justify-between h-12 m-auto hidden lg:flex md:flex items-center">
             <div className=''>
                 <div className='flex gap-8'>
-                    <div>
+                    <div
+                    className='cursor-pointer'
+                    onClick={()=>router.push("/products")}
+                    >
                         All Categories
                     </div>
-                    <div>
+                    <div
+                    className='cursor-pointer'
+                    onClick={()=>router.push("/about-us")}
+                    >
                         About Us
                     </div>
                     <div>
                         Contact
                     </div>
-                    <div>
+                    <div
+                    className='cursor-pointer'
+                    onClick={()=>router.push("/privacy-policy")}
+                    >
                         Privacy Policy
+                    </div>
+                    <div
+                    className='cursor-pointer'
+                    onClick={()=>router.push("/terms-and-conditions")}
+                    >
+                        Terms and Conditions
                     </div>
                 </div>
             </div>

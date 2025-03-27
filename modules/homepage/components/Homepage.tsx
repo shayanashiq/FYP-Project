@@ -7,11 +7,13 @@ import Partner from './Partner'
 import FeaturedProducts from './FeaturedProducts'
 import TopDeals from './TopDeals'
 import Newsletter from '@/common/components/layouts/Newsletter'
+import { Categories } from './Categories'
 
 const Homepage = () => {
     return (
         <>
             <Slider />
+            <Categories/>
             <FeaturedProducts/>
             <TopDeals/>
             <BannerPromotion />

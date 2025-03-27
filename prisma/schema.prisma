@@ -132,8 +132,9 @@ enum UserRole {
 //// ==================== CART & WISHLIST ==================== ////
 model Cart {
   id        String    @id @default(uuid())
-  userId    String    @unique
-  user      User      @relation(fields: [userId], references: [id])
+  userId    String?    @unique
+  user      User?      @relation(fields: [userId], references: [id])
+  isGuestCart Boolean     @default(false)
   items     CartItem[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -168,8 +169,8 @@ model WishlistItem {
 //// ==================== ORDERS & PAYMENTS ==================== ////
 model Order {
   id                  String       @id @default(uuid())
-  userId              String
-  user                User         @relation(fields: [userId], references: [id])
+  userId              String?
+  user                User?         @relation(fields: [userId], references: [id])
   items               OrderItem[]
   
   // Shipping Address Details
@@ -195,8 +196,10 @@ model Order {
   status              OrderStatus  @default(PENDING)
   payment             Payment?
   shipment            Shipment?
+
+  guestEmail          String?      
+  isGuestOrder        Boolean      @default(false)
   
-  email               String
   createdAt           DateTime     @default(now())
   updatedAt           DateTime     @updatedAt
 }

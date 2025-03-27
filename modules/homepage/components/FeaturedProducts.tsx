@@ -142,7 +142,7 @@ const FeaturedProducts: React.FC = () => {
   const secondRowProducts = products.slice(5, 10);
 
   return (
-    <div className="px-4 sm:px-8 md:px-12 lg:px-20">
+    <div className="px-4 sm:px-8 md:px-12 lg:px-20 py-20">
       <h1 className="mt-8 md:mt-12 mb-4 md:mb-8 text-cyan-800 text-2xl md:text-3xl lg:text-4xl font-medium text-center md:text-left">
         Featured Products
       </h1>

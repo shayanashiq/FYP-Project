@@ -22,8 +22,8 @@ const HeaderBottom = () => {
   };
 
   return (
-    <header className="bg-[#205781] w-full top-4 left-0 z-50 shadow-md">
-      <div className="container mx-auto px-4">
+    <header className="bg-[#205781] w-full top-4 left-0 z-50">
+      <div className="px-8 mx-auto">
         {/* Main header layout */}
         <div className="flex items-center justify-between py-2">
           {/* Logo */}
@@ -35,7 +35,10 @@ const HeaderBottom = () => {
             }}
             className="flex-shrink-0"
           >
-            <Image src={"/logo"} alt="Logo" width={500} height={500} className="h-16 w-16 md:h-24 md:w-24" />
+            <p className='font-bold text-[36px] text-[#ffffff]'>
+            Lyalla & Lora
+            </p>
+            {/* <Image src={"/logo"} alt="Logo" width={500} height={500} className="h-16 w-16 md:h-24 md:w-24" /> */}
           </a>
 
           {/* Center section with search bar for md+ screens */}

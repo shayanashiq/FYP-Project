@@ -6,9 +6,22 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
 
-        // Validate input
-        if (!body.userId || !body.items || body.items.length === 0) {
+        // Validate essential input
+        if (!body.items || body.items.length === 0) {
             return NextResponse.json({ error: "Invalid order data" }, { status: 400 });
+        }
+
+        // Validate shipping information
+        if (!body.shippingFirstName || !body.shippingLastName || 
+            !body.shippingStreet || !body.shippingCity || 
+            !body.shippingPostalCode || !body.shippingCountry || 
+            !body.shippingPhone) {
+            return NextResponse.json({ error: "Incomplete shipping information" }, { status: 400 });
+        }
+
+        // Validate email for guest orders
+        if (!body.userId && (!body.guestEmail || !body.guestEmail.includes('@'))) {
+            return NextResponse.json({ error: "Valid email is required for guest orders" }, { status: 400 });
         }
 
         // Calculate totalPrice from items with precise decimal calculation
@@ -21,20 +34,20 @@ export async function POST(request: Request) {
 
         // Prepare shipping and billing data
         const shippingData = {
-            shippingFirstName: body.shippingFirstName || '',
-            shippingLastName: body.shippingLastName || '',
-            shippingStreet: body.shippingStreet || '',
-            shippingCity: body.shippingCity || '',
+            shippingFirstName: body.shippingFirstName,
+            shippingLastName: body.shippingLastName,
+            shippingStreet: body.shippingStreet,
+            shippingCity: body.shippingCity,
             shippingState: body.shippingState || null,
-            shippingPostalCode: body.shippingPostalCode || '',
-            shippingCountry: body.shippingCountry || '',
-            shippingPhone: body.shippingPhone || '',
-            email: body.email || '',
+            shippingPostalCode: body.shippingPostalCode,
+            shippingCountry: body.shippingCountry,
+            shippingPhone: body.shippingPhone,
+            email: body.email || body.guestEmail, // Use email or guestEmail
         };
 
-        const billingData = body.useSameAddress ? 
-            {} : 
-            {
+        const billingData = body.useSameAddress 
+            ? {} 
+            : {
                 billingFirstName: body.billingFirstName || null,
                 billingLastName: body.billingLastName || null,
                 billingStreet: body.billingStreet || null,
@@ -44,28 +57,61 @@ export async function POST(request: Request) {
                 billingCountry: body.billingCountry || null,
             };
 
-        const order = await prisma.order.create({
-            data: {
-                userId: body.userId,
-                totalPrice,
-                status: "PENDING",
-                ...shippingData,
-                ...billingData,
-                items: {
-                    create: body.items.map((item: any) => ({
-                        productId: item.productId,
-                        quantity: item.quantity,
-                        price: new Prisma.Decimal(item.unitPrice)
-                    })),
+        // Check product availability and stock
+        for (const item of body.items) {
+            const product = await prisma.product.findUnique({
+                where: { id: item.productId }
+            });
+
+            if (!product || product.stock < item.quantity) {
+                return NextResponse.json({ 
+                    error: `Product ${item.productId} is out of stock or insufficient quantity` 
+                }, { status: 400 });
+            }
+        }
+
+        // Create order with guest support
+        const order = await prisma.$transaction(async (prisma) => {
+            // Create the order
+            const createdOrder = await prisma.order.create({
+                data: {
+                    userId: body.userId || undefined, // Optional user ID
+                    isGuestOrder: !body.userId, // Set guest order flag
+                    guestEmail: !body.userId ? body.guestEmail : undefined,
+                    totalPrice,
+                    status: "PENDING",
+                    ...shippingData,
+                    ...billingData,
+                    items: {
+                        create: body.items.map((item: any) => ({
+                            productId: item.productId,
+                            quantity: item.quantity,
+                            price: new Prisma.Decimal(item.unitPrice)
+                        })),
+                    },
                 },
-            },
-            include: { 
-                items: {
-                    include: { 
-                        product: true 
+                include: { 
+                    items: {
+                        include: { 
+                            product: true 
+                        } 
                     } 
-                } 
-            },
+                },
+            });
+
+            // Update product stock
+            for (const item of body.items) {
+                await prisma.product.update({
+                    where: { id: item.productId },
+                    data: { 
+                        stock: { 
+                            decrement: item.quantity 
+                        } 
+                    }
+                });
+            }
+
+            return createdOrder;
         });
 
         return NextResponse.json({ data: order }, { status: 201 });
@@ -82,13 +128,20 @@ export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const userId = searchParams.get('userId');
+        const guestEmail = searchParams.get('guestEmail');
 
-        if (!userId) {
-            return NextResponse.json({ error: "User ID is required" }, { status: 400 });
+        // Support both user and guest order retrieval
+        if (!userId && !guestEmail) {
+            return NextResponse.json({ error: "User ID or Guest Email is required" }, { status: 400 });
         }
 
         const orders = await prisma.order.findMany({
-            where: { userId },
+            where: userId 
+                ? { userId } 
+                : { 
+                    isGuestOrder: true, 
+                    guestEmail: guestEmail || undefined 
+                },
             include: { 
                 items: { 
                     include: { 
