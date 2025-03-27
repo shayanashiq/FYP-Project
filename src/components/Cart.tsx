@@ -282,7 +282,7 @@ const CartDisplay: React.FC = () => {
 
             const { data } = await response.json();
 
-            router.push(`/account/checkout?orderId=${data.id}`);
+            router.push(`/checkout?orderId=${data.id}`);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to create order');
         } finally {

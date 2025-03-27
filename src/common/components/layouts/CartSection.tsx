@@ -95,7 +95,7 @@ const CartSection: React.FC = () => {
                     <path d="M8.99995 8H21" stroke="currentColor" strokeWidth="2" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
             ),
-            onClick: (e: React.MouseEvent) => router.push("/account/cart"),
+            onClick: (e: React.MouseEvent) => router.push("/cart"),
             count: session ? cartCount : null
         },
         // Profile item with dropdown
