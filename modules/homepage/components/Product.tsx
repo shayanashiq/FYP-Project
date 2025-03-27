@@ -354,7 +354,7 @@ const Product: React.FC<ProductProps> = ({
   };
 
   const formatPrice = (price: number) => {
-    return `£${price.toFixed(2)}`;
+    return `£${price}`;
   };
 
   const discountPercentage = product.regularPrice > product.salePrice
