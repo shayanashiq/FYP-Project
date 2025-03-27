@@ -35,12 +35,12 @@ interface Cart {
 const GUEST_CART_KEY = 'guestCartId';
 const GUEST_EMAIL_KEY = 'guestEmail';
 
-
 const CartDisplay: React.FC = () => {
     const { data: session, status } = useSession();
     const [cart, setCart] = useState<Cart | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [stockError, setStockError] = useState<string | null>(null);
     const [isCreatingOrder, setIsCreatingOrder] = useState(false);
     const [showEmailModal, setShowEmailModal] = useState(false);
     const [email, setEmail] = useState('');
@@ -200,7 +200,31 @@ const CartDisplay: React.FC = () => {
         return { total, items: calculatedItems };
     }, [cart]);
 
+    const checkProductStock = useCallback(() => {
+        if (!cart || cart.items.length === 0) return true;
+
+        const outOfStockItems = cart.items.filter(item => 
+            item.quantity > item.product.stock
+        );
+
+        if (outOfStockItems.length > 0) {
+            const errorMessage = outOfStockItems.map(item => 
+                `${item.product.name} - Available: ${item.product.stock}, Requested: ${item.quantity}`
+            ).join('; ');
+            
+            setStockError(`Some items are out of stock: ${errorMessage}`);
+            return false;
+        }
+
+        return true;
+    }, [cart]);
+
     const createOrderAndProceedToCheckout = useCallback(async (guestEmail?: string) => {
+        // First, check product stock
+        if (!checkProductStock()) {
+            return;
+        }
+
         if (!cart || cart.items.length === 0) {
             setError('Your cart is empty');
             return;
@@ -209,6 +233,7 @@ const CartDisplay: React.FC = () => {
         try {
             setIsCreatingOrder(true);
             setError(null);
+            setStockError(null);
 
             // Validate guest email if not logged in
             if (!session?.user && !guestEmail) {
@@ -257,21 +282,25 @@ const CartDisplay: React.FC = () => {
 
             const { data } = await response.json();
 
-
-
             router.push(`/account/checkout?orderId=${data.id}`);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to create order');
         } finally {
             setIsCreatingOrder(false);
         }
-    }, [cart, session, router]);
+    }, [cart, session, router, checkProductStock]);
 
     const handleProceedToCheckout = () => {
-        if (session?.user) {
-            createOrderAndProceedToCheckout();
-        } else {
-            setShowEmailModal(true);
+        // Clear any previous stock errors
+        setStockError(null);
+
+        // Check stock before proceeding
+        if (checkProductStock()) {
+            if (session?.user) {
+                createOrderAndProceedToCheckout();
+            } else {
+                setShowEmailModal(true);
+            }
         }
     };
 
@@ -309,7 +338,15 @@ const CartDisplay: React.FC = () => {
 
     return (
         <div className="bg-white p-12">
-            {error && <div className="text-red-500 p-2 mb-4 bg-red-50 rounded">{error}</div>}
+            {/* Display stock error if there is one */}
+            {stockError && (
+                <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <strong className="font-bold">Stock Issue: </strong>
+                    <span className="block sm:inline">{stockError}</span>
+                </div>
+            )}
+
+            {error && <div className="text-red-500 mb-20 bg-red-50 rounded">{error}</div>}
 
             <div className="divide-y divide-gray-200">
                 {cartCalculations.items.map((item) => (

@@ -27,12 +27,13 @@ export async function POST(request: Request) {
         // Check product availability and stock
         for (const item of body.items) {
             const product = await prisma.product.findUnique({
-                where: { id: item.productId }
+                where: { id: item.productId },
+                select:{    name: true, stock: true}
             });
 
             if (!product || product.stock < item.quantity) {
                 return NextResponse.json({ 
-                    error: `Product ${item.productId} is out of stock or insufficient quantity` 
+                    error: `${product?.name} is out of stock or insufficient quantity. Remove it from your cart to proceed.` 
                 }, { status: 400 });
             }
         }
