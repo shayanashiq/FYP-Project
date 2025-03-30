@@ -1,13 +1,21 @@
 import React from 'react';
 import { Card } from '@/common/components/elements/Card';
+import { usePathname } from 'next/navigation';
 
 interface ProductListSkeletonProps {
   count?: number;
 }
 
 const ProductListSkeleton: React.FC<ProductListSkeletonProps> = ({ count = 8 }) => {
+  const pathname = usePathname();
+  const isHomePage = pathname === '/';
+  
+  const gridClasses = isHomePage 
+    ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-5 gap-4"
+    : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4";
+  
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-5 gap-4">
+    <div className={gridClasses}>
       {Array.from({ length: count }).map((_, index) => (
         <Card key={index} className="overflow-hidden">
           <div className="w-62 bg-white border border-gray-150 shadow-sm relative overflow-hidden">
