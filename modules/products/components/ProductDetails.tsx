@@ -340,7 +340,7 @@ const ProductDetails: React.FC = () => {
               <Star count={calculateAverageRating()} />
               <div className="text-neutral-600 text-sm font-medium">
                 {product.reviews.length > 0
-                  ? `${calculateAverageRating().toFixed(1)} / 5 from ${product.reviews.length} review${product.reviews.length !== 1 ? 's' : ''}`
+                  ? `${calculateAverageRating().toFixed(1)} / 5 (${product.reviews.length} review${product.reviews.length !== 1 ? 's)' : ')'}`
                   : 'No reviews'
                 }
               </div>
