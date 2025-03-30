@@ -133,6 +133,29 @@ const CustomerProfileForm: React.FC = () => {
         throw new Error(data.message || "Failed to save profile");
       }
 
+      // Subscribe the user to the newsletter
+      try {
+        const email = user?.email;
+        if (email) {
+          await fetch('/api/subscribe', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+              email,
+              name: `${updatedProfile.firstName} ${updatedProfile.lastName}`.trim()
+            }),
+          });
+          // We intentionally don't await this or handle errors differently
+          // as we don't want it to block the profile creation process
+          // Just log success silently
+        }
+      } catch (subscribeError) {
+        console.error("Error subscribing user:", subscribeError);
+        // We don't show this error to the user as the profile was successfully created
+      }
+
       toast.success(data.message);
       await update({ 
         user: { 

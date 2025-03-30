@@ -91,10 +91,7 @@ export async function POST(request: Request) {
     // Create new subscriber
     await prisma.subscriber.create({
       data: {
-        email,
-        token,
-        source: 'website_footer',
-        status: 'active',
+        email
       }
     });
 

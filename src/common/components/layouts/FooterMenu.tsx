@@ -1,7 +1,50 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Send } from "lucide-react";
 
 const Footer = () => {
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
+    const [status, setStatus] = useState('idle'); // idle, loading, success, error
+    
+    const handleSubscribe = async (e) => {
+        e.preventDefault();
+        
+        // Basic validation
+        if (!email || !email.includes('@')) {
+            setMessage('Please enter a valid email address');
+            setStatus('error');
+            return;
+        }
+        
+        setStatus('loading');
+        setMessage('');
+        
+        try {
+            const response = await fetch('/api/subscribe', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email }),
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok) {
+                setStatus('success');
+                setMessage(data.message || 'Subscription successful!');
+                setEmail(''); // Clear input on success
+            } else {
+                setStatus('error');
+                setMessage(data.message || 'Subscription failed. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error subscribing:', error);
+            setStatus('error');
+            setMessage('Something went wrong. Please try again later.');
+        }
+    };
+    
     return (
         <footer className="bg-[#205781] text-white py-8 md:py-16 mt-12">
             <div className="container mx-auto px-4 max-w-7xl">
@@ -29,16 +72,37 @@ const Footer = () => {
                             <h3 className="mb-2 text-xl md:text-2xl font-medium">
                                 Subscribe to Newsletter
                             </h3>
-                            <div className="flex w-full">
-                                <input
-                                    type="email"
-                                    placeholder="Email address"
-                                    className="flex-grow px-3 py-3 rounded-l-md focus:outline-none text-gray-800 text-sm md:text-base"
-                                />
-                                <button className="bg-[#F19B12] text-white px-3 py-2 rounded-r-md flex items-center justify-center hover:bg-[#e08a00] transition-colors">
-                                    <Send size={20} />
-                                </button>
-                            </div>
+                            <form onSubmit={handleSubscribe} className="flex flex-col w-full">
+                                <div className="flex w-full">
+                                    <input
+                                        type="email"
+                                        placeholder="Email address"
+                                        className="flex-grow px-3 py-3 rounded-l-md focus:outline-none text-gray-800 text-sm md:text-base"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
+                                        disabled={status === 'loading'}
+                                        required
+                                    />
+                                    <button 
+                                        type="submit"
+                                        className={`${
+                                            status === 'loading' ? 'bg-gray-500' : 'bg-[#F19B12] hover:bg-[#e08a00]'
+                                        } text-white px-3 py-2 rounded-r-md flex items-center justify-center transition-colors`}
+                                        disabled={status === 'loading'}
+                                    >
+                                        {status === 'loading' ? (
+                                            <span className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></span>
+                                        ) : (
+                                            <Send size={20} />
+                                        )}
+                                    </button>
+                                </div>
+                                {message && (
+                                    <p className={`text-sm mt-2 ${status === 'success' ? 'text-green-300' : 'text-red-300'}`}>
+                                        {message}
+                                    </p>
+                                )}
+                            </form>
                         </div>
                     </div>
 
