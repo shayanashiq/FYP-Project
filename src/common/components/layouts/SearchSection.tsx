@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { Search, ChevronDown } from "lucide-react";
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 interface Category {
   id: string;
@@ -19,6 +19,7 @@ const SearchSection = () => {
   const [isLoading, setIsLoading] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Fetch categories on component mount
   useEffect(() => {
@@ -38,6 +39,24 @@ const SearchSection = () => {
     
     fetchCategories();
   }, []);
+
+  // Extract search parameters from URL when component mounts
+  useEffect(() => {
+    // Get searchTerm from URL
+    const termFromUrl = searchParams.get('searchTerm');
+    if (termFromUrl) {
+      setSearchTerm(termFromUrl);
+    }
+    
+    // Get category from URL
+    const categoryId = searchParams.get('category');
+    if (categoryId && categories.length > 0) {
+      const category = categories.find(cat => cat.id === categoryId);
+      if (category) {
+        setSelectedCategory(category);
+      }
+    }
+  }, [searchParams, categories]);
 
   // Close dropdown when clicking outside
   useEffect(() => {

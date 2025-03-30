@@ -9,8 +9,9 @@ interface ProductListSkeletonProps {
 const ProductListSkeleton: React.FC<ProductListSkeletonProps> = ({ count = 8 }) => {
   const pathname = usePathname();
   const isHomePage = pathname === '/';
+  const isProductDetailsPage = pathname !== '/products';
   
-  const gridClasses = isHomePage 
+  const gridClasses = isHomePage || isProductDetailsPage
     ? "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 lg:grid-cols-5 xl:grid-cols-5 gap-4"
     : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 gap-4";
   

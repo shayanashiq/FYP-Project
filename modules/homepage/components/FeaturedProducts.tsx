@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Product, { ProductType } from "./Product";
 import { useSession } from "next-auth/react";
 import ProductListSkeleton from "../../products/components/ProductListSkeleton";
+import { useRouter } from "next/navigation";
 
 interface WishlistItem {
   id: string;
@@ -58,6 +59,7 @@ const FeaturedProducts: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const { data: session } = useSession();
+  const router = useRouter()
 
   // Fetch featured products from API
   useEffect(() => {
@@ -177,7 +179,9 @@ const FeaturedProducts: React.FC = () => {
             </div>
           )}
         </div>
-        <button className="mt-6 md:mt-8 px-6 py-2 text-lg md:text-xl bg-[#205781] text-white rounded-md hover:bg-[#1a4a70] transition-colors">
+        <button 
+        onClick={()=>router.push("/products?type=featured")}
+        className="mt-6 md:mt-8 px-6 py-2 text-lg md:text-xl bg-[#205781] text-white rounded-md hover:bg-[#1a4a70] transition-colors">
           See All
         </button>
       </div>

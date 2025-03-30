@@ -352,10 +352,10 @@ const Product: React.FC<ProductProps> = ({
     }
   };
 
-  const formatPrice = (price: number) => {
-    return `£${price}`;
+  const formatPrice = (price: unknown): string => {
+    const numericPrice = Number(price) || 0;  
+    return `£${numericPrice.toFixed(2)}`;
   };
-
   const discountPercentage = product.regularPrice > product.salePrice
     ? Math.round(((product.regularPrice - product.salePrice) / product.regularPrice) * 100)
     : 0;
@@ -406,7 +406,7 @@ const Product: React.FC<ProductProps> = ({
         />
       </div>
 
-      <div className="p-4">
+      <div className="p-4 mt-4">
         <h3 className="text-base font-medium text-gray-800 mb-1 line-clamp-2 h-12">
           {product.title}
         </h3>
@@ -422,7 +422,7 @@ const Product: React.FC<ProductProps> = ({
               </span>
             )}
           </div>
-          <div className="flex items-center min-h-14 mb-3">
+          <div className="flex items-center min-h-12">
             {product.inStock && (
               <div className="flex items-center justify-between" onClick={(e) => e.stopPropagation()}>
                 <div className="text-xs text-gray-500">

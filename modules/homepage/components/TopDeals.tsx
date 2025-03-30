@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Product, { ProductType } from "./Product";
 import ProductListSkeleton from "../../products/components/ProductListSkeleton";
+import { useRouter } from "next/navigation";
 
 // Updated ProductType to match API response
 interface ApiProductType {
@@ -57,6 +58,7 @@ const TopDeals: React.FC = () => {
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter()
 
   // Fetch user's wishlist if logged in
   useEffect(() => {
@@ -199,7 +201,9 @@ const TopDeals: React.FC = () => {
             </div>
           )}
         </div>
-        <button className="mt-6 md:mt-8 px-6 py-2 text-lg md:text-xl bg-[#205781] text-white rounded-md hover:bg-[#1a4a70] transition-colors">
+        <button 
+        onClick={()=>router.push("/products?type=bestchoice")}
+        className="mt-6 md:mt-8 px-6 py-2 text-lg md:text-xl bg-[#205781] text-white rounded-md hover:bg-[#1a4a70] transition-colors">
           See All
         </button>
       </div>

@@ -4,6 +4,7 @@ import { Card } from '@/common/components/elements/Card'
 import { Separator } from '@/common/components/elements/Separator'
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation';
+import ProductSkeleton from './ProductDetailsSkeleton';
 
 // Define TypeScript interfaces
 interface Review {
@@ -211,17 +212,15 @@ const ProductDetails: React.FC = () => {
   };
 
   // Calculate discounted price
-  const calculateDiscountedPrice = () => {
+  const calculateDiscountedPrice = (): number => {
     if (!product) return 0;
-    // Discount is a percentage, so calculate the discounted price
-    return product.price * (1 - product.discount / 100);
+    const discountedPrice = product.price * (1 - product.discount / 100);
+    return parseFloat(discountedPrice.toFixed(2)); // Ensures 2 decimal places as a number
   };
 
   if (loading) {
     return (
-      <div className="container mx-auto py-14 flex justify-center items-center">
-        <div className="text-xl">Loading product details...</div>
-      </div>
+      <ProductSkeleton/>
     );
   }
 
@@ -322,10 +321,10 @@ const ProductDetails: React.FC = () => {
               {product.discount > 0 ? (
                 <div className="flex items-center gap-3">
                   <div className="text-red-600 text-2xl font-semibold">
-                    ${calculateDiscountedPrice()}
+                  &#163;{calculateDiscountedPrice()}
                   </div>
                   <div className="text-neutral-600 line-through text-xl">
-                    ${product.price}
+                  &#163;{product.price}
                   </div>
                   <div className="text-green-600 text-base font-medium">
                     {product.discount}% OFF

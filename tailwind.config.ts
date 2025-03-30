@@ -9,7 +9,7 @@ const config: Config = {
   ],
   safelist: [
     'bg-[#F19B12]',
-    'bg-[#205781]',
+    'bg-[#205781]', 
     'bg-[#D9D9D9]'
   ],
   theme: {
