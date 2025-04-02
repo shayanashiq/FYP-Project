@@ -245,9 +245,9 @@ const Product: React.FC<ProductProps> = ({
     }
 
     setIsCartLoading(true);
-    openCart();
-
-
+    if(!inCart){
+      openCart();
+    }
     try {
       const cartPayload = userId 
         ? { userId, productId: product.id, quantity }

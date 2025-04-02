@@ -7,6 +7,7 @@ import { useParams } from 'next/navigation';
 import ProductSkeleton from './ProductDetailsSkeleton';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
+import { useCart } from '@/components/context/CartContext';
 import { useSession } from 'next-auth/react';
 
 // Define TypeScript interfaces
@@ -210,12 +211,17 @@ const ProductDetails: React.FC = () => {
     }
   };
 
+  const { openCart } = useCart();
+
   const handleCartToggle = async () => {
     if (!product || (product.stock <= 0 && !inCart)) {
       return;
     }
 
     setIsCartLoading(true);
+    if(!inCart){
+      openCart();
+    }
 
     try {
       const cartPayload = userId

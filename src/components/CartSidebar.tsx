@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 interface Product {
   id: string;
   name: string;
-  image: string;
+  images: string[];
   price: number;
   discount?: number;
 }
@@ -250,7 +250,7 @@ const CartSidebar = () => {
             )}
           </div>
 
-          {cart?.items.length > 0 && (
+          {cart?.items.length && cart?.items.length > 0 && (
             <div className="border-t p-4">
               <div className="flex justify-between mb-4">
                 <span className="font-medium">Subtotal</span>
