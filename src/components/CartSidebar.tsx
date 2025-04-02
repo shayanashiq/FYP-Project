@@ -12,6 +12,7 @@ interface Product {
   images: string[];
   price: number;
   discount?: number;
+  stock: number;
 }
 
 interface CartItem {

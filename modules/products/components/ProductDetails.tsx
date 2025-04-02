@@ -149,6 +149,7 @@ const ProductDetails: React.FC = () => {
   const [cartItemId, setCartItemId] = useState<string | undefined>(undefined);
   const [cartQuantity, setCartQuantity] = useState<number>(0);
   const [guestCartId, setGuestCartId] = useState<string | null>(null);
+  const [isBuyNow, setIsBuyNow] = useState<boolean>(false);
   
   // Zoom state
   const [isZoomed, setIsZoomed] = useState(false);
@@ -219,7 +220,7 @@ const ProductDetails: React.FC = () => {
     }
 
     setIsCartLoading(true);
-    if(!inCart){
+    if(!inCart && !isBuyNow){
       openCart();
     }
 
@@ -371,6 +372,7 @@ const ProductDetails: React.FC = () => {
   };
 
   const handleBuyNow = async () => {
+    setIsBuyNow(true)
     if (!product) return;
 
     // Check stock
