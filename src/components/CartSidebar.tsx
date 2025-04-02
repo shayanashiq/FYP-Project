@@ -221,12 +221,13 @@ const CartSidebar = () => {
                             onClick={() => updateQuantity(item.productId, Math.max(1, item.quantity - 1))}
                             className="w-8 h-8 border rounded flex items-center justify-center"
                           >
-                            -
+                             -
                           </button>
                           <span className="mx-2">{item.quantity}</span>
                           <button
                             onClick={() => updateQuantity(item.productId, item.quantity + 1)}
                             className="w-8 h-8 border rounded flex items-center justify-center"
+                            disabled={item.quantity >= item.product.stock}
                           >
                             +
                           </button>
