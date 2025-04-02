@@ -21,13 +21,14 @@ const LoginSchema = Yup.object().shape({
 });
 
 function ClientLoginForm() {
-  const { data: session, status }:any = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const searchParams = useSearchParams();
   const emailFromParams = searchParams?.get("email") || "";
   const from = searchParams?.get("from");
   const [loading, setLoading] = useState(true);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -40,6 +41,7 @@ function ClientLoginForm() {
   }, [status]);
 
   const handleGoogleSignIn = async () => {
+    setGoogleLoading(true);
     try {
       const result = await signIn("google", {
         redirect: false,
@@ -47,38 +49,48 @@ function ClientLoginForm() {
       });
   
       if (result?.error) {
-        toast.error("Failed to sign in with Google");
+        toast.error(result.error || "Failed to sign in with Google");
       } else {
-        // Check the user role after Google sign-in
-        const session = await fetch("/api/auth/session");
-        const sessionData = await session.json();
+        // Wait for session to update
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const updatedSession = await update();
         
-        if (sessionData?.user?.role === "ADMIN") {
-          router.push("/admin");
-        } else if (sessionData?.user?.role === "VENDOR") {
-          router.push("/vendor"); // Add this if vendors have a specific page
+        if (updatedSession?.user) {
+          redirectBasedOnRole(updatedSession.user);
         } else {
-          router.push("/"); // Default for customers
+          router.push(from || "/");
         }
       }
     } catch (error) {
+      console.error("Google sign-in error:", error);
       toast.error("Error signing in with Google");
+    } finally {
+      setGoogleLoading(false);
     }
-  }; 
+  };
 
-  const callbackUrl = from || session?.user?.role === "CUSTOMER"
-    ? "/"
-    : session?.user?.role === null &&
-      session?.user?.token &&
-      session?.user?.isPasswordSet === false &&
-      session?.user?.isProfileComplete === false
-    ? `/password?email=${encodeURIComponent(session?.user?.email)}`
-    : session?.user?.role === null &&
-      session?.user?.isPasswordSet === true &&
-      session?.user?.isProfileComplete === false &&
-      session?.user?.token
-    ? `/doctor/profile?email=${encodeURIComponent(session?.user?.email)}`
-    : "/login";
+  const redirectBasedOnRole = (user: any) => {
+    if (!user) {
+      router.push("/");
+      return;
+    }
+
+    if (user.role === "ADMIN") {
+      router.push("/admin");
+    } else if (user.role === "VENDOR") {
+      router.push("/vendor");
+    } else if (user.role === null && user.token) {
+      if (!user.isPasswordSet) {
+        router.push(`/password?email=${encodeURIComponent(user.email)}`);
+      } else if (!user.isProfileComplete) {
+        router.push(`/doctor/profile?email=${encodeURIComponent(user.email)}`);
+      } else {
+        router.push("/");
+      }
+    } else {
+      router.push(from || "/");
+    }
+  };
 
   return (
     <div className="w-full">
@@ -106,17 +118,14 @@ function ClientLoginForm() {
                 description: result?.error || "🚨Oops... Something went wrong!",
               });
             } else {
-              // Instead of hardcoding the redirect to "/"
-              // Get the current session to check the user role
-              const session = await fetch("/api/auth/session");
-              const sessionData = await session.json();
+              // Wait for session to update
+              await new Promise(resolve => setTimeout(resolve, 500));
+              const updatedSession = await update();
               
-              if (sessionData?.user?.role === "ADMIN") {
-                router.push("/admin");
-              } else if (sessionData?.user?.role === "VENDOR") {
-                router.push("/vendor"); // Add this if vendors have a specific page
+              if (updatedSession?.user) {
+                redirectBasedOnRole(updatedSession.user);
               } else {
-                router.push("/"); // Default for customers
+                router.push(from || "/");
               }
             }
           } catch (err) {
@@ -215,16 +224,25 @@ function ClientLoginForm() {
 
       <button
         onClick={handleGoogleSignIn}
-        className="flex justify-center py-2 w-full bg-white font-custom text-base font-normal text-black border-[#F19B12] border-2"
+        disabled={googleLoading}
+        className={`flex justify-center items-center py-2 w-full bg-white font-custom text-base font-normal text-black border-[#F19B12] border-2 rounded-md ${
+          googleLoading ? "opacity-50 cursor-not-allowed" : ""
+        }`}
       >
-        <Image
-          width={50}
-          height={50}
-          src={googleLogo.src}
-          alt="Google Logo"
-          className="w-6 h-6 mr-2"
-        />
-        <div className="text-black">Continue with Google</div>
+        {googleLoading ? (
+          <span>Signing in...</span>
+        ) : (
+          <>
+            <Image
+              width={24}
+              height={24}
+              src={googleLogo.src}
+              alt="Google Logo"
+              className="w-6 h-6 mr-2"
+            />
+            <span>Continue with Google</span>
+          </>
+        )}
       </button>
 
       <p className="text-center text-black leading-[25.48px] pt-3">

@@ -12,12 +12,13 @@ model User {
   id           String    @id @default(uuid())
   
   email        String    @unique
-  password     String
+  password     String?
   role         UserRole  @default(CUSTOMER) 
   isAdmin      Boolean   @default(false)
   verified            Boolean            @default(false)
   isPasswordSet       Boolean            @default(false)
   isProfileComplete       Boolean            @default(false)
+  loginType          String 
   // Relationships
   customerProfile CustomerProfile? 
   orders       Order[]
