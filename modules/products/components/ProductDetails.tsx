@@ -5,6 +5,9 @@ import { Separator } from '@/common/components/elements/Separator'
 import React, { useState, useEffect, useRef } from 'react'
 import { useParams } from 'next/navigation';
 import ProductSkeleton from './ProductDetailsSkeleton';
+import { useRouter } from 'next/navigation';
+import { v4 as uuidv4 } from 'uuid';
+import { useSession } from 'next-auth/react';
 
 // Define TypeScript interfaces
 interface Review {
@@ -143,11 +146,174 @@ const ProductDetails: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(1);
+  const { data: session } = useSession();
+  const userId = session?.user?.id;
+  const router = useRouter();
 
+  // Cart state variables
+  const [isCartLoading, setIsCartLoading] = useState<boolean>(false);
+  const [inCart, setInCart] = useState<boolean>(false);
+  const [cartItemId, setCartItemId] = useState<string | undefined>(undefined);
+  const [cartQuantity, setCartQuantity] = useState<number>(0);
+  const [guestCartId, setGuestCartId] = useState<string | null>(null);
   // Zoom state
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
   const imageContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const storedGuestCartId = localStorage.getItem('guestCartId');
+    if (!storedGuestCartId) {
+      const newGuestCartId = uuidv4();
+      localStorage.setItem('guestCartId', newGuestCartId);
+      setGuestCartId(newGuestCartId);
+    } else {
+      setGuestCartId(storedGuestCartId);
+    }
+  }, []);
+
+  useEffect(() => {
+    if ((userId || guestCartId) && product?.id) {
+      checkCartStatus();
+    }
+  }, [userId, guestCartId, product?.id]);
+
+  const checkCartStatus = async () => {
+    try {
+      const queryParams = userId
+        ? `userId=${userId}`
+        : `guestCartId=${guestCartId}`;
+
+      const response = await fetch(`/api/cart?${queryParams}`);
+
+      if (response.ok) {
+        const { data } = await response.json();
+
+        if (data && data.items) {
+          const cartItem = data.items.find((item: any) => item.productId === product?.id);
+
+          if (cartItem) {
+            setInCart(true);
+            setCartItemId(cartItem.id);
+            setCartQuantity(cartItem.quantity || 1);
+            setQuantity(cartItem.quantity || 1);
+          } else {
+            setInCart(false);
+            setCartItemId(undefined);
+            setCartQuantity(0);
+            setQuantity(1);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error checking cart status:", error);
+    }
+  };
+
+  const handleCartToggle = async () => {
+    if (!product || (product.stock <= 0 && !inCart)) {
+      return;
+    }
+
+    setIsCartLoading(true);
+
+    try {
+      const cartPayload = userId
+        ? { userId, productId: product.id, quantity }
+        : { guestCartId, productId: product.id, quantity };
+
+      if (inCart && cartItemId) {
+        const id = cartItemId;
+        const response = await fetch(`/api/cart/${id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...(userId ? { userId } : { guestCartId }),
+            itemId: cartItemId
+          }),
+        });
+
+        if (response.ok) {
+          setInCart(false);
+          setCartItemId(undefined);
+          setCartQuantity(0);
+          setQuantity(1);
+        } else {
+          const errorData = await response.json();
+          console.error('Delete Cart Item Error:', errorData);
+        }
+      } else {
+        const response = await fetch('/api/cart', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(cartPayload),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setInCart(true);
+          setCartItemId(data.data.cartItem.id);
+          setCartQuantity(quantity);
+        } else {
+          const errorData = await response.json();
+          console.error("Error adding to cart:", errorData.message);
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling cart:", error);
+    } finally {
+      setIsCartLoading(false);
+    }
+  };
+
+
+
+  const updateCartQuantity = async (newQuantity: number) => {
+    if (!userId && !guestCartId || !cartItemId || !inCart) return;
+
+    try {
+      const queryParams = userId
+        ? { userId }
+        : { guestCartId };
+
+      const response = await fetch(`/api/cart/${cartItemId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...queryParams,
+          quantity: newQuantity
+        }),
+      });
+
+      if (response.ok) {
+        setCartQuantity(newQuantity);
+      } else {
+        setQuantity(cartQuantity);
+        const errorData = await response.json();
+        console.error("Error updating cart quantity:", errorData.message);
+      }
+    } catch (error) {
+      console.error("Error updating cart quantity:", error);
+      setQuantity(cartQuantity);
+    }
+  };
+
+
+
+  const handleBuyNow = async () => {
+    // First add to cart if not already in cart
+    if (!inCart) {
+      await handleCartToggle();
+    }
+    // Then navigate to checkout page
+    router.push("/checkout")
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -220,7 +386,7 @@ const ProductDetails: React.FC = () => {
 
   if (loading) {
     return (
-      <ProductSkeleton/>
+      <ProductSkeleton />
     );
   }
 
@@ -321,10 +487,10 @@ const ProductDetails: React.FC = () => {
               {product.discount > 0 ? (
                 <div className="flex items-center gap-3">
                   <div className="text-red-600 text-2xl font-semibold">
-                  &#163;{calculateDiscountedPrice()}
+                    &#163;{calculateDiscountedPrice()}
                   </div>
                   <div className="text-neutral-600 line-through text-xl">
-                  &#163;{product.price}
+                    &#163;{product.price}
                   </div>
                   <div className="text-green-600 text-base font-medium">
                     {product.discount}% OFF
@@ -423,14 +589,23 @@ const ProductDetails: React.FC = () => {
 
             <div className="flex flex-wrap gap-3 mt-3">
               <button
-                disabled={product.stock <= 0}
-                className='w-full sm:w-56 h-16 bg-amber-500 text-white text-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed'
+                onClick={handleCartToggle}
+                disabled={product.stock <= 0 && !inCart}
+                className={`w-full sm:w-56 h-16 text-white text-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed ${inCart ? 'bg-red-500 hover:bg-red-600' : 'bg-amber-500 hover:bg-amber-600'
+                  }`}
               >
-                Add to cart
+                {isCartLoading ? (
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
+                ) : inCart ? (
+                  "Remove from cart"
+                ) : (
+                  "Add to cart"
+                )}
               </button>
               <button
+                onClick={handleBuyNow}
                 disabled={product.stock <= 0}
-                className='w-full sm:w-56 h-16 bg-amber-500 text-white text-lg font-medium  disabled:bg-gray-400 disabled:cursor-not-allowed'
+                className='w-full sm:w-56 h-16 bg-amber-500 hover:bg-amber-600 text-white text-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed'
               >
                 Buy it now
               </button>
