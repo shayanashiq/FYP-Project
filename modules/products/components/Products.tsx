@@ -9,7 +9,7 @@ import SidePriceRange from './SidePriceRange'
 import BannerPromotion from '../../homepage/components/BannerPromotion'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import Product, {ProductType} from '../../homepage/components/Product'
+import Product, { ProductType } from '../../homepage/components/Product'
 import { SlidersHorizontal, X } from 'lucide-react'
 import SortDropdown from '@/common/components/SortDropdown'
 import Pagination from '@/common/components/Pagination'
@@ -38,7 +38,7 @@ const Products = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session } = useSession();
-  
+
   const [products, setProducts] = useState<ProductType[]>([]);
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +47,7 @@ const Products = () => {
   const [isFiltersOpen, setIsFiltersOpen] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [debugInfo, setDebugInfo] = useState<string | null>(null);
-  
+
   // Get current query parameters - ensure correct naming
   const search = searchParams.get('searchTerm') || '';
   const category = searchParams.get('category') || '';
@@ -58,13 +58,13 @@ const Products = () => {
   const color = searchParams.get('color') || '';
   const size = searchParams.get('size') || '';
   const type = searchParams.get('type') || '';
-  
+
   // Fetch products with updated mapping to ProductType
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
       setDebugInfo(null);
-      
+
       const queryParams = new URLSearchParams();
       if (search) queryParams.set('search', search);
       if (category) queryParams.set('category', category);
@@ -75,16 +75,16 @@ const Products = () => {
       if (color) queryParams.set('color', color);
       if (size) queryParams.set('size', size);
       if (type) queryParams.set('type', type);
-      
+
       try {
         const response = await fetch(`/api/products/search?${queryParams.toString()}`);
         if (!response.ok) {
           const errorText = await response.text();
           throw new Error(`Failed to fetch products: ${errorText}`);
         }
-        
+
         const data = await response.json();
-        
+
         // Map API products to ProductType format
         const formattedProducts = data.products.map(product => ({
           id: product.id,
@@ -102,7 +102,7 @@ const Products = () => {
           inStock: product.stock > 0,
           slug: product.sku || product.id,
         }));
-        
+
         setProducts(formattedProducts);
         setTotalPages(data.pagination.totalPages);
         setCurrentPage(data.pagination.page);
@@ -115,7 +115,7 @@ const Products = () => {
         setLoading(false);
       }
     };
-    
+
     fetchProducts();
   }, [search, category, sort, pageParam, minPrice, maxPrice, color, size, type]);
 
@@ -123,21 +123,21 @@ const Products = () => {
   useEffect(() => {
     const fetchWishlist = async () => {
       if (!session?.user?.id) return;
-      
+
       try {
         const response = await fetch(`/api/wishlist?userId=${session.user.id}`);
         if (!response.ok) {
           console.error('Failed to fetch wishlist');
           return;
         }
-        
+
         const data = await response.json();
         setWishlistItems(data.data?.items || []);
       } catch (error) {
         console.error('Error fetching wishlist:', error);
       }
     };
-    
+
     if (session?.user?.id && products.length > 0) {
       fetchWishlist();
     }
@@ -181,7 +181,7 @@ const Products = () => {
             <p>{debugInfo}</p>
           </div>
         )}
-       
+
         {/* Mobile filters button */}
         <div className="flex items-center justify-between mb-4 lg:hidden">
           <button
@@ -191,10 +191,10 @@ const Products = () => {
             <SlidersHorizontal size={16} />
             Filters
           </button>
-          
+
           <SortDropdown />
         </div>
-        
+
         {/* Main content area */}
         <div className="flex relative">
           {/* Sidebar filters - desktop */}
@@ -210,7 +210,7 @@ const Products = () => {
                   Clear all filters
                 </button>
               )}
-              
+
               <SideCategories />
               <Separator />
               <SideProductType />
@@ -221,16 +221,50 @@ const Products = () => {
               <Separator />
             </div>
           </div>
-          
+
           {/* Mobile filters sidebar */}
           {isFiltersOpen && (
             <div className="fixed inset-0 z-50 bg-black bg-opacity-50 lg:hidden">
               <div className="absolute right-0 top-0 h-full w-[280px] bg-white overflow-y-auto p-4">
-                {/* Mobile filters content remains the same */}
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-medium text-lg">Filters</h3>
+                  <button onClick={toggleFilters} className="text-gray-500">
+                    <X size={20} />
+                  </button>
+                </div>
+
+                {/* Clear filters button */}
+                {hasFilters && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="text-sm text-blue-600 hover:text-blue-800 mb-4 flex items-center"
+                  >
+                    <X size={16} className="mr-1" />
+                    Clear all filters
+                  </button>
+                )}
+
+                {/* Add the same filter components as desktop */}
+                <SideCategories />
+                <Separator />
+                <SideProductType />
+                <Separator />
+                <SidePriceRange />
+                <Separator />
+                <SideSize />
+                <Separator />
+
+                {/* Apply button for mobile */}
+                <button
+                  onClick={toggleFilters}
+                  className="w-full bg-black text-white py-2 rounded-md mt-4"
+                >
+                  Apply Filters
+                </button>
               </div>
             </div>
           )}
-          
+
           <div className="flex-1">
             <div className="hidden lg:flex justify-between items-center mb-4">
               <div className="text-sm text-gray-500">
@@ -238,7 +272,7 @@ const Products = () => {
               </div>
               <SortDropdown />
             </div>
-            
+
             {/* Products grid or no results */}
             {loading ? (
               <ProductListSkeleton />
@@ -249,20 +283,20 @@ const Products = () => {
                   {products.map((product) => {
                     const { isInWishlist, wishlistItemId } = getWishlistInfo(product.id);
                     return (
-                      <Product 
-                        key={product.id} 
-                        product={product} 
+                      <Product
+                        key={product.id}
+                        product={product}
                         isInWishlist={isInWishlist}
                         wishlistItemId={wishlistItemId}
                       />
                     );
                   })}
                 </div>
-                
+
                 {/* Pagination */}
                 {totalPages > 1 && (
                   <div className="mt-8">
-                    <Pagination 
+                    <Pagination
                       currentPage={currentPage}
                       totalPages={totalPages}
                       onPageChange={handlePageChange}
@@ -271,14 +305,14 @@ const Products = () => {
                 )}
               </>
             ) : (
-              <NoResults 
+              <NoResults
                 title="No products found"
                 description="Try changing your search or filter criteria."
               />
             )}
           </div>
         </div>
-        
+
         {/* Promotional banner at bottom */}
         <div className="mt-12">
           <BannerPromotion />
