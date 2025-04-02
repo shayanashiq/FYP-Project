@@ -380,7 +380,7 @@ const CheckoutPage = () => {
                 body: JSON.stringify(orderUpdatePayload),
             });
 
-            router.push(`/account/orders/confirmation?orderId=${order?.id}`);
+            router.push(`/orders/confirmation?orderId=${order?.id}`);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Payment processing failed');
         }

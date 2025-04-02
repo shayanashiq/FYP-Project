@@ -152,7 +152,7 @@ export default function Wishlist() {
           Profile
         </button>
         <button
-          onClick={() => router.push("/account/orders")}
+          onClick={() => router.push("/orders")}
           className={`mr-4 py-2 px-4 rounded-t ${activeTab === "orders" ? "bg-white border-t border-l border-r font-bold" : ""}`}
         >
           My Orders

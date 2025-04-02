@@ -13,19 +13,45 @@ export default function Orders() {
     const [activeTab, setActiveTab] = useState("orders");
     const [orders, setOrders] = useState<Order[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [guestEmail, setGuestEmail] = useState("");
+    const [showEmailPopup, setShowEmailPopup] = useState(false);
 
     useEffect(() => {
-        if (status === "authenticated" && activeTab === "orders") {
+        if (status === "unauthenticated") {
+            // Check if we have a stored guest email in localStorage
+            const storedEmail = localStorage.getItem("guestEmail");
+            if (storedEmail) {
+                setGuestEmail(storedEmail);
+                fetchOrders(storedEmail);
+            } else {
+                setShowEmailPopup(true);
+            }
+        } else if (status === "authenticated" && session?.user.id) {
             fetchOrders();
         }
-    }, [status, activeTab]);
+    }, [status, session]);
 
-    const fetchOrders = async () => {
-        if (!session?.user.id) return;
+    const handleEmailSubmit = (e) => {
+        e.preventDefault();
+        if (guestEmail.trim()) {
+            localStorage.setItem("guestEmail", guestEmail);
+            setShowEmailPopup(false);
+            fetchOrders(guestEmail);
+        }
+    };
 
+    const fetchOrders = async (email = null) => {
         setIsLoading(true);
         try {
-            const response = await fetch(`/api/orders?userId=${session.user.id}`);
+            let response;
+            if (session?.user.id) {
+                response = await fetch(`/api/orders?userId=${session.user.id}`);
+            } else if (email) {
+                response = await fetch(`/api/orders?guestEmail=${email}`);
+            } else {
+                return; // Don't fetch if no identification is available
+            }
+            
             const result = await response.json();
 
             if (response.ok) {
@@ -44,16 +70,44 @@ export default function Orders() {
         return <div className="flex justify-center items-center h-screen">Loading...</div>;
     }
 
-    if (status === "unauthenticated") {
-        router.push("/login");
-        return null;
-    }
-
-    const profile = session?.user.customerProfile || {};
-
     return (
         <div className="container mx-auto px-4 py-8">
-            {/* Tab Navigation remains the same as before */}
+            {/* Email Popup Modal */}
+            {showEmailPopup && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+                        <h2 className="text-xl font-bold mb-4">Enter Your Email</h2>
+                        <p className="mb-4 text-gray-600">Please enter your email to view your orders</p>
+                        <form onSubmit={handleEmailSubmit}>
+                            <input
+                                type="email"
+                                value={guestEmail}
+                                onChange={(e) => setGuestEmail(e.target.value)}
+                                placeholder="your@email.com"
+                                className="w-full p-2 border border-gray-300 rounded mb-4"
+                                required
+                            />
+                            <div className="flex justify-end space-x-3">
+                                <button
+                                    type="button"
+                                    onClick={() => router.push("/")}
+                                    className="px-4 py-2 border border-gray-300 rounded"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-orange-500 text-white rounded"
+                                >
+                                    Submit
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Tab Navigation */}
             <div className="bg-gray-100 p-4 flex border-b">
                 <button
                     onClick={() => router.push("/account")}
@@ -76,8 +130,6 @@ export default function Orders() {
 
             {/* Content Area */}
             <div className="bg-white p-6 rounded-b-lg border border-grey-200">
-                {/* Existing Profile and Wishlist tabs remain the same */}
-
                 <div>
                     <h2 className="text-xl font-bold mb-4">My Orders</h2>
                     {isLoading ? (
