@@ -8,10 +8,9 @@ import { useRouter } from 'next/navigation';
 
 interface Product {
   id: string;
-  title: string;
+  name: string;
   image: string;
-  salePrice: number;
-  regularPrice: number;
+  price: number;
   discount?: number;
 }
 
@@ -52,8 +51,19 @@ const CartSidebar = () => {
         
         if (!response.ok) throw new Error('Failed to fetch cart');
         
-        const { data } = await response.json();
-        setCart(data);
+        const { data, cartId, isGuestCart } = await response.json();
+        
+        const cartData = data || {
+          id: cartId || '',
+          userId: userId || null,
+          items: []
+        };
+        
+        setCart(cartData);
+        
+        if (isGuestCart && cartId && !guestCartId) {
+          localStorage.setItem('guestCartId', cartId);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load cart');
       } finally {
@@ -122,10 +132,16 @@ const CartSidebar = () => {
     }
   };
 
+  const calculateDiscountedPrice = (price: number, discount?: number) => {
+    if (!discount) return price;
+    return price * (1 - discount / 100);
+  };
+
   const calculateTotal = () => {
     if (!cart?.items.length) return 0;
     return cart.items.reduce((total, item) => {
-      return total + (item.product.salePrice * item.quantity);
+      const discountedPrice = calculateDiscountedPrice(item.product.price, item.product.discount);
+      return total + (discountedPrice * item.quantity);
     }, 0);
   };
 
@@ -173,52 +189,63 @@ const CartSidebar = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                {cart.items.map((item) => (
-                  <div key={item.id} className="flex items-start border-b pb-4">
-                    <div className="relative w-20 h-20 flex-shrink-0">
-                      <Image
-                        src={item.product.image}
-                        alt={item.product.title}
-                        fill
-                        className="object-cover rounded"
-                      />
-                    </div>
-                    <div className="ml-4 flex-1">
-                      <h3 className="font-medium">{item.product.title}</h3>
-                      <div className="flex items-center mt-1">
-                        <span className="text-gray-900 font-medium">
-                          £{(item.product.salePrice * item.quantity).toFixed(2)}
-                        </span>
-                        {item.product.discount && (
-                          <span className="ml-2 text-sm text-gray-500 line-through">
-                            £{(item.product.regularPrice * item.quantity).toFixed(2)}
+                {cart.items.map((item) => {
+                  const discountedPrice = calculateDiscountedPrice(item.product.price, item.product.discount);
+                  const originalTotal = item.product.price * item.quantity;
+                  const discountedTotal = discountedPrice * item.quantity;
+                  
+                  return (
+                    <div key={item.id} className="flex items-start border-b pb-4">
+                      <div className="relative w-20 h-20 flex-shrink-0">
+                        <Image
+                          src={item.product.images[0]}
+                          alt={item.product.name}
+                          fill
+                          className="object-cover rounded"
+                        />
+                      </div>
+                      <div className="ml-4 flex-1">
+                        <h3 className="font-medium">{item.product.name}</h3>
+                        <div className="flex items-center mt-1">
+                          <span className="text-gray-900 font-medium">
+                            £{discountedTotal.toFixed(2)}
                           </span>
+                          {item.product.discount && (
+                            <span className="ml-2 text-sm text-gray-500 line-through">
+                              £{originalTotal.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center mt-2">
+                          <button
+                            onClick={() => updateQuantity(item.productId, Math.max(1, item.quantity - 1))}
+                            className="w-8 h-8 border rounded flex items-center justify-center"
+                          >
+                            -
+                          </button>
+                          <span className="mx-2">{item.quantity}</span>
+                          <button
+                            onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                            className="w-8 h-8 border rounded flex items-center justify-center"
+                          >
+                            +
+                          </button>
+                          <button
+                            onClick={() => removeItem(item.id)}
+                            className="ml-4 text-red-500 text-sm"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                        {item.product.discount && (
+                          <div className="mt-1 text-sm text-green-600">
+                            You save £{(originalTotal - discountedTotal).toFixed(2)} ({item.product.discount}% off)
+                          </div>
                         )}
                       </div>
-                      <div className="flex items-center mt-2">
-                        <button
-                          onClick={() => updateQuantity(item.productId, Math.max(1, item.quantity - 1))}
-                          className="w-8 h-8 border rounded flex items-center justify-center"
-                        >
-                          -
-                        </button>
-                        <span className="mx-2">{item.quantity}</span>
-                        <button
-                          onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                          className="w-8 h-8 border rounded flex items-center justify-center"
-                        >
-                          +
-                        </button>
-                        <button
-                          onClick={() => removeItem(item.id)}
-                          className="ml-4 text-red-500 text-sm"
-                        >
-                          Remove
-                        </button>
-                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
