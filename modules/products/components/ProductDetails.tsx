@@ -51,12 +51,11 @@ interface Product {
   reviewCount: number;
 }
 
-// Updated Star component with precise rating
+// Star component implementation remains the same
 const Star: React.FC<{ count: number }> = ({ count }) => {
   return (
     <div className="flex">
       {[1, 2, 3, 4, 5].map((star) => {
-        // Calculate the fill percentage for the current star
         const fillPercentage = Math.max(0, Math.min(1, Math.max(0, count - (star - 1))));
 
         return (
@@ -69,12 +68,9 @@ const Star: React.FC<{ count: number }> = ({ count }) => {
             stroke="#D3D3D3"
             strokeWidth={2}
           >
-            {/* Background (grey) star path */}
             <path
               d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
             />
-
-            {/* Filled (golden) star path with dynamic clip */}
             <defs>
               <clipPath id={`starClip-${star}`}>
                 <rect
@@ -96,16 +92,15 @@ const Star: React.FC<{ count: number }> = ({ count }) => {
     </div>
   );
 };
+
 const StarNew: React.FC<{ count: number }> = ({ count }) => {
   return (
     <div className="flex">
       {[1, 2, 3, 4, 5].map((star) => {
-        // Calculate the percentage fill for the current star
         const fillPercentage = Math.max(0, Math.min(1, count - (star - 1))) * 100;
 
         return (
           <div key={star} className="relative w-5 h-5">
-            {/* Background Star (Grey) */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="absolute top-0 left-0 w-full h-full"
@@ -115,8 +110,6 @@ const StarNew: React.FC<{ count: number }> = ({ count }) => {
             >
               <path d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
             </svg>
-
-            {/* Foreground Star (Gold) with mask */}
             <div
               className="absolute top-0 left-0 h-full"
               style={{ width: `${fillPercentage}%`, overflow: "hidden" }}
@@ -137,7 +130,6 @@ const StarNew: React.FC<{ count: number }> = ({ count }) => {
   );
 };
 
-
 const ProductDetails: React.FC = () => {
   const params = useParams();
   const id = params.id;
@@ -156,10 +148,18 @@ const ProductDetails: React.FC = () => {
   const [cartItemId, setCartItemId] = useState<string | undefined>(undefined);
   const [cartQuantity, setCartQuantity] = useState<number>(0);
   const [guestCartId, setGuestCartId] = useState<string | null>(null);
+  
   // Zoom state
   const [isZoomed, setIsZoomed] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
   const imageContainerRef = useRef<HTMLDivElement>(null);
+
+  // Order and email state
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [email, setEmail] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const storedGuestCartId = localStorage.getItem('guestCartId');
@@ -270,8 +270,6 @@ const ProductDetails: React.FC = () => {
     }
   };
 
-
-
   const updateCartQuantity = async (newQuantity: number) => {
     if (!userId && !guestCartId || !cartItemId || !inCart) return;
 
@@ -304,15 +302,93 @@ const ProductDetails: React.FC = () => {
     }
   };
 
+  const validateEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
 
+  const createOrder = async (guestEmail?: string) => {
+    if (!product) return;
+
+    try {
+      setIsCreatingOrder(true);
+      setError(null);
+
+      // Validate guest email if not logged in
+      if (!session?.user && !guestEmail) {
+        throw new Error('Email is required for guest checkout');
+      }
+
+      if (guestEmail && !validateEmail(guestEmail)) {
+        throw new Error('Please enter a valid email address');
+      }
+
+      // First ensure product is in cart
+      if (!inCart) {
+        await handleCartToggle();
+      }
+
+      const orderItems = [{
+        productId: product.id,
+        quantity: quantity,
+        unitPrice: product.price,
+        discountPercentage: product.discount || 0
+      }];
+
+      const requestBody = {
+        items: orderItems,
+        ...(session?.user
+          ? { userId: session.user.id }
+          : { guestEmail: guestEmail?.toLowerCase().trim() })
+      };
+
+      const response = await fetch('/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || 'Failed to create order');
+      }
+
+      const { data } = await response.json();
+      router.push(`/checkout?orderId=${data.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create order');
+    } finally {
+      setIsCreatingOrder(false);
+    }
+  };
 
   const handleBuyNow = async () => {
-    // First add to cart if not already in cart
-    if (!inCart) {
-      await handleCartToggle();
+    if (!product) return;
+
+    // Check stock
+    if (quantity > product.stock) {
+      setError(`Only ${product.stock} items available in stock`);
+      return;
     }
-    // Then navigate to checkout page
-    router.push("/checkout")
+
+    if (!session?.user) {
+      setShowEmailModal(true);
+      return;
+    }
+
+    await createOrder();
+  };
+
+  const handleEmailSubmit = () => {
+    if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+    setEmailError('');
+    localStorage.setItem('guestEmail', email.toLowerCase().trim());
+    createOrder(email);
   };
 
   useEffect(() => {
@@ -329,7 +405,6 @@ const ProductDetails: React.FC = () => {
 
         const data = await response.json();
         setProduct(data);
-        // Reset image index when new product is loaded
         setCurrentImageIndex(0);
       } catch (error) {
         console.error('Error fetching product:', error);
@@ -362,14 +437,12 @@ const ProductDetails: React.FC = () => {
     const container = imageContainerRef.current;
     const rect = container.getBoundingClientRect();
 
-    // Calculate mouse position as a percentage
     const x = ((e.clientX - rect.left) / rect.width) * 100;
     const y = ((e.clientY - rect.top) / rect.height) * 100;
 
     setZoomPosition({ x, y });
   };
 
-  // Calculate average rating dynamically
   const calculateAverageRating = () => {
     if (!product?.reviews || product.reviews.length === 0) return 0;
 
@@ -377,17 +450,14 @@ const ProductDetails: React.FC = () => {
     return totalRating / product.reviews.length;
   };
 
-  // Calculate discounted price
   const calculateDiscountedPrice = (): number => {
     if (!product) return 0;
     const discountedPrice = product.price * (1 - product.discount / 100);
-    return parseFloat(discountedPrice.toFixed(2)); // Ensures 2 decimal places as a number
+    return parseFloat(discountedPrice.toFixed(2));
   };
 
   if (loading) {
-    return (
-      <ProductSkeleton />
-    );
+    return <ProductSkeleton />;
   }
 
   if (!product) {
@@ -401,6 +471,7 @@ const ProductDetails: React.FC = () => {
   return (
     <div className='container mx-auto'>
       <div className='min-h-full flex flex-col lg:flex-row py-14'>
+        {/* Product images section */}
         <div className="w-full lg:w-1/2 h-full justify-center items-center gap-5 flex flex-col">
           <div
             ref={imageContainerRef}
@@ -427,7 +498,6 @@ const ProductDetails: React.FC = () => {
               </div>
             )}
 
-            {/* Previous Image Button */}
             <button
               onClick={() => {
                 if (!product?.images?.length) return;
@@ -442,7 +512,6 @@ const ProductDetails: React.FC = () => {
               </svg>
             </button>
 
-            {/* Next Image Button */}
             <button
               onClick={() => {
                 if (!product?.images?.length) return;
@@ -458,7 +527,6 @@ const ProductDetails: React.FC = () => {
             </button>
           </div>
 
-          {/* Thumbnail Images */}
           <div className="flex m-auto flex-wrap gap-5 group">
             {product.images && product.images.map((img, index) => (
               <div
@@ -480,8 +548,16 @@ const ProductDetails: React.FC = () => {
           </div>
         </div>
 
+        {/* Product details section */}
         <div className="w-full lg:w-1/2 h-full lg:h-auto lg:flex lg:ml-5">
           <div className="w-full max-w-[500px] h-full lg:h-auto lg:w-full flex-col gap-2 flex mt-10 lg:mt-0 mx-auto px-4 lg:px-0">
+            {error && (
+              <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <strong className="font-bold">Error: </strong>
+                <span className="block sm:inline">{error}</span>
+              </div>
+            )}
+
             <div className="flex-col gap-2.5 flex">
               <div className="text-sky-900 font-semibold text-2xl">{product.name}</div>
               {product.discount > 0 ? (
@@ -604,10 +680,10 @@ const ProductDetails: React.FC = () => {
               </button>
               <button
                 onClick={handleBuyNow}
-                disabled={product.stock <= 0}
+                disabled={product.stock <= 0 || isCreatingOrder}
                 className='w-full sm:w-56 h-16 bg-amber-500 hover:bg-amber-600 text-white text-lg font-medium disabled:bg-gray-400 disabled:cursor-not-allowed'
               >
-                Buy it now
+                {isCreatingOrder ? 'Processing...' : 'Buy it now'}
               </button>
             </div>
 
@@ -639,6 +715,7 @@ const ProductDetails: React.FC = () => {
         </div>
       </div>
 
+      {/* Product description and reviews */}
       <div className='p-5 flex flex-col justify-center items-center m-auto'>
         <Card className="w-[85%] p-8 flex flex-col gap-3 border border-grey-200">
           <span className='font-semibold text-sky-900 text-2xl mb-2'>Product Description</span>
@@ -657,13 +734,11 @@ const ProductDetails: React.FC = () => {
               {product.reviews.map((review) => (
                 <div key={review.id} className="border-b pb-4">
                   <div className="flex items-start gap-4">
-                    {/* User Avatar Placeholder */}
                     <div className="w-10 h-10 flex items-center justify-center bg-gray-200 rounded-full text-gray-600 font-semibold">
                       {review.user?.customerProfile?.firstName?.[0]?.toUpperCase() || 'A'}
                     </div>
 
                     <div className="flex-1">
-                      {/* User Info & Rating */}
                       <div className="flex justify-between items-center">
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-gray-900">
@@ -676,13 +751,9 @@ const ProductDetails: React.FC = () => {
                         </p>
                       </div>
 
-                      {/* Review Content */}
                       <p className="mt-2 text-gray-700 leading-relaxed">{review.comment}</p>
 
-                      {/* Date */}
                       <span className="text-sm text-gray-600">Rating: {review.rating} / 5</span>
-
-
                     </div>
                   </div>
                 </div>
@@ -695,6 +766,38 @@ const ProductDetails: React.FC = () => {
           )}
         </Card>
       </div>
+
+      {/* Email modal for guest checkout */}
+      {showEmailModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg max-w-md w-full">
+            <h3 className="text-lg font-semibold mb-4">Enter Your Email</h3>
+            <p className="text-gray-600 mb-4">Please provide your email address to proceed with checkout.</p>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="your@email.com"
+              className="w-full p-2 border border-gray-300 rounded mb-2"
+            />
+            {emailError && <p className="text-red-500 text-sm mb-2">{emailError}</p>}
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setShowEmailModal(false)}
+                className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEmailSubmit}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
