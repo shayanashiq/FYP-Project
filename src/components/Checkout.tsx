@@ -71,6 +71,7 @@ interface CustomerProfile {
 }
 
 const GUEST_EMAIL_KEY = 'guestEmail';
+const GUEST_CART_ID_KEY = 'guestCartId';
 
 const StripePaymentForm = ({
     order,
@@ -189,13 +190,14 @@ const CheckoutPage = () => {
 
     const getGuestCartId = useCallback(() => {
         if (typeof window !== 'undefined') {
-            return localStorage.getItem('guestCartId');
+            return localStorage.getItem(GUEST_CART_ID_KEY);
         }
         return null;
     }, []);
 
     const createOrderAndProceedToCheckout = useCallback(async () => {
-        if ((!session?.user?.id && !getGuestCartId()) || !orderId) return;
+        const guestCartId = getGuestCartId();
+        if ((!session?.user?.id && !guestCartId) || !orderId) return;
 
         try {
             setIsCreatingOrder(true);
@@ -212,19 +214,32 @@ const CheckoutPage = () => {
 
             const requestBody: any = {
                 items: orderItems,
-                useSameAddress: true,
+                shippingFirstName: formData.shippingFirstName,
+                shippingLastName: formData.shippingLastName,
+                shippingStreet: formData.shippingStreet,
+                shippingCity: formData.shippingCity,
+                shippingState: formData.shippingState,
+                shippingPostalCode: formData.shippingPostalCode,
+                shippingCountry: formData.shippingCountry,
+                shippingPhone: formData.shippingPhone,
+                useSameAddress: formData.useSameAddress,
             };
 
             if (session?.user?.id) {
                 requestBody.userId = session.user.id;
                 requestBody.email = session.user.email;
             } else {
-                const guestCartId = getGuestCartId();
+                if (!guestCartId) {
+                    throw new Error('Guest cart ID is required');
+                }
                 requestBody.guestCartId = guestCartId;
-                requestBody.guestEmail = localStorage.getItem("guestEmail") || null;
+                requestBody.guestEmail = localStorage.getItem(GUEST_EMAIL_KEY) || formData.email;
+                localStorage.setItem(GUEST_EMAIL_KEY, requestBody.guestEmail);
             }
 
-            const response = await fetch('/api/orders', {
+            const userId = session?.user.id;
+            console.log("gcid", guestCartId)
+            const response = await fetch(`/api/orders`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(requestBody),
@@ -242,7 +257,7 @@ const CheckoutPage = () => {
         } finally {
             setIsCreatingOrder(false);
         }
-    }, [order, session, router, getGuestCartId, orderId]);
+    }, [order, session, router, getGuestCartId, orderId, formData]);
 
     const fetchCustomerProfile = async () => {
         if (!session?.user?.id) return;
@@ -344,7 +359,7 @@ const CheckoutPage = () => {
     const formatPrice = (price: number | string | null | undefined): string => {
         if (price === null || price === undefined) return "0.00";
         const numPrice = typeof price === 'string' ? parseFloat(price) : price;
-        return isNaN(numPrice) ? "0.00" : numPrice;
+        return isNaN(numPrice) ? "0.00" : numPrice.toFixed(2);
     };
 
     const handlePaymentSuccess = async () => {
@@ -379,6 +394,11 @@ const CheckoutPage = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(orderUpdatePayload),
             });
+
+            // Clear guest cart after successful payment
+            if (!session?.user?.id) {
+                localStorage.removeItem(GUEST_CART_ID_KEY);
+            }
 
             router.push(`/orders/confirmation?orderId=${order?.id}`);
         } catch (err) {

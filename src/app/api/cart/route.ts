@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const userId = url.searchParams.get("userId");
     const guestCartId = url.searchParams.get("guestCartId");
-
+ 
     console.log(`Fetching cart - userId: ${userId}, guestCartId: ${guestCartId}`);
 
     if (!userId && !guestCartId) {

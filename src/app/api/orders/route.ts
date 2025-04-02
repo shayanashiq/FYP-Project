@@ -28,7 +28,7 @@ export async function POST(request: Request) {
         for (const item of body.items) {
             const product = await prisma.product.findUnique({
                 where: { id: item.productId },
-                select:{    name: true, stock: true}
+                select: { name: true, stock: true }
             });
 
             if (!product || product.stock < item.quantity) {
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
 
         // Create order with guest support
         const order = await prisma.$transaction(async (prisma) => {
-            // Create the order with empty strings for required fields
+            // Create the order
             const createdOrder = await prisma.order.create({
                 data: {
                     userId: body.userId || undefined,
@@ -48,14 +48,13 @@ export async function POST(request: Request) {
                     guestEmail: !body.userId ? body.guestEmail : undefined,
                     totalPrice,
                     status: "PENDING",
-                    // Provide empty strings for required fields
-                    shippingFirstName: "",
-                    shippingLastName: "",
-                    shippingStreet: "",
-                    shippingCity: "",
-                    shippingPostalCode: "",
-                    shippingCountry: "",
-                    shippingPhone: "",
+                    shippingFirstName: body.shippingFirstName || "",
+                    shippingLastName: body.shippingLastName || "",
+                    shippingStreet: body.shippingStreet || "",
+                    shippingCity: body.shippingCity || "",
+                    shippingPostalCode: body.shippingPostalCode || "",
+                    shippingCountry: body.shippingCountry || "",
+                    shippingPhone: body.shippingPhone || "",
                     items: {
                         create: body.items.map((item: any) => ({
                             productId: item.productId,
@@ -85,10 +84,92 @@ export async function POST(request: Request) {
                 });
             }
 
+            // Handle cart cleanup based on user type
+            if (body.userId) {
+                console.log(`Cleaning up authenticated user cart for userId: ${body.userId}`);
+                const userCart = await prisma.cart.findUnique({
+                    where: { userId: body.userId },
+                    include: { items: true }
+                });
+        
+                if (userCart) {
+                    console.log(`Found user cart with ${userCart.items.length} items`);
+                    const deletedItems = await prisma.cartItem.deleteMany({
+                        where: {
+                            cartId: userCart.id,
+                            productId: {
+                                in: body.items.map((item: any) => item.productId)
+                            }
+                        }
+                    });
+                    console.log(`Deleted ${deletedItems.count} cart items`);
+        
+                    // Verify remaining items
+                    const remainingItems = await prisma.cartItem.count({
+                        where: { cartId: userCart.id }
+                    });
+                    console.log(`Remaining items in cart: ${remainingItems}`);
+        
+                    if (remainingItems === 0) {
+                        await prisma.cart.delete({
+                            where: { id: userCart.id }
+                        });
+                        console.log('Deleted empty cart');
+                    }
+                } else {
+                    console.log('No cart found for user');
+                }
+            } 
+            else if (body.guestCartId) {
+                console.log(`Cleaning up guest cart with ID: ${body.guestCartId}`);
+                const guestCart = await prisma.cart.findUnique({
+                    where: { id: body.guestCartId },
+                    include: { items: true }
+                });
+        
+                if (guestCart) {
+                    console.log(`Found guest cart with ${guestCart.items.length} items`);
+                    const deletedItems = await prisma.cartItem.deleteMany({
+                        where: {
+                            cartId: body.guestCartId,
+                            productId: {
+                                in: body.items.map((item: any) => item.productId)
+                            }
+                        }
+                    });
+                    console.log(`Deleted ${deletedItems.count} guest cart items`);
+        
+                    // Verify remaining items
+                    const remainingItems = await prisma.cartItem.count({
+                        where: { cartId: body.guestCartId }
+                    });
+                    console.log(`Remaining items in guest cart: ${remainingItems}`);
+        
+                    if (remainingItems === 0) {
+                        await prisma.cart.delete({
+                            where: { id: body.guestCartId }
+                        });
+                        console.log('Deleted empty guest cart');
+                    }
+                } else {
+                    console.log('No guest cart found');
+                }
+            }
+        
             return createdOrder;
         });
 
-        return NextResponse.json({ data: order }, { status: 201 });
+        // Return response with cart cleanup information
+        const responseData = {
+            data: order,
+            cartCleanup: {
+                clearedCart: !!body.userId || !!body.guestCartId,
+                cartId: body.guestCartId || null,
+                isGuest: !body.userId
+            }
+        };
+
+        return NextResponse.json(responseData, { status: 201 });
     } catch (error) {
         console.error("Order creation error:", error);
         return NextResponse.json({ 
