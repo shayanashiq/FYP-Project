@@ -177,7 +177,7 @@ export async function POST(request: Request) {
             details: error instanceof Error ? error.message : "Unknown error" 
         }, { status: 500 });
     }
-}
+} 
 
 export async function GET(request: Request) {
     try {
