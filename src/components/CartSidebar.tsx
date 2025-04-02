@@ -311,6 +311,7 @@ const CartSidebar = () => {
     setEmailError('');
     localStorage.setItem(GUEST_EMAIL_KEY, email.toLowerCase().trim());
     createOrderAndProceedToCheckout(email);
+    setShowEmailModal(false)
   };
 
   const calculations = cartCalculations();
