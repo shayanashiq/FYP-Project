@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { v4 as uuidv4 } from 'uuid';
+import { useCart } from '@/components/context/CartContext';
 
 interface Review {
   id: string;
@@ -234,6 +235,8 @@ const Product: React.FC<ProductProps> = ({
     }
   };
 
+  const { openCart } = useCart();
+
   const handleCartToggle = async (e: React.MouseEvent) => {
     e.stopPropagation();
 
@@ -242,6 +245,8 @@ const Product: React.FC<ProductProps> = ({
     }
 
     setIsCartLoading(true);
+    openCart();
+
 
     try {
       const cartPayload = userId 

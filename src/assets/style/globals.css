@@ -87,3 +87,19 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+body.cart-open {
+  /* Prevent scrolling when cart is open */
+  overflow: hidden;
+  position: relative;
+}
+
+/* Smooth transitions for the cart sidebar */
+.cart-sidebar {
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Overlay styles */
+.cart-overlay {
+  transition: opacity 0.3s ease-in-out;
+}
