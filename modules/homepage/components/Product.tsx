@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { v4 as uuidv4 } from 'uuid';
 import { useCart } from '@/components/context/CartContext';
+import { Toaster } from "sonner";
+import { toast } from "sonner";
 
 interface Review {
   id: string;
@@ -211,6 +213,7 @@ const Product: React.FC<ProductProps> = ({
           setInWishlist(false);
           setCurrentWishlistItemId(undefined);
           if (onWishlistChange) onWishlistChange();
+          toast.success("Successfully removed item from wishlist")
         }
       } else {
         const response = await fetch('/api/wishlist', {
@@ -226,6 +229,7 @@ const Product: React.FC<ProductProps> = ({
           setInWishlist(true);
           setCurrentWishlistItemId(data.data.id);
           if (onWishlistChange) onWishlistChange();
+          toast.success("Successfully added item to wishlist")
         }
       }
     } catch (error) {
@@ -275,6 +279,7 @@ const Product: React.FC<ProductProps> = ({
           setCartItemId(undefined);
           setCartQuantity(0);
           setQuantity(1);
+          toast.success("Successfully removed item from cart")
         } else {
           const errorData = await response.json();
           console.error('Delete Cart Item Error:', errorData);
@@ -293,6 +298,7 @@ const Product: React.FC<ProductProps> = ({
           setInCart(true);
           setCartItemId(data.data.cartItem.id);
           setCartQuantity(quantity);
+          toast.success("Successfully added item to cart")
         } else {
           const errorData = await response.json();
           console.error("Error adding to cart:", errorData.message);
@@ -491,6 +497,7 @@ const Product: React.FC<ProductProps> = ({
           </svg>
         </button>
       </div>
+      <Toaster position="top-right"/>
     </div>
   );
 };
