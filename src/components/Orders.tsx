@@ -137,7 +137,7 @@ export default function Orders() {
                     ) : orders.length === 0 ? (
                         <div className="border rounded-lg overflow-hidden">
                             <div className="p-6 text-center">
-                                <p className="text-gray-500">You haven't placed any orders yet.</p>
+                                <p className="text-gray-500">You haven&apos;t placed any orders yet.</p>
                                 <Link href="/" className="mt-4 inline-block bg-orange-500 text-white py-2 px-6 rounded">
                                     Start Shopping
                                 </Link>

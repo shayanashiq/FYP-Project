@@ -505,7 +505,7 @@ const CheckoutPage = () => {
         <div className="bg-white p-6 rounded-lg  text-center">
           <h2 className="text-xl font-semibold mb-4">Order Not Found</h2>
           <p className="text-gray-600 mb-4">
-            The order you're looking for doesn't exist or you don't have
+            The order you&apos;re looking for doesn&apos;t exist or you don&apos;t have
             permission to view it.
           </p>
           <button
