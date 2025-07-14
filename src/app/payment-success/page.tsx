@@ -37,7 +37,10 @@ export default function OrderConfirmationPage() {
     fetchOrderDetails();
   }, [id]);
 
-  if (loading) return <div>Loading order details...</div>;
+  if(loading){
+    return<></>
+  }
+
   if (error) return <div>{error}</div>;
   if (!orderData) return <div>No order found</div>;
 
@@ -55,10 +58,10 @@ export default function OrderConfirmationPage() {
 
       <div className="mt-6 text-center">
         <a 
-          href={`/track-order/${id}`} 
+          href={`/products`} 
           className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300"
         >
-          Track Your Order
+          Continue Shopping
         </a>
       </div>
     </div>
