@@ -739,7 +739,7 @@ const ProductDetails: React.FC = () => {
 
           {product.reviews && product.reviews.length > 0 ? (
             <div className="flex flex-col gap-6 mt-4">
-              {product.reviews.map((review) => (
+              {product.reviews.map((review:any) => (
                 <div key={review.id} className="border-b pb-4">
                   <div className="flex items-start gap-4">
                     <div className="w-10 h-10 flex items-center justify-center bg-gray-200 rounded-full text-gray-600 font-semibold">

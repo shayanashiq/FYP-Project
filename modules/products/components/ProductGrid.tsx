@@ -34,7 +34,8 @@ const ProductGrid: React.FC<ProductGridProps> = ({ products }) => {
               />
             </Link>
             <div className="absolute top-2 right-2">
-              <ButtonLove productId={product.id} />
+              <ButtonLove />
+              {/* <ButtonLove productId={product.id} /> */}
             </div>
             
             {product.discount && (
