@@ -31,7 +31,7 @@ export default function Orders() {
         }
     }, [status, session]);
 
-    const handleEmailSubmit = (e) => {
+    const handleEmailSubmit = (e:any) => {
         e.preventDefault();
         if (guestEmail.trim()) {
             localStorage.setItem("guestEmail", guestEmail);
@@ -40,7 +40,7 @@ export default function Orders() {
         }
     };
 
-    const fetchOrders = async (email = null) => {
+    const fetchOrders = async (email?:string) => {
         setIsLoading(true);
         try {
             let response;
