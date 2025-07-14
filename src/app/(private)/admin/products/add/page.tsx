@@ -42,7 +42,7 @@ export default function AddProductPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [subcategories, setSubcategories] = useState<SubCategory[]>([]);
   const [isLoadingCategories, setIsLoadingCategories] = useState(true);
   const [colorInput, setColorInput] = useState('');
