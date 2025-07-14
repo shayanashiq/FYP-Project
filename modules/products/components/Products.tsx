@@ -86,7 +86,7 @@ const Products = () => {
         const data = await response.json();
 
         // Map API products to ProductType format
-        const formattedProducts = data.products.map(product => ({
+        const formattedProducts = data.products.map((product:any) => ({
           id: product.id,
           title: product.name,
           description: product.description || "",
