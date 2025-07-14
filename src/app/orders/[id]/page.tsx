@@ -94,7 +94,7 @@ export default function OrderConfirmationPage() {
     return (
       <div className="container mx-auto py-16 px-4 text-center">
         <h1 className="text-2xl font-bold mb-4">Order not found</h1>
-        <p className="mb-8">We couldn't find the order you're looking for.</p>
+        <p className="mb-8">We couldn&apos;t find the order you&apos;re looking for.</p>
         <button
           onClick={() => router.push('/')}
           className="bg-blue-600 text-white py-2 px-4 rounded-md"
