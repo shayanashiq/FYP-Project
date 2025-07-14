@@ -208,7 +208,7 @@ const ProductDetails: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error("Error checking cart status:", error);
+      throw new Error('Failed to check cart status');
     }
   };
 
@@ -249,7 +249,6 @@ const ProductDetails: React.FC = () => {
           setQuantity(1);
         } else {
           const errorData = await response.json();
-          console.error('Delete Cart Item Error:', errorData);
         }
       } else {
         const response = await fetch('/api/cart', {
@@ -267,11 +266,10 @@ const ProductDetails: React.FC = () => {
           setCartQuantity(quantity);
         } else {
           const errorData = await response.json();
-          console.error("Error adding to cart:", errorData.message);
         }
       }
     } catch (error) {
-      console.error("Error toggling cart:", error);
+      throw new Error('Failed to toggle cart status');
     } finally {
       setIsCartLoading(false);
     }
@@ -301,10 +299,9 @@ const ProductDetails: React.FC = () => {
       } else {
         setQuantity(cartQuantity);
         const errorData = await response.json();
-        console.error("Error updating cart quantity:", errorData.message);
       }
     } catch (error) {
-      console.error("Error updating cart quantity:", error);
+      throw new Error('Failed to update cart quantity');
       setQuantity(cartQuantity);
     }
   };
@@ -415,7 +412,7 @@ const ProductDetails: React.FC = () => {
         setProduct(data);
         setCurrentImageIndex(0);
       } catch (error) {
-        console.error('Error fetching product:', error);
+        throw new Error('Failed to fetch product details');
       } finally {
         setLoading(false);
       }

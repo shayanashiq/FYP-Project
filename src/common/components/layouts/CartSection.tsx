@@ -58,7 +58,7 @@ const CartSection: React.FC = () => {
                         setWishlistCount(wishlistData.count);
                     }
                 } catch (error) {
-                    console.error('Failed to fetch counts:', error);
+                    throw new Error('Failed to fetch counts');
                 }
             }
         };

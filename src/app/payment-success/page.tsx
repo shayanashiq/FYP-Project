@@ -60,7 +60,6 @@ const OrderConfirmationContent = () => {
       } catch (err) {
         setError('Error fetching order details');
         setLoading(false);
-        console.error(err);
       }
     }
 

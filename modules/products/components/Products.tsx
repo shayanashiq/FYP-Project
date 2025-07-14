@@ -108,7 +108,7 @@ const ProductContent = () => {
         setCurrentPage(data.pagination.page);
         setTotalCount(data.pagination.total);
       } catch (error) {
-        console.error('Error fetching products:', error);
+        throw new Error(`Failed to fetch products: ${error instanceof Error ? error.message : 'Unknown error'}`);
         setProducts([]);
         setDebugInfo(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
       } finally {
@@ -127,14 +127,13 @@ const ProductContent = () => {
       try {
         const response = await fetch(`/api/wishlist?userId=${session.user.id}`);
         if (!response.ok) {
-          console.error('Failed to fetch wishlist');
           return;
         }
 
         const data = await response.json();
         setWishlistItems(data.data?.items || []);
       } catch (error) {
-        console.error('Error fetching wishlist:', error);
+        throw new Error('Failed to fetch wishlist items');
       }
     };
 

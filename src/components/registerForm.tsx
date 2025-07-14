@@ -60,8 +60,6 @@ export default function ClientLoginForm() {
               return;
             }
 
-            console.log("Submitting email:", values.email);
-            
             const response = await axios.post("/api/send-otp-register", {
               email: values.email,
             }, {
@@ -69,9 +67,6 @@ export default function ClientLoginForm() {
                 "Content-Type": "application/json",
               },
             });
-            
-            // Log the response for debugging
-            console.log("API Response:", response);
             
             if (response.status === 200) {
               // Make sure we're accessing a string
@@ -85,10 +80,6 @@ export default function ClientLoginForm() {
               );
             }
           } catch (err: any) {
-            console.error("Error during OTP send:", err);
-            
-            // Debug the error structure
-            console.log("Error response:", err?.response?.data);
             
             const errorMessage = getErrorMessage(err);
             

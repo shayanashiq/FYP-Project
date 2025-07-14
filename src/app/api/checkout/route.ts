@@ -218,7 +218,6 @@ export async function POST(request: Request) {
     });
 
   } catch (error) {
-    console.error('Checkout error:', error);
     return NextResponse.json(
       { error: 'Failed to process checkout' }, 
       { status: 500 }
@@ -301,7 +300,6 @@ export async function GET(request: Request) {
     });
 
   } catch (error) {
-    console.error('Get checkout error:', error);
     return NextResponse.json(
       { error: 'Failed to retrieve checkout information' }, 
       { status: 500 }

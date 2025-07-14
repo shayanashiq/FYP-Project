@@ -99,7 +99,6 @@ export const authOptions: AuthOptions = {
             customerProfile: customerProfile || null,
           };
         } catch (error) {
-          console.error("Authorization error:", error);
           return null;
         }
       },

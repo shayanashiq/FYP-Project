@@ -115,7 +115,6 @@ const Recommendations: React.FC = () => {
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
         setError(errorMessage);
-        console.error('Error fetching recommended products:', err);
       } finally {
         setLoading(false);
       }
@@ -132,14 +131,13 @@ const Recommendations: React.FC = () => {
       try {
         const response = await fetch(`/api/wishlist?userId=${session.user.id}`);
         if (!response.ok) {
-          console.error('Failed to fetch wishlist');
           return;
         }
         
         const data = await response.json();
         setWishlistItems(data.data?.items || data.items || []);
       } catch (error) {
-        console.error('Error fetching wishlist:', error);
+        throw new Error('Failed to fetch wishlist items');
       }
     };
     

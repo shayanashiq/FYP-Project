@@ -31,7 +31,7 @@ const SideCategories = () => {
         const data = await response.json();
         setCategories(data);
       } catch (error) {
-        console.error('Error loading categories:', error);
+        throw new Error('Failed to fetch categories');
       } finally {
         setLoading(false);
       }

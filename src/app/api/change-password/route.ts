@@ -66,7 +66,6 @@ export async function POST(req: NextRequest) {
 
     return successResponse(null, "Password changed successfully");
   } catch (error) {
-    console.error("Password Change Error:", error);
     return errorResponse(ErrorMessages.internalServerError, 500);
   }
 }

@@ -74,7 +74,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<any>> {
       message: 'Payment processed successfully'
     });
   } catch (error) {
-    console.error('Error processing payment:', error);
     return NextResponse.json(
       { error: 'Failed to process payment' },
       { status: 500 }

@@ -109,16 +109,11 @@ export async function GET(request: NextRequest): Promise<NextResponse<ProductsRe
     // Calculate pagination
     const skip = (queryParams.page - 1) * queryParams.limit;
     
-    // Debug logging
-    console.log('Query parameters:', queryParams);
-    console.log('Where clause:', where);
     
     // Try a simple query first to test connection
     try {
       const testCount = await prisma.product.count();
-      console.log('Total products in database:', testCount);
     } catch (connectionError) {
-      console.error('Database connection test failed:', connectionError);
       return NextResponse.json(
         { error: 'Database connection failed' },
         { status: 500 }
@@ -171,8 +166,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<ProductsRe
       prisma.product.count({ where })
     ]);
     
-    console.log(`Found ${products.length} products out of ${total} total matching products`);
-    
     // Calculate average rating for each product
     const productsWithRating = products.map(product => {
       const ratings = product.reviews.map(review => review.rating);
@@ -200,8 +193,6 @@ export async function GET(request: NextRequest): Promise<NextResponse<ProductsRe
       }
     });
   } catch (error) {
-    console.error('Error fetching products:', error instanceof Error ? error.message : error);
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack available');
     return NextResponse.json(
       { error: 'Failed to fetch products' },
       { status: 500 }
@@ -272,14 +263,12 @@ export async function POST(request: NextRequest): Promise<NextResponse<any>> {
       
       return NextResponse.json(formattedProduct, { status: 201 });
     } catch (dbError) {
-      console.error('Database error when creating product:', dbError);
       return NextResponse.json(
         { error: 'Database error when creating product', details: dbError instanceof Error ? dbError.message : 'Unknown error' },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error('Error creating product:', error instanceof Error ? error.message : error);
     return NextResponse.json(
       { error: 'Failed to create product' },
       { status: 500 }

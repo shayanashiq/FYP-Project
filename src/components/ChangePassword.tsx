@@ -65,7 +65,6 @@ export default function ChangePassword() {
             }
         } catch (err) {
             setError("An unexpected error occurred");
-            console.error(err);
         } finally {
             setIsLoading(false);
         }

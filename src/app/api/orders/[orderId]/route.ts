@@ -60,7 +60,6 @@ export async function GET(request: Request, { params }: { params: { orderId: str
 
         return NextResponse.json({ data: orderWithDetails }, { status: 200 });
     } catch (error) {
-        console.error("Order retrieval error:", error);
         return NextResponse.json(
             { error: "Internal Server Error" }, 
             { status: 500 }
@@ -149,7 +148,6 @@ export async function PUT(req: Request, { params }: { params: { orderId: string 
 
       return NextResponse.json({ data: updatedOrder }, { status: 200 });
   } catch (error) {
-      console.error("Order update error:", error);
       return NextResponse.json(
           { error: "Internal Server Error" }, 
           { status: 500 }

@@ -99,7 +99,6 @@ export default function AddProductPage() {
           }
         }
       } catch (err) {
-        console.error('Error fetching categories:', err);
         setError('Failed to load categories. Please try again later.');
       } finally {
         setIsLoadingCategories(false);
@@ -197,7 +196,6 @@ export default function AddProductPage() {
       }));
       
     } catch (err) {
-      console.error('Error uploading image:', err);
       setError(err instanceof Error ? err.message : 'Failed to upload image');
     } finally {
       setUploadingImage(false);
@@ -281,10 +279,6 @@ export default function AddProductPage() {
         shortDescription: formData.shortDescription,
       };
 
-      // Log the data for debugging
-      console.log('Submitting product data:', productData);
-      console.log('isFeatured type:', typeof productData.isFeatured);
-
       const response = await fetch('/api/products', {
         method: 'POST',
         headers: {
@@ -293,12 +287,7 @@ export default function AddProductPage() {
         body: JSON.stringify(productData),
       });
 
-      // Log the raw response and body for debugging
-      console.log('Response status:', response.status);
-
-      // Try to read the response body as text for debugging
       const responseText = await response.text();
-      console.log('Response body:', responseText);
 
       // If not OK, parse the error
       if (!response.ok) {
@@ -317,14 +306,12 @@ export default function AddProductPage() {
       let newProduct;
       try {
         newProduct = JSON.parse(responseText);
-        console.log('Product created:', newProduct);
       } catch (e) {
-        console.log('Could not parse response as JSON, but request succeeded');
+        throw new Error('Failed to parse response from server');
       }
 
       router.push('/admin/products');
     } catch (err) {
-      console.error('Error creating product:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
       setIsSubmitting(false);

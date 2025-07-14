@@ -99,16 +99,12 @@ export async function POST(request: Request) {
 
       // Handle cart cleanup based on user type
       if (body.userId) {
-        console.log(
-          `Cleaning up authenticated user cart for userId: ${body.userId}`
-        );
         const userCart = await prisma.cart.findUnique({
           where: { userId: body.userId },
           include: { items: true },
         });
 
         if (userCart) {
-          console.log(`Found user cart with ${userCart.items.length} items`);
           const deletedItems = await prisma.cartItem.deleteMany({
             where: {
               cartId: userCart.id,
@@ -117,32 +113,25 @@ export async function POST(request: Request) {
               },
             },
           });
-          console.log(`Deleted ${deletedItems.count} cart items`);
 
           // Verify remaining items
           const remainingItems = await prisma.cartItem.count({
             where: { cartId: userCart.id },
           });
-          console.log(`Remaining items in cart: ${remainingItems}`);
 
           if (remainingItems === 0) {
             await prisma.cart.delete({
               where: { id: userCart.id },
             });
-            console.log("Deleted empty cart");
           }
-        } else {
-          console.log("No cart found for user");
-        }
+        } 
       } else if (body.guestCartId) {
-        console.log(`Cleaning up guest cart with ID: ${body.guestCartId}`);
         const guestCart = await prisma.cart.findUnique({
           where: { id: body.guestCartId },
           include: { items: true },
         });
 
         if (guestCart) {
-          console.log(`Found guest cart with ${guestCart.items.length} items`);
           const deletedItems = await prisma.cartItem.deleteMany({
             where: {
               cartId: body.guestCartId,
@@ -151,23 +140,18 @@ export async function POST(request: Request) {
               },
             },
           });
-          console.log(`Deleted ${deletedItems.count} guest cart items`);
 
           // Verify remaining items
           const remainingItems = await prisma.cartItem.count({
             where: { cartId: body.guestCartId },
           });
-          console.log(`Remaining items in guest cart: ${remainingItems}`);
 
           if (remainingItems === 0) {
             await prisma.cart.delete({
               where: { id: body.guestCartId },
             });
-            console.log("Deleted empty guest cart");
           }
-        } else {
-          console.log("No guest cart found");
-        }
+        } 
       }
 
       return createdOrder;
@@ -185,7 +169,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json(responseData, { status: 201 });
   } catch (error) {
-    console.error("Order creation error:", error);
     return NextResponse.json(
       {
         error: "Internal Server Error",
@@ -265,7 +248,6 @@ export async function PUT(
 
     return NextResponse.json({ data: updatedOrder }, { status: 200 });
   } catch (error) {
-    console.error("Order update error:", error);
     return NextResponse.json(
       {
         error: "Internal Server Error",
@@ -309,7 +291,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ data: orders }, { status: 200 });
   } catch (error) {
-    console.error("Order retrieval error:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

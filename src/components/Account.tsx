@@ -26,7 +26,6 @@ export default function Account() {
                     setProfile(result.data);
                     setIsLoading(false);
                 } catch (err) {
-                    console.error('Error fetching profile:', err);
                     setError('Unable to load profile');
                     setIsLoading(false);
                 }

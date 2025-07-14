@@ -32,7 +32,6 @@ export async function GET() {
     
     return NextResponse.json({ count });
   } catch (error) {
-    console.error('Error fetching cart count:', error);
     return NextResponse.json({ count: 0 }, { status: 200 });
   }
 }

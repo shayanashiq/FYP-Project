@@ -24,16 +24,12 @@ export async function GET(request: NextRequest): Promise<NextResponse<DashboardS
       ? parseFloat(revenueResult._sum.totalPrice.toString())
       : 0;
     
-    console.log('Dashboard stats:', { totalProducts, totalOrders, totalRevenue });
-    
     return NextResponse.json({
       totalProducts,
       totalOrders,
       totalRevenue
     });
   } catch (error) {
-    console.error('Error fetching dashboard stats:', error instanceof Error ? error.message : error);
-    console.error('Error stack:', error instanceof Error ? error.stack : 'No stack available');
     return NextResponse.json(
       { error: 'Failed to fetch dashboard statistics' },
       { status: 500 }

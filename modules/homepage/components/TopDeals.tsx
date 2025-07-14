@@ -82,7 +82,7 @@ const TopDeals: React.FC = () => {
         setWishlistItems(data.data?.items || []);
       }
     } catch (error) {
-      console.error("Error fetching wishlist:", error);
+      throw new Error('Failed to fetch wishlist');
     }
   };
 
@@ -98,7 +98,6 @@ const TopDeals: React.FC = () => {
     const fetchTopDeals = async () => {
       try { 
         setLoading(true);
-        console.log('Fetching top deals products with discount >= 20%');
         
         // Update the API endpoint to filter for products with discount >= 20%
         const response = await fetch('/api/products?minDiscount=20&limit=10');
@@ -108,7 +107,6 @@ const TopDeals: React.FC = () => {
         }
         
         const data: ApiResponse = await response.json();
-        console.log('API Response:', data);
         
         // Map API products to component's ProductType format
         const formattedProducts = data.products.map(product => {
@@ -118,7 +116,6 @@ const TopDeals: React.FC = () => {
           // Calculate sale price (assuming discount is a percentage)
           const salePrice = product.price - (product.price * discountValue / 100);
           
-          console.log(`Product ${product.name}: price=${product.price}, discount=${discountValue}%, salePrice=${salePrice}`);
           
           return {
             id: product.id,
@@ -140,11 +137,9 @@ const TopDeals: React.FC = () => {
           };
         });
         
-        console.log('Formatted products:', formattedProducts);
         setProducts(formattedProducts);
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
-        console.error('Error fetching top deals products:', errorMessage);
         setError(errorMessage);
         setProducts([]);
       } finally {

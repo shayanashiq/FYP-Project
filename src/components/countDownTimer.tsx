@@ -38,12 +38,9 @@ const CountdownTimer: React.FC = () => {
 
       if (response.ok) {
         const result = await response.json();
-        // console.log("OTP resent successfully:", result);
-      } else {
-        console.error("Failed to resend OTP");
       }
     } catch (error) {
-      console.error("Error while resending OTP:", error);
+      throw new Error("Error resending OTP");
     }
 
     setTimer(120);

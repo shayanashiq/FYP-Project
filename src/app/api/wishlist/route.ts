@@ -41,7 +41,6 @@ export async function GET(req: NextRequest) {
     }, { status: 200 });
 
   } catch (error) {
-    console.error("Error retrieving wishlist items:", error);
     return NextResponse.json({
       message: "Failed to retrieve wishlist items",
       error: (error as Error).message
@@ -98,7 +97,6 @@ export async function POST(req: NextRequest) {
     }, { status: 201 });
     
   } catch (error) {
-    console.error("Error adding to wishlist:", error);
     return NextResponse.json({ 
       message: "Failed to add to wishlist", 
       error: (error as Error).message
@@ -151,7 +149,6 @@ export async function DELETE(req: NextRequest) {
     }, { status: 200 });
     
   } catch (error) {
-    console.error("Error removing wishlist item:", error);
     return NextResponse.json({ 
       message: "Failed to remove wishlist item",
       error: (error as Error).message

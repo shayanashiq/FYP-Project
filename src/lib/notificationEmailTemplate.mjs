@@ -244,9 +244,7 @@ body {
         html,
       });
 
-      console.log(`Notification email sent successfully to ${email}`);
     } catch (error) {
-      console.error("Failed to send notification email:", error);
       throw error;
     }
   }

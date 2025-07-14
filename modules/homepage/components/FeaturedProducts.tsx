@@ -96,7 +96,6 @@ const FeaturedProducts: React.FC = () => {
         setProducts(formattedProducts);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
-        console.error('Error fetching featured products:', err);
       } finally {
         setLoading(false);
       }
@@ -113,7 +112,6 @@ const FeaturedProducts: React.FC = () => {
       try {
         const response = await fetch(`/api/wishlist?userId=${session.user.id}`);
         if (!response.ok) {
-          console.error('Failed to fetch wishlist');
           return;
         }
         
@@ -121,7 +119,7 @@ const FeaturedProducts: React.FC = () => {
         // Make sure we're accessing the correct property in the response
         setWishlistItems(data.data?.items || []);
       } catch (error) {
-        console.error('Error fetching wishlist:', error);
+        throw new Error('Failed to fetch wishlist items');
       }
     };
     

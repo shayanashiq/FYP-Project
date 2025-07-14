@@ -37,7 +37,6 @@ export async function GET() {
       data: customerProfile
     });
   } catch (error) {
-    console.error('Error fetching profile:', error);
     return NextResponse.json(
       { message: 'Failed to fetch profile' },
       { status: 500 }
@@ -123,7 +122,6 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating profile:', error);
     return NextResponse.json(
       { message: 'Failed to create profile' },
       { status: 500 }
@@ -178,7 +176,6 @@ export async function PUT(request: NextRequest) {
       data: customerProfile
     });
   } catch (error) {
-    console.error('Error updating profile:', error);
     return NextResponse.json(
       { message: 'Failed to update profile' },
       { status: 500 }

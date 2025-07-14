@@ -83,7 +83,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(recommendationsWithRatings);
   } catch (error) {
-    console.error('Error fetching recommendations:', error);
     return NextResponse.json({ 
       message: 'Error fetching recommendations', 
       error: error instanceof Error ? error.message : 'Unknown error' 

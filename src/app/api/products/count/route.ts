@@ -38,7 +38,6 @@ export async function GET(request: Request) {
       }
     });
   } catch (error) {
-    console.error('Error fetching product stock:', error);
     return NextResponse.json(
       { success: false, message: 'Failed to fetch product stock' },
       { status: 500 }
@@ -79,7 +78,6 @@ export async function PATCH(request: Request) {
       }
     });
   } catch (error) {
-    console.error('Error updating product stock:', error);
     return NextResponse.json(
       { success: false, message: 'Failed to update product stock' },
       { status: 500 }

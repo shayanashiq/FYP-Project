@@ -90,7 +90,6 @@ export default function EditProductPage() {
           shortDescription: productData.shortDescription || ''
         });
       } catch (err) {
-        console.error('Error fetching product:', err);
         setError('Failed to load product data. Please try again later.');
       } finally {
         setIsLoading(false);
@@ -118,7 +117,6 @@ export default function EditProductPage() {
 
         setCategories(formattedCategories);
       } catch (err) {
-        console.error('Error fetching categories:', err);
         setError('Failed to load categories. Please try again later.');
       } finally {
         setIsLoadingCategories(false);
@@ -226,7 +224,6 @@ export default function EditProductPage() {
       
       return imageUrl;
     } catch (err) {
-      console.error('Error uploading image:', err);
       throw new Error('Failed to upload image');
     }
   };
@@ -333,9 +330,6 @@ export default function EditProductPage() {
         shortDescription: formData.shortDescription,
       };
 
-      // Log the data for debugging
-      console.log('Updating product data:', productData);
-
       const response = await fetch(`/api/products/${productId}`, {
         method: 'PUT',
         headers: {
@@ -344,12 +338,7 @@ export default function EditProductPage() {
         body: JSON.stringify(productData),
       });
 
-      // Log the raw response and body for debugging
-      console.log('Response status:', response.status);
-
-      // Try to read the response body as text for debugging
       const responseText = await response.text();
-      console.log('Response body:', responseText);
 
       // If not OK, parse the error
       if (!response.ok) {
@@ -368,14 +357,12 @@ export default function EditProductPage() {
       let updatedProduct;
       try {
         updatedProduct = JSON.parse(responseText);
-        console.log('Product updated:', updatedProduct);
       } catch (e) {
-        console.log('Could not parse response as JSON, but request succeeded');
+        throw new Error('Failed to parse updated product data');
       }
 
       router.push('/admin/products');
     } catch (err) {
-      console.error('Error updating product:', err);
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {
       setIsSubmitting(false);

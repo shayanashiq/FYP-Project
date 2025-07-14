@@ -20,7 +20,6 @@ interface InvitePatientsError {
 
 export const invitePatientsApi = async (emails: string[], token: string): 
 Promise<InvitePatientsResponse> => {
-  console.log("TOKEN",token)
   try {
     // Set the Authorization header for this request
     const response: AxiosResponse<InvitePatientsResponse> = await instance.post("/api/doctor/invite", {

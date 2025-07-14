@@ -50,7 +50,6 @@ export default function EditProfile() {
                     setImagePreview(result.data?.imageUrl || null);
                     setIsLoading(false);
                 } catch (err) {
-                    console.error('Error fetching profile:', err);
                     setError('Unable to load profile');
                     setIsLoading(false);
                 }
@@ -108,7 +107,6 @@ export default function EditProfile() {
             const result = await response.json();
             router.push('/account');
         } catch (err) {
-            console.error('Error updating profile:', err);
             setError('Unable to update profile');
             setIsLoading(false);
         }

@@ -86,7 +86,6 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Subscription error:', error);
     return NextResponse.json(
       { message: 'Server error, please try again' }, 
       { status: 500 }

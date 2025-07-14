@@ -253,7 +253,6 @@ const Checkout = () => {
       }
 
       const userId = session?.user.id;
-      console.log("gcid", guestCartId);
       const response = await fetch(`/api/orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -289,7 +288,7 @@ const Checkout = () => {
       const { data } = await response.json();
       setCustomerProfile(data);
     } catch (err) {
-      console.error("Error fetching customer profile:", err);
+      throw new Error("Error setting profile")
     }
   };
 
@@ -390,7 +389,6 @@ const Checkout = () => {
   };
 
   const handlePaymentSuccess = async () => {
-    console.log("Payment successful, updating order...");
     try {
       const orderUpdatePayload = {
         shippingFirstName: formData.shippingFirstName,
@@ -443,7 +441,6 @@ const Checkout = () => {
       setError(
         err instanceof Error ? err.message : "Payment processing failed"
       );
-      console.error("Payment processing error:", err);
     }
   };
 

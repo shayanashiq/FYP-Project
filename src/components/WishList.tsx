@@ -52,7 +52,7 @@ export default function Wishlist() {
         setWishlist(data.data);
       }
     } catch (error) {
-      console.error("Error fetching wishlist:", error);
+      throw new Error("Error fetching wishlist");
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +82,7 @@ export default function Wishlist() {
         fetchWishlist(session.user.id);
       }
     } catch (error) {
-      console.error("Error removing from wishlist:", error);
+      throw new Error("Error removing item from wishlist"); 
     }
   };
 
@@ -109,18 +109,16 @@ export default function Wishlist() {
         body: JSON.stringify({
           userId: session.user.id,
           productId: productId,
-          quantity: 1 // Default to 1 for wishlist add to cart
+          quantity: 1
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error("Error adding to cart:", errorData.message);
       }
     } catch (error) {
-      console.error("Error adding to cart:", error);
+      throw new Error("Error adding item to cart");
     } finally {
-      // Remove loading state for this item
       setCartLoadingItems(prev => {
         const newState = { ...prev };
         delete newState[productId];

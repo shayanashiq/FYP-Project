@@ -66,7 +66,6 @@ const CategoryDropdown = () => {
                 setCategories(formattedCategories);
                 setError(null);
             } catch (err) {
-                console.error('Error fetching categories:', err);
                 setError(err instanceof Error ? err.message : 'An error occurred');
             } finally {
                 setLoading(false);

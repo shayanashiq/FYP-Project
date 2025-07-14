@@ -43,7 +43,6 @@ const Footer = () => {
                 setMessage(data.message || 'Subscription failed. Please try again.');
             }
         } catch (error) {
-            console.error('Error subscribing:', error);
             setStatus('error');
             setMessage('Something went wrong. Please try again later.');
         }

@@ -28,7 +28,6 @@ export async function GET(
     
     return NextResponse.json(subcategory);
   } catch (error) {
-    console.error('Error fetching subcategory:', error);
     return NextResponse.json(
       { error: 'Failed to fetch subcategory' },
       { status: 500 }
@@ -80,7 +79,6 @@ export async function PUT(
     
     return NextResponse.json(updatedSubcategory);
   } catch (error) {
-    console.error('Error updating subcategory:', error);
     return NextResponse.json(
       { error: 'Failed to update subcategory' },
       { status: 500 }
@@ -120,7 +118,6 @@ export async function DELETE(
     
     return NextResponse.json({ message: 'Subcategory deleted successfully' });
   } catch (error) {
-    console.error('Error deleting subcategory:', error);
     return NextResponse.json(
       { error: 'Failed to delete subcategory' },
       { status: 500 }

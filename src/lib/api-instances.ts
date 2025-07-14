@@ -33,7 +33,6 @@ export const fetcher = (url: string, token?: string) => {
     })
     .catch((error: AxiosError) => {
       const responseData = error.response?.data as any;
-      console.log("this is the error ", error.response);
 
       if (
         error.response &&
@@ -70,7 +69,6 @@ export const paginationFetcher = (url: string, token?: string) => {
     })
     .catch((error: AxiosError) => {
       const responseData = error.response?.data as any;
-      console.log("this is the error baksdjakd ", error.response);
 
       if (
         error.response &&

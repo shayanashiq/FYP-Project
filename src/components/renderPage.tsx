@@ -19,7 +19,7 @@ const RenderExternalPage = ({ url }: { url: string }) => {
         const extractedContent = extractContentByClasses(html);
         setContent(extractedContent);
       } catch (error) {
-        console.error("Error fetching content:", error);
+        throw new Error("Error fetching external content");
       }
     };
 
@@ -63,7 +63,6 @@ const RenderExternalPage = ({ url }: { url: string }) => {
     links.forEach((link) => {
       const href = link.getAttribute("href") || "";
       if (href.startsWith("/professional/authors")) {
-        console.log(`Disabling /author link: ${href}`);
         
         link.removeAttribute("href");
         link.addEventListener("click", (event) => {

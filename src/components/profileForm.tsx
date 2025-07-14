@@ -54,7 +54,7 @@ const CustomerProfileForm: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      throw new Error("Error fetching profile");
     } finally {
       setLoading(false);
     }
@@ -147,13 +147,10 @@ const CustomerProfileForm: React.FC = () => {
               name: `${updatedProfile.firstName} ${updatedProfile.lastName}`.trim()
             }),
           });
-          // We intentionally don't await this or handle errors differently
-          // as we don't want it to block the profile creation process
-          // Just log success silently
+          
         }
       } catch (subscribeError) {
-        console.error("Error subscribing user:", subscribeError);
-        // We don't show this error to the user as the profile was successfully created
+        throw new Error("Failed to subscribe to newsletter");
       }
 
       toast.success(data.message);
@@ -169,7 +166,6 @@ const CustomerProfileForm: React.FC = () => {
         router.push("/");
       }
     } catch (error: any) {
-      console.error("Error saving profile:", error);
       toast.error(error.message || "Failed to save profile");
     } finally {
       setLoading(false);

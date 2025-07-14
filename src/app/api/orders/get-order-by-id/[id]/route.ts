@@ -8,12 +8,7 @@ export async function GET(
     try {
         const orderId = params.id;
         
-        // Add additional logging for debugging
-        console.log("Requested Order ID:", orderId);
-
-        // Validate that orderId is not undefined or empty
         if (!orderId) {
-            console.error("No order ID provided");
             return NextResponse.json(
                 { error: "Order ID is required" }, 
                 { status: 400 }
@@ -35,7 +30,6 @@ export async function GET(
         });
 
         if (!orderWithDetails) {
-            console.log("No order found with ID:", orderId);
             return NextResponse.json(
                 { error: "Order not found" }, 
                 { status: 404 }
@@ -44,7 +38,6 @@ export async function GET(
 
         return NextResponse.json({ data: orderWithDetails }, { status: 200 });
     } catch (error) {
-        console.error("Order retrieval error:", error);
         
         return NextResponse.json(
             { 

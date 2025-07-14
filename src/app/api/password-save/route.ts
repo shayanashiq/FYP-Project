@@ -63,7 +63,6 @@ export async function POST(req: NextRequest) {
 
     return successResponse({ ...currUser, token }, "Password set successfully");
   } catch (error) {
-    console.error("Password Reset Error:", error);
     return errorResponse(ErrorMessages.internalServerError, 500);
   }
 }

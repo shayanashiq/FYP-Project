@@ -32,7 +32,6 @@ export async function GET() {
     
     return NextResponse.json({ count });
   } catch (error) {
-    console.error('Error fetching wishlist count:', error);
     return NextResponse.json({ error: 'Failed to fetch wishlist count' }, { status: 500 });
   } finally {
     await prisma.$disconnect();

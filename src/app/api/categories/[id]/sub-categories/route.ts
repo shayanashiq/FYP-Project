@@ -35,7 +35,6 @@ export async function GET(
     
     return NextResponse.json(subcategories);
   } catch (error) {
-    console.error('Error fetching subcategories:', error);
     return NextResponse.json(
       { error: 'Failed to fetch subcategories' },
       { status: 500 }
@@ -81,7 +80,6 @@ export async function POST(
     
     return NextResponse.json(subcategory, { status: 201 });
   } catch (error) {
-    console.error('Error creating subcategory:', error);
     return NextResponse.json(
       { error: 'Failed to create subcategory' },
       { status: 500 }

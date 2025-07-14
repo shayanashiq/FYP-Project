@@ -63,9 +63,6 @@ export async function GET(request: NextRequest) {
     const sizes = sizeParam ? sizeParam.split(',').filter(Boolean) : [];
     const types = typeParam ? typeParam.split(',').filter(Boolean) : [];
     
-    console.log('Filter arrays:', { categories, sizes, types });
-    
-    // Calculate pagination
     const skip = (page - 1) * limit;
     
     // Build a cleaner where clause
@@ -310,7 +307,6 @@ export async function GET(request: NextRequest) {
     });
     
   } catch (error) {
-    console.error('Error searching products:', error);
     return NextResponse.json(
       { error: 'Failed to search products', details: (error as Error).message },
       { status: 500 }

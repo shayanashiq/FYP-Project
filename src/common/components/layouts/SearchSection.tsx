@@ -64,7 +64,7 @@ const SearchSectionContent = () => {
         const data = await response.json();
         setCategories(data);
       } catch (error) {
-        console.error('Error loading categories:', error);
+        throw new Error('Failed to fetch categories');
       } finally {
         setIsLoading(false);
       }
@@ -108,7 +108,6 @@ const SearchSectionContent = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     router.push(`/products?${selectedCategory?.id ? `category=${selectedCategory.id}&` : ""}searchTerm=${searchTerm}`)
-    console.log("Searching for:", searchTerm, "in category:", selectedCategory?.name || "All")
   }
 
   const toggleDropdown = () => {

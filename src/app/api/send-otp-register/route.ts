@@ -23,7 +23,6 @@ export async function POST(req: NextRequest) {
     const user = await prisma.user.findUnique({
       where: { email, verified: true, isPasswordSet: true },
     });
-    console.log("user", user)
   
     if (user && user.role === "CUSTOMER") {
       return errorResponse(ErrorMessages.customerFound, 404)

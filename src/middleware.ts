@@ -47,11 +47,8 @@ export async function middleware(req: NextRequest) {
 
   // Authentication and Authorization Logic
   const token = await getToken({ req });
-  console.log("token from middleware", token);
-  console.log("token end")
 
   const email = token?.email || "";
-  console.log(email);
 
   if (!token) {
     const loginUrl = new URL("/login", req.url);

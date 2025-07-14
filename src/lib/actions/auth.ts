@@ -50,7 +50,6 @@ export const createTask = async (payload: any, token: string) => {
 };
 
 export const fileUpload = async (payload: any) => {
-  console.log("payload", payload);
   return await instance.post(`/api/file`, payload, {
     headers: {
       "Content-Type": "multipart/form-data",
@@ -197,10 +196,9 @@ export const getTotalPatientsCount = async (token: string) => {
 
       }
     );
-    return response.data; // Returning the response data which includes the count
+    return response.data;
   } catch (error) {
-    console.error("Error fetching total patients count:", error);
-    throw error; // You can handle the error as you prefer
+    throw error;
   }
 };
 
@@ -350,7 +348,6 @@ export async function getTourData(email: string) {
     });
     return response.json();
   } catch (error) {
-    console.error("Error fetching tour data:", error);
     return null;
   }
 }
@@ -366,7 +363,6 @@ export async function setTour({ email, hasCompTour }: { email: string, hasCompTo
     });
     return response.json();
   } catch (error) {
-    console.error("Error setting tour data:", error);
     return null;
   }
 }

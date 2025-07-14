@@ -99,8 +99,6 @@ export default function ProductsPage() {
   // Improved mapper function to handle potential undefined values
   const mapApiProductsToTableProducts = (products: ApiProduct[]): ProductTableProduct[] => {
     return products.map(product => {
-      // Debug statement to see what's coming from the API
-      console.log('Mapping product:', product);
       
       return {
         id: product.id || '',
@@ -170,21 +168,17 @@ export default function ProductsPage() {
       }
 
       const url = `/api/products?${params.toString()}`;
-      console.log('Fetching products from:', url);
       
       const response = await fetch(url);
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error('API error response:', errorText);
         throw new Error(`Failed to fetch products: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log('API response data:', data);
       
       if (!data.products || !Array.isArray(data.products)) {
-        console.error('Invalid API response format:', data);
         throw new Error('Invalid API response format');
       }
 
@@ -202,7 +196,7 @@ export default function ProductsPage() {
         totalPages: 1
       });
     } catch (error) {
-      console.error("Error fetching products:", error);
+      throw new Error(`Error fetching products: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
@@ -264,7 +258,6 @@ export default function ProductsPage() {
         fetchProducts(pagination.page, pagination.limit, searchQuery);
         
       } catch (error) {
-        console.error("Error deleting product:", error);
         alert("Failed to delete product. Please try again.");
       }
     }

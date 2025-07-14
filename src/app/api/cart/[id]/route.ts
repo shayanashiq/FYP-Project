@@ -9,20 +9,13 @@ export async function DELETE(
   request: NextRequest, 
   { params }: { params: { id: string } }
 ) {
-  console.log('DELETE Cart Item - Received Request');
-  console.log('Request URL:', request.url);
-  console.log('Item ID from params:', params.id);
 
   try {
     const session = await getServerSession();
     const guestCartId = cookies().get('guestCartId')?.value;
     const itemId = params.id;
 
-    console.log('Session User ID:', session?.user?.id);
-    console.log('Guest Cart ID:', guestCartId);
-
     if (!itemId) {
-      console.error('No item ID provided');
       return NextResponse.json(
         { message: "Cart item ID is required" },
         { status: 400 }
@@ -31,11 +24,9 @@ export async function DELETE(
 
     // Additional logging for request body and search params
     const requestBody = await request.json().catch(() => ({}));
-    console.log('Request Body:', requestBody);
 
     const url = new URL(request.url);
     const searchParams = Object.fromEntries(url.searchParams);
-    console.log('Search Params:', searchParams);
 
     // Check if cart item exists
     const cartItem = await prisma.cartItem.findUnique({
@@ -44,18 +35,11 @@ export async function DELETE(
     });
 
     if (!cartItem) {
-      console.error(`Cart item not found: ${itemId}`);
       return NextResponse.json(
         { message: "Cart item not found" },
         { status: 404 }
       );
     }
-
-    console.log('Cart Item Details:', {
-      cartItemId: cartItem.id,
-      cartId: cartItem.cart.id,
-      userId: cartItem.cart.userId,
-    });
 
     // Validate ownership
     const isAuthorized = 
@@ -67,8 +51,6 @@ export async function DELETE(
       where: { id: itemId },
     });
 
-    console.log(`Successfully deleted cart item: ${itemId}`);
-
     return NextResponse.json(
       { 
         message: "Item removed from cart successfully", 
@@ -77,7 +59,6 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error removing cart item:", error);
     return NextResponse.json(
       { message: "Internal server error", error: String(error) },
       { status: 500 }
@@ -142,7 +123,6 @@ export async function PATCH(
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error updating cart item:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

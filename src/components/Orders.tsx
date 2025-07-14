@@ -56,11 +56,9 @@ export default function Orders() {
 
             if (response.ok) {
                 setOrders(result.data);
-            } else {
-                console.error("Failed to fetch orders");
             }
         } catch (error) {
-            console.error("Error fetching orders:", error);
+            throw new Error("Error fetching orders");
         } finally {
             setIsLoading(false);
         }

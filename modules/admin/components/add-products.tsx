@@ -108,7 +108,6 @@ const ProductCreationForm = () => {
         categoryId: null,
       });
       
-      console.log('Product created:', data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
     } finally {

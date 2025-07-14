@@ -63,7 +63,6 @@ function ClientLoginForm() {
         }
       }
     } catch (error) {
-      console.error("Google sign-in error:", error);
       toast.error("Error signing in with Google");
     } finally {
       setGoogleLoading(false);

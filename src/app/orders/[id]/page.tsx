@@ -67,7 +67,6 @@ export default function OrderConfirmationPage() {
           router.push('/');
         }
       } catch (error) {
-        console.error('Error fetching order:', error);
         toast.error('An error occurred while loading your order');
       } finally {
         setIsLoading(false);

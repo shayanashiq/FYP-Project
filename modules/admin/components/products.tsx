@@ -70,7 +70,6 @@ const handleDelete = async (productId: string) => {
       
       return result;
     } catch (error: any) {
-      console.error('Error deleting product:', error);
       alert(error.message || 'An error occurred while deleting the product');
       return null;
     }

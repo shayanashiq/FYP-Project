@@ -17,7 +17,6 @@ async function getOrCreateGuestCart(guestCartId?: string) {
     
     if (existingCart) return existingCart;
     
-    console.log(`Guest cart with ID ${guestCartId} not found. Creating new cart.`);
   }
 
   const newCart = await prisma.cart.create({
@@ -43,7 +42,6 @@ export async function GET(request: NextRequest) {
     const userId = url.searchParams.get("userId");
     const guestCartId = url.searchParams.get("guestCartId");
  
-    console.log(`Fetching cart - userId: ${userId}, guestCartId: ${guestCartId}`);
 
     if (!userId && !guestCartId) {
       return NextResponse.json(
@@ -71,7 +69,6 @@ export async function GET(request: NextRequest) {
     }
 
     if (!cart) {
-      console.log(`Cart not found for userId: ${userId}, guestCartId: ${guestCartId}`);
       return NextResponse.json(
         { 
           message: "Cart not found", 
@@ -88,7 +85,6 @@ export async function GET(request: NextRequest) {
       cartId: cart.id
     }, { status: 200 });
   } catch (error) {
-    console.error("Error fetching cart:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }
@@ -101,7 +97,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { userId, guestCartId, productId, quantity = 1 } = body;
 
-    console.log(`Adding to cart - userId: ${userId}, guestCartId: ${guestCartId}, productId: ${productId}, quantity: ${quantity}`);
 
     if (!productId) {
       return NextResponse.json(
@@ -173,7 +168,6 @@ export async function POST(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error adding product to cart:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

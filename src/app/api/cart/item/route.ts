@@ -51,7 +51,6 @@ export async function DELETE(request: NextRequest) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Error removing cart item:", error);
     return NextResponse.json(
       { message: "Internal server error" },
       { status: 500 }

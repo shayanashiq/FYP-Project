@@ -136,7 +136,6 @@ const Product: React.FC<ProductProps> = ({
           setMaxStock(product.stock || 0);
         }
       } catch (error) {
-        console.error("Error fetching product stock:", error);
         setMaxStock(product.stock || 0);
       } finally {
         setIsLoadingStock(false);
@@ -185,7 +184,7 @@ const Product: React.FC<ProductProps> = ({
         }
       }
     } catch (error) {
-      console.error("Error checking cart status:", error);
+      throw new Error('Failed to check cart status');
     }
   };
 
@@ -233,7 +232,7 @@ const Product: React.FC<ProductProps> = ({
         }
       }
     } catch (error) {
-      console.error("Error toggling wishlist:", error);
+      throw new Error('Failed to toggle wishlist status');
     } finally {
       setIsWishlistLoading(false);
     }
@@ -282,7 +281,6 @@ const Product: React.FC<ProductProps> = ({
           toast.success("Successfully removed item from cart")
         } else {
           const errorData = await response.json();
-          console.error('Delete Cart Item Error:', errorData);
         }
       } else {
         const response = await fetch('/api/cart', {
@@ -301,11 +299,10 @@ const Product: React.FC<ProductProps> = ({
           toast.success("Successfully added item to cart")
         } else {
           const errorData = await response.json();
-          console.error("Error adding to cart:", errorData.message);
         }
       }
     } catch (error) {
-      console.error("Error toggling cart:", error);
+      throw new Error('Failed to toggle cart status');
     } finally {
       setIsCartLoading(false);
     }
@@ -337,10 +334,8 @@ const Product: React.FC<ProductProps> = ({
       } else {
         setQuantity(cartQuantity);
         const errorData = await response.json();
-        console.error("Error updating cart quantity:", errorData.message);
       }
     } catch (error) {
-      console.error("Error updating cart quantity:", error);
       setQuantity(cartQuantity);
     } finally {
       setIsUpdatingCart(false);
