@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, Suspense } from 'react'
 import { Search, ChevronDown } from "lucide-react";
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -10,7 +10,40 @@ interface Category {
   description?: string;
 }
 
-const SearchSection = () => {
+// Loading component for Suspense fallback
+const SearchSectionSkeleton = () => (
+  <>
+    {/* Mobile skeleton */}
+    <div className="w-full md:hidden">
+      <div className="relative flex flex-col">
+        <div className="flex items-center justify-between px-3 py-3 border rounded-t-sm bg-gray-100 animate-pulse">
+          <div className="h-4 bg-gray-300 rounded w-24"></div>
+          <div className="h-4 w-4 bg-gray-300 rounded"></div>
+        </div>
+        <div className="relative">
+          <div className="w-full py-3 pl-4 pr-10 border border-t-0 rounded-b-sm bg-gray-100 animate-pulse">
+            <div className="h-4 bg-gray-300 rounded w-32"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Desktop skeleton */}
+    <div className="w-full hidden md:block">
+      <div className="relative flex">
+        <div className="flex items-center justify-between px-3 py-3 border border-r-0 rounded-l-sm bg-gray-100 animate-pulse" style={{ minWidth: 'fit-content', maxWidth: '200px' }}>
+          <div className="h-4 bg-gray-300 rounded w-24 mr-1"></div>
+          <div className="h-4 w-4 bg-gray-300 rounded"></div>
+        </div>
+        <div className="flex-grow py-3 pl-4 px-4 pr-10 border rounded-none rounded-r-sm bg-gray-100 animate-pulse">
+          <div className="h-4 bg-gray-300 rounded w-32"></div>
+        </div>
+      </div>
+    </div>
+  </>
+);
+
+const SearchSectionContent = () => {
   const [searchTerm, setSearchTerm] = useState("")
   const [isFocused, setIsFocused] = useState(false)
   const [categories, setCategories] = useState<Category[]>([])
@@ -245,6 +278,14 @@ const SearchSection = () => {
       {mobileView}
       {desktopView}
     </>
+  );
+};
+
+const SearchSection = () => {
+  return (
+    <Suspense fallback={<SearchSectionSkeleton />}>
+      <SearchSectionContent />
+    </Suspense>
   );
 };
 

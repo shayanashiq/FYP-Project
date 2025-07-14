@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import SideCategories from './SideCategories'
 import { Separator } from '@/common/components/elements/Separator'
 import SideProductType from './SideProductType'
@@ -34,7 +34,7 @@ interface WishlistItem {
   productId: string;
 }
 
-const Products = () => {
+const ProductContent = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session } = useSession();
@@ -318,6 +318,14 @@ const Products = () => {
         </div>
       </div>
     </>
+  );
+};
+
+const Products = () => {
+  return (
+    <Suspense fallback={<></>}>
+      <ProductContent />
+    </Suspense>
   );
 };
 

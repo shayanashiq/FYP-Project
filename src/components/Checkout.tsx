@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, Suspense } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
@@ -159,7 +159,7 @@ const StripePaymentForm = ({
   );
 };
 
-const CheckoutPage = () => {
+const Checkout = () => {
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1129,6 +1129,16 @@ const CheckoutPage = () => {
         )}
       </div>
     </div>
+  );
+};
+
+
+
+const CheckoutPage = () => {
+  return (
+    <Suspense fallback={<></>}>
+      <Checkout />
+    </Suspense>
   );
 };
 
