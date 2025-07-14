@@ -95,12 +95,13 @@ const StripePaymentForm = ({
   const [clientSecret, setClientSecret] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const amount = Math.round(((order.totalPrice) * 100) + 1000);
   useEffect(() => {
     fetch("/api/create-payment-intent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        amount: Math.round((order.totalPrice + 10) * 100),
+        amount: amount,
         orderId: order.id,
       }),
     })
@@ -388,6 +389,7 @@ const CheckoutPage = () => {
   };
 
   const handlePaymentSuccess = async () => {
+    console.log("Payment successful, updating order...");
     try {
       const orderUpdatePayload = {
         shippingFirstName: formData.shippingFirstName,
@@ -440,6 +442,7 @@ const CheckoutPage = () => {
       setError(
         err instanceof Error ? err.message : "Payment processing failed"
       );
+      console.error("Payment processing error:", err);
     }
   };
 
@@ -1121,6 +1124,7 @@ const CheckoutPage = () => {
               formData={formData}
               onPaymentSuccess={handlePaymentSuccess}
             />
+            
           </Elements>
         )}
       </div>
