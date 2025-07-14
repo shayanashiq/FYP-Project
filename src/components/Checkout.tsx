@@ -95,7 +95,7 @@ const StripePaymentForm = ({
   const [clientSecret, setClientSecret] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const amount = Math.round(((order.totalPrice) * 100) + 1000);
+  const amount = Math.round(order.totalPrice * 100 + 1000);
   useEffect(() => {
     fetch("/api/create-payment-intent", {
       method: "POST",
@@ -121,6 +121,9 @@ const StripePaymentForm = ({
       setLoading(false);
       return;
     }
+    else{
+      onPaymentSuccess();
+    }
 
     const { error } = await stripe.confirmPayment({
       elements,
@@ -132,9 +135,7 @@ const StripePaymentForm = ({
 
     if (error) {
       setErrorMessage(error.message);
-    } else {
-      onPaymentSuccess();
-    }
+    } 
 
     setLoading(false);
   };
@@ -508,8 +509,8 @@ const CheckoutPage = () => {
         <div className="bg-white p-6 rounded-lg  text-center">
           <h2 className="text-xl font-semibold mb-4">Order Not Found</h2>
           <p className="text-gray-600 mb-4">
-            The order you&apos;re looking for doesn&apos;t exist or you don&apos;t have
-            permission to view it.
+            The order you&apos;re looking for doesn&apos;t exist or you
+            don&apos;t have permission to view it.
           </p>
           <button
             onClick={() => router.push("/products")}
@@ -563,7 +564,7 @@ const CheckoutPage = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
-                        {order.items.map((item:any) => {
+                        {order.items.map((item: any) => {
                           const itemPrice = parseFloat(item.price);
                           const discountPercent = item.product.discount
                             ? parseFloat(item.product.discount)
@@ -646,7 +647,7 @@ const CheckoutPage = () => {
                           <td className="px-4 py-3 text-right font-semibold">
                             £
                             {formatPrice(
-                              order.items.reduce((sum, item:any) => {
+                              order.items.reduce((sum, item: any) => {
                                 const itemPrice = parseFloat(item.price);
                                 const discountPercent = item.product.discount
                                   ? parseFloat(item.product.discount)
@@ -664,7 +665,7 @@ const CheckoutPage = () => {
 
                   {/* Mobile Card Layout - visible on mobile and tablet */}
                   <div className="md:hidden space-y-4">
-                    {order.items.map((item:any) => {
+                    {order.items.map((item: any) => {
                       const itemPrice = parseFloat(item.price);
                       const discount = item.product.discount
                         ? parseFloat(item.product.discount)
@@ -763,7 +764,7 @@ const CheckoutPage = () => {
                         <span className="text-lg font-bold">
                           £
                           {formatPrice(
-                            order.items.reduce((sum, item:any) => {
+                            order.items.reduce((sum, item: any) => {
                               const itemPrice = parseFloat(item.price);
                               const discount = item.product.discount
                                 ? parseFloat(item.product.discount)
@@ -1124,7 +1125,6 @@ const CheckoutPage = () => {
               formData={formData}
               onPaymentSuccess={handlePaymentSuccess}
             />
-            
           </Elements>
         )}
       </div>
