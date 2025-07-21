@@ -188,6 +188,7 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error) {
+    console.log(error)
     return NextResponse.json(
       { error: 'Failed to delete product' },
       { status: 500 }
